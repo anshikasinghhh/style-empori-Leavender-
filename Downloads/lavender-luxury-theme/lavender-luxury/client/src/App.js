@@ -1,0 +1,106 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchMe } from './slices/authSlice';
+import { fetchCart } from './slices/cartSlice';
+import { fetchWishlist } from './slices/wishlistSlice';
+import LoadingSpinner from './components/common/LoadingSpinner';
+import Navbar from './components/common/Navbar';
+import Footer from './components/common/Footer';
+
+//import chatbot
+import ChatBot from "./components/common/Chatbot";
+// Customer pages
+import HomePage from './pages/customer/HomePage';
+import ProductsPage from './pages/customer/ProductsPage';
+import ProductDetailPage from './pages/customer/ProductDetailPage';
+import CartPage from './pages/customer/CartPage';
+import WishlistPage from './pages/customer/WishlistPage';
+import CheckoutPage from './pages/customer/CheckoutPage';
+import OrdersPage from './pages/customer/OrdersPage';
+import OrderDetailPage from './pages/customer/OrderDetailPage';
+import ProfilePage from './pages/customer/ProfilePage';
+import LoginPage from './pages/customer/LoginPage';
+import RegisterPage from './pages/customer/RegisterPage';
+import PaymentSuccessPage from './pages/customer/PaymentSuccessPage';
+
+// Admin pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminOrders from './pages/admin/AdminOrders';
+import AdminCustomers from './pages/admin/AdminCustomers';
+import AdminInventory from './pages/admin/AdminInventory';
+import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminSettings from './pages/admin/AdminSettings';
+
+const ProtectedRoute = ({ children }) => {
+  const { token } = useSelector(s => s.auth);
+  return token ? children : <Navigate to="/login" replace />;
+};
+const AdminRoute = ({ children }) => {
+  const { token, user } = useSelector(s => s.auth);
+  if (!token) return <Navigate to="/login" replace />;
+  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+};
+const CustomerLayout = ({ children }) => (
+  <div className="min-h-screen flex flex-col" style={{ background:'#FDF8F0' }}>
+    <Navbar />
+    <main className="flex-1">{children}</main>
+    <Footer />
+  </div>
+);
+
+export default function App() {
+  const dispatch = useDispatch();
+  const { token, initialized } = useSelector(s => s.auth);
+
+  useEffect(() => {
+    if (token) {
+      dispatch(fetchMe());
+      dispatch(fetchCart());
+      dispatch(fetchWishlist());
+    }
+  }, [token, dispatch]);
+
+  if (token && !initialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background:'#FDF8F0' }}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  return (
+    <Router>
+      <Routes>
+        {/* Public */}
+        <Route path="/" element={<CustomerLayout><HomePage /></CustomerLayout>} />
+        <Route path="/products" element={<CustomerLayout><ProductsPage /></CustomerLayout>} />
+        <Route path="/products/:id" element={<CustomerLayout><ProductDetailPage /></CustomerLayout>} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        {/* Protected */}
+        <Route path="/cart" element={<ProtectedRoute><CustomerLayout><CartPage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><CustomerLayout><WishlistPage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><CustomerLayout><CheckoutPage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/orders" element={<ProtectedRoute><CustomerLayout><OrdersPage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/orders/:id" element={<ProtectedRoute><CustomerLayout><OrderDetailPage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><CustomerLayout><ProfilePage /></CustomerLayout></ProtectedRoute>} />
+        <Route path="/payment/success" element={<ProtectedRoute><CustomerLayout><PaymentSuccessPage /></CustomerLayout></ProtectedRoute>} />
+        {/* Admin */}
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+        <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+        <Route path="/admin/customers" element={<AdminRoute><AdminCustomers /></AdminRoute>} />
+        <Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
+        <Route path="/admin/coupons" element={<AdminRoute><AdminCoupons /></AdminRoute>} />
+        <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        {/* 404 */}
+        <Route path="*" element={<CustomerLayout><div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><p className="font-display text-6xl font-bold text-primary-100 mb-4">404</p><h2 className="font-display text-2xl font-bold text-gray-800 mb-3">Page Not Found</h2><p className="font-body text-gray-500 mb-6">The page you're looking for doesn't exist.</p><a href="/" className="btn-primary inline-flex">Go Home</a></div></div></CustomerLayout>} />
+      </Routes>
+       <ChatBot />
+
+    </Router>
+  );
+}

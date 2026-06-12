@@ -1,0 +1,103 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+const User = require('./models/User');
+const chatRoutes = require("./routes/chatRoutes");
+
+const app = express();
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/products', require('./routes/products'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/cart', require('./routes/cart'));
+app.use('/api/wishlist', require('./routes/wishlist'));
+app.use('/api/reviews', require('./routes/reviews'));
+app.use('/api/coupons', require('./routes/coupons'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/users', require('./routes/users'));
+app.use("/api/chat", chatRoutes);
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Vastra Elegance API is running' });
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    success: false, 
+    message: err.message || 'Internal Server Error' 
+  });
+});
+
+const PORT = process.env.PORT || 5000;
+const MONGODB_URI = process.env.MONGODB_URI;
+const LOCAL_MONGODB_URI = 'mongodb://127.0.0.1:27017/vastra-elegance';
+
+const connectToDatabase = async () => {
+  const urls = [MONGODB_URI, LOCAL_MONGODB_URI].filter(Boolean);
+
+  for (const url of urls) {
+    try {
+      await mongoose.connect(url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000
+      });
+      console.log(`✅ Connected to MongoDB: ${url}`);
+      return;
+    } catch (err) {
+      console.error(`❌ Failed to connect to MongoDB at ${url}:`, err.message);
+    }
+  }
+
+  throw new Error('Unable to connect to any MongoDB instance. Check MONGODB_URI or run a local MongoDB server.');
+};
+
+const seedDefaultUsers = async () => {
+  const defaultUsers = [
+    { name: 'Admin User', email: 'admin@vastra.com', password: 'admin123', role: 'admin' },
+    { name: 'Customer User', email: 'customer@vastra.com', password: 'customer123', role: 'customer' }
+  ];
+
+  for (const userData of defaultUsers) {
+    const existing = await User.findOne({ email: userData.email });
+    if (!existing) {
+      await User.create(userData);
+      console.log(`✅ Created default user: ${userData.email}`);
+    }
+  }
+};
+
+const startServer = async () => {
+  try {
+    await connectToDatabase();
+    await seedDefaultUsers();
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('❌ MongoDB startup failed:', err.message);
+    console.error('⚠️ Please verify your database configuration and ensure MongoDB is reachable.');
+    process.exit(1);
+  }
+};
+
+startServer();
+
+module.exports = app;
