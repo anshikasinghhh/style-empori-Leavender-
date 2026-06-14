@@ -92,7 +92,7 @@ export function ProductCard({ product, index = 0 }) {
 
           {/* Info */}
           <div className="p-4">
-            <p className="font-body text-[11px] text-primary font-semibold uppercase tracking-widest mb-1">{product.category?.name}</p>
+            <p className="font-body text-[11px] text-primary font-semibold uppercase tracking-widest mb-1">{typeof product.category === 'object' ? product.category?.name : product.category}</p>
             <h3 className="font-display text-sm font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors leading-snug">{product.name}</h3>
             {product.ratings > 0 && (
               <div className="flex items-center gap-1.5 mb-2.5">

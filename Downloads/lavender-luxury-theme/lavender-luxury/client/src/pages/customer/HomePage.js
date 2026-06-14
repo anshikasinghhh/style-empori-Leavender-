@@ -285,25 +285,9 @@ const festive = products.filter(p => p.isFestival);
           <SectionHeader title="Featured Collection" subtitle="Handpicked for you" center={false}/>
           <Link to="/products?isFeatured=true" className="btn-ghost text-sm hidden md:flex gap-2">View All <ArrowRight size={15}/></Link>
         </div>
-        <div style={{ background: "yellow", padding: "10px", marginBottom: "10px" }}>
-    Products Loaded: {products.length}
-  </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-  {products.map((p) => (
-    <div
-      key={p._id}
-      style={{
-        border: "2px solid red",
-        padding: "20px",
-        background: "white"
-      }}
-    >
-      <h3>{p.name}</h3>
-      <p>₹{p.price}</p>
-      <p>{p.category}</p>
-    </div>
-  ))}
-</div>
+          {featured.map((p, i) => <ProductCard key={p._id} product={p} index={i}/>)}
+        </div>
       </section>
 
       <FlashSaleTimer/>
