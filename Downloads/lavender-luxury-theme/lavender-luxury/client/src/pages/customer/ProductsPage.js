@@ -140,7 +140,7 @@ console.log("Category Param:", searchParams.get("category"));
     else if (sort==='popular') p.sort((a,b) => b.sold-a.sold);
     else if (sort==='rating') p.sort((a,b) => b.ratings-a.ratings);
     return p;
-  }, [searchParams, filters, sort, search]);
+  }, [products, searchParams, filters, sort, search]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
