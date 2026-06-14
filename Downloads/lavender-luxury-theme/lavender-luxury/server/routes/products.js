@@ -14,8 +14,8 @@ router.get('/', async (req, res) => {
     let limitNum = Math.min(Math.max(1, parseInt(limit) || 12), 100); // Cap limit at 100
     
     const query = { isActive: true };
-    if (category) query.category = category;
-    if (subcategory) query.subcategory = subcategory;
+    if (category) query.category = { $regex: new RegExp('^' + category + '$', 'i') };
+    if (subcategory) query.subcategory = { $regex: new RegExp('^' + subcategory + '$', 'i') };
     if (minPrice || maxPrice) query.price = {};
     if (minPrice) query.price.$gte = Number(minPrice);
     if (maxPrice) query.price.$lte = Number(maxPrice);
