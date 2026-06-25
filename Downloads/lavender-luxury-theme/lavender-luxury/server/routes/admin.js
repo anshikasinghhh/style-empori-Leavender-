@@ -43,6 +43,23 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
       { $limit: 10 }
     ]);
 
+    const categorySales = await Order.aggregate([
+      { $match: { paymentStatus: 'paid' } },
+      { $unwind: '$items' },
+      { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'productData' } },
+      { $unwind: { path: '$productData', preserveNullAndEmptyArrays: true } },
+      { $match: { 'productData.category': { $exists: true, $ne: null } } },
+      { $group: {
+        _id: '$productData.category',
+        revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        orders: { $sum: 1 },
+        unitsSold: { $sum: '$items.quantity' }
+      } },
+      { $project: { _id: 0, category: '$_id', revenue: 1, orders: 1, unitsSold: 1 } },
+      { $sort: { revenue: -1 } },
+      { $limit: 8 }
+    ]);
+
     // Recent orders
     const recentOrders = await Order.find()
       .populate('user', 'name email')
@@ -62,7 +79,11 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     res.json({
       success: true,
       stats: { totalOrders, pendingOrders, totalCustomers, totalProducts, totalRevenue, lowStockProducts },
-      monthlyData, topProducts, recentOrders, customerGrowth
+      monthlyData,
+      categorySales,
+      topProducts,
+      recentOrders,
+      customerGrowth
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

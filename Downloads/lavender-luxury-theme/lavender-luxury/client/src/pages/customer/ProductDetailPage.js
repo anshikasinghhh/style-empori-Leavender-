@@ -1,29 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Star, Truck, Shield, RefreshCw, Share2, ChevronRight, Plus, Minus, Check, Sparkles } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../slices/cartSlice';
 import { toggleWishlist } from '../../slices/wishlistSlice';
-import { PRODUCTS, formatPrice, getDiscount } from '../../utils/data';
-import { ProductCard, SectionHeader } from '../../components/common/LoadingSpinner';
+import { formatPrice, getDiscount } from '../../utils/data';
+import { ProductCard, SectionHeader, LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { fetchProductById, clearProduct } from '../../slices/productSlice';
 import toast from 'react-hot-toast';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const product = PRODUCTS.find(p => p._id === id) || PRODUCTS[0];
+  const dispatch = useDispatch();
+  const { product, loading, error, items: allProducts } = useSelector((s) => s.products);
   const [selImg, setSelImg] = useState(0);
   const [selSize, setSelSize] = useState('');
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState('description');
   const [addedToCart, setAddedToCart] = useState(false);
-  const dispatch = useDispatch();
   const { token } = useSelector(s => s.auth);
   const { products: wishlist } = useSelector(s => s.wishlist);
-  const isWishlisted = wishlist?.some(p => (p._id||p) === product._id);
+  const isWishlisted = wishlist?.some(p => (p._id||p) === product?._id);
+
+  useEffect(() => {
+    if (!id) return;
+    dispatch(fetchProductById(id));
+    return () => dispatch(clearProduct());
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    setSelImg(0);
+  }, [product]);
+
+  if (loading && !product) {
+    return (
+      <div className="min-h-[65vh] flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[65vh] flex items-center justify-center px-4 text-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-[65vh] flex items-center justify-center px-4 text-center">
+        <p className="text-gray-500">Product not found.</p>
+      </div>
+    );
+  }
+
   const discount = product.originalPrice ? getDiscount(product.originalPrice, product.price) : 0;
   const effectivePrice = product.isFlashSale && product.flashSalePrice ? product.flashSalePrice : product.price;
-  const related = PRODUCTS.filter(p => p._id !== product._id && p.category?.slug === product.category?.slug).slice(0,4);
+  const related = allProducts.filter(p => p._id !== product._id && p.category?.slug === product.category?.slug).slice(0,4);
   const images = product.images?.length >= 3 ? product.images : [
     ...product.images,
     { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },
@@ -34,7 +70,8 @@ export default function ProductDetailPage() {
     if (!token) { toast.error('Please login to add to cart'); return; }
     if (product.sizes?.length > 0 && !selSize) { toast.error('Please select a size'); return; }
     dispatch(addToCart({ productId: product._id, quantity: qty, size: selSize || 'Free Size' }));
-    setAddedToCart(true); toast.success('Added to cart! 🛍️');
+    setAddedToCart(true);
+    toast.success('Added to cart! 🛍️');
     setTimeout(() => setAddedToCart(false), 2500);
   };
   const handleWishlist = () => {

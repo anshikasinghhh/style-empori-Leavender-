@@ -7,6 +7,21 @@ import { PRODUCTS, CATEGORIES } from '../../utils/data';
 import { ShoppingBag } from 'lucide-react';
 import api from '../../utils/api';
 
+const normalizeCategory = (value) => {
+  if (!value) return '';
+  const raw = typeof value === 'object' ? value.name || '' : String(value);
+  return raw.toLowerCase().replace(/\s+/g, ' ').trim();
+};
+const CATEGORY_SLUG_TO_NAME = Object.fromEntries(CATEGORIES.map(c => [c.slug, normalizeCategory(c.name)]));
+const categoryMatches = (productCategory, categoryParam) => {
+  if (!productCategory || !categoryParam) return false;
+  const productCat = normalizeCategory(productCategory);
+  const param = normalizeCategory(categoryParam);
+  if (productCat === param) return true;
+  if (CATEGORY_SLUG_TO_NAME[param] && productCat === CATEGORY_SLUG_TO_NAME[param]) return true;
+  if (param && productCat.startsWith(param + ' ')) return true;
+  return false;
+};
 const SORT_OPTIONS = [
   { value:'newest', label:'Newest First' },
   { value:'price_asc', label:'Price: Low to High' },
@@ -77,10 +92,6 @@ useEffect(() => {
   const loadProducts = async () => {
     try {
       const res = await api.get('/products');
-
-      console.log("URL Category:", searchParams.get("category"));
-      console.log("Mongo Products:", res.data.products);
-
       setProducts(res.data.products);
     } catch (err) {
       console.error(err);
@@ -114,23 +125,14 @@ console.log("Category Param:", searchParams.get("category"));
     if (searchParams.get('isFlashSale')) p = p.filter(x => x.isFlashSale);
     if (searchParams.get('isFestival')) p = p.filter(x => x.isFestival);
     if (searchParams.get('category')) {
-  const category = searchParams.get('category').toLowerCase();
-
-  p = p.filter(
-    x =>
-      typeof x.category === "string" &&
-      x.category.toLowerCase() === category
-  );
-}
-    // if (searchParams.get('category')) p = p.filter(x => x.category && x.category.toLowerCase() === searchParams.get('category').toLowerCase());
+      const category = searchParams.get('category');
+      p = p.filter(x => typeof x.category === 'string' && categoryMatches(x.category, category));
+    }
     // if (searchParams.get('subcategory')) p = p.filter(x => x.category?.slug === searchParams.get('subcategory'));
     // if (filters.categories?.length) p = p.filter(x => filters.categories.includes(x.category?.slug));
-    if (filters.categories?.length)
-  p = p.filter(
-    x =>
-      x.category &&
-      filters.categories.includes(x.category.toLowerCase())
-  );
+    if (filters.categories?.length) {
+      p = p.filter(x => typeof x.category === 'string' && filters.categories.some(cat => categoryMatches(x.category, cat)));
+    }
     if (filters.minPrice!=null) p = p.filter(x => x.price >= filters.minPrice);
     if (filters.maxPrice!=null && filters.maxPrice!==Infinity) p = p.filter(x => x.price <= filters.maxPrice);
     if (filters.occasions?.length) p = p.filter(x => x.occasion?.some(o => filters.occasions.includes(o)));

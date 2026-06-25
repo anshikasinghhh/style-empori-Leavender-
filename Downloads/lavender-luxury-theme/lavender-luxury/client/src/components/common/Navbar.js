@@ -12,7 +12,7 @@ const NAV_LINKS = [
     { label:'Sarees', path:'/products?category=sarees' },
 { label:'Lehengas', path:'/products?category=lehengas' },
 { label:'Kurtis', path:'/products?category=kurtis' },
-{ label:'Anarkali Suits', path:'/products?category=anarkali suits' },
+{ label:'Anarkali Suits', path:'/products?category=anarkali' },
 { label:'Dupattas', path:'/products?category=dupattas' },
   ]},
   { label:'Kids', path:'/products?category=kidswear' },
