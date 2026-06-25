@@ -52,7 +52,7 @@ function FilterSidebar({ filters, setFilters, onClose, mobile }) {
         </div>
       </div>
       {/* Price */}
-      <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
+      {/* <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
         <p className="font-body font-semibold text-gray-800 text-sm mb-3">Price Range</p>
         <div className="space-y-2">
           {[{label:'Under ₹1,000',min:0,max:1000},{label:'₹1,000 – ₹5,000',min:1000,max:5000},{label:'₹5,000 – ₹15,000',min:5000,max:15000},{label:'₹15,000 – ₹30,000',min:15000,max:30000},{label:'Above ₹30,000',min:30000,max:Infinity}].map(r => (
@@ -65,7 +65,7 @@ function FilterSidebar({ filters, setFilters, onClose, mobile }) {
           ))}
           {(filters.minPrice||filters.maxPrice) && <button onClick={() => setFilters(f => ({...f,minPrice:null,maxPrice:null}))} className="font-body text-xs text-primary hover:underline mt-1">Clear</button>}
         </div>
-      </div>
+      </div> */}
       {/* Occasion */}
       <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
         <p className="font-body font-semibold text-gray-800 text-sm mb-3">Occasion</p>

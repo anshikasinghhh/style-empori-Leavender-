@@ -8,7 +8,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useState, useEffect } from 'react';
 
+const COLOR_OPTIONS = [
+  "Black",
+  "White",
+  "Blue",
+  "Red",
+  "Green",
+  "Pink",
+  "Purple",
+  "Yellow",
+  "Grey",
+  "Brown",
+  "Navy Blue",
+  "Maroon",
+  "Beige",
+  "Lavender"
+];
 
+const SIZE_OPTIONS = [
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "Free Size"
+];
 // const loadProducts = async () => {
 //   try {
 //     const res = await api.get('/products');
@@ -30,7 +55,7 @@ import { useState, useEffect } from 'react';
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}] };
+const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}] };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -59,7 +84,11 @@ export default function AdminProducts() {
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY);
-  
+  const [selectedColor, setSelectedColor] = useState("");
+const [customColor, setCustomColor] = useState("");
+
+const [selectedSize, setSelectedSize] = useState("");
+const [customSize, setCustomSize] = useState("");
 const filtered = products.filter(
   p =>
     p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,7 +98,7 @@ console.log("Products:", products);
 console.log("Filtered:", filtered);
   // console.log("Current Products State:", products);
   const openAdd = () => { setForm(EMPTY); setEditId(null); setModal(true); };
-  const openEdit = (p) => { setForm({ ...p, price:String(p.price), originalPrice:String(p.originalPrice||''), stock:String(p.stock) }); setEditId(p._id); setModal(true); };
+  const openEdit = (p) => { setForm({ ...p, mrp: String(p.mrp || ''),price:String(p.price), originalPrice:String(p.originalPrice||''), stock:String(p.stock) }); setEditId(p._id); setModal(true); };
 useEffect(() => {
     loadProducts();
   }, []);
@@ -151,6 +180,7 @@ const deleteProduct = async (id) => {
         <div><h1 className="font-display text-2xl font-bold text-gray-900">Products</h1><p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p></div>
         <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
       </div>
+     
 
       <div className="bg-white rounded-2xl shadow-card border border-gray-50 overflow-hidden">
         <div className="p-4 border-b border-gray-50 flex items-center gap-3">
@@ -162,7 +192,7 @@ const deleteProduct = async (id) => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body min-w-[700px]">
             <thead className="bg-gray-50/80">
-              <tr>{['Product','Category','Price','Stock','Tags','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+              <tr>{['Product','Category','MRP' ,'Price','Stock','Tags','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(p => (
@@ -176,6 +206,7 @@ const deleteProduct = async (id) => {
                     </div>
                   </td>
                   <td className="px-4 py-3"><span className="badge bg-champagne-light/80 text-primary border border-primary-100">{p.category}</span></td>
+                  <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.mrp)}</p></td>
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.price)}</p>{p.originalPrice && <p className="text-xs text-gray-400 line-through">{formatPrice(p.originalPrice)}</p>}</td>
                   <td className="px-4 py-3"><span className={`badge text-xs font-bold ${p.stock < 10 ? 'bg-rose-soft text-rose' : p.stock < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{p.stock} left</span></td>
                   <td className="px-4 py-3">
@@ -212,6 +243,22 @@ const deleteProduct = async (id) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Name *</label><input value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} className="input-field text-sm" placeholder="e.g. Royal Kanjivaram Silk Saree"/></div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Code *</label><input value={form.productCode} onChange={e => setForm(f=>({...f,productCode:e.target.value}))} className="input-field text-sm" placeholder="e.g. KS-001"/></div>
+                  <div>
+  <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">
+    MRP (₹)
+  </label>
+
+  <input
+    type="number"
+    value={form.mrp}
+    onChange={e => setForm(f => ({
+      ...f,
+      mrp: e.target.value
+    }))}
+    className="input-field text-sm"
+    placeholder="2000"
+  />
+</div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Price (₹) *</label><input type="number" value={form.price} onChange={e => setForm(f=>({...f,price:e.target.value}))} className="input-field text-sm" placeholder="9499"/></div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Original Price (₹)</label><input type="number" value={form.originalPrice} onChange={e => setForm(f=>({...f,originalPrice:e.target.value}))} className="input-field text-sm" placeholder="14999"/></div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Category</label>
@@ -221,6 +268,288 @@ const deleteProduct = async (id) => {
                     </select>
                   </div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units</label><input type="number" value={form.stock} onChange={e => setForm(f=>({...f,stock:e.target.value}))} className="input-field text-sm" placeholder="50"/></div>
+                  <div className="col-span-2">
+
+<label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
+Sizes
+</label>
+
+<div className="flex gap-2">
+
+<select
+value={selectedSize}
+onChange={(e)=>setSelectedSize(e.target.value)}
+className="input-field flex-1"
+>
+
+<option value="">Select Size</option>
+
+{SIZE_OPTIONS.map(size=>(
+
+<option
+key={size}
+value={size}
+>
+{size}
+</option>
+
+))}
+
+</select>
+
+<button
+type="button"
+onClick={()=>{
+
+if(!selectedSize) return;
+
+if(form.sizes.some(s=>s.size===selectedSize))
+return;
+
+setForm(f=>({
+
+...f,
+
+sizes:[
+...f.sizes,
+{
+size:selectedSize,
+stock:Number(f.stock || 0)
+}
+]
+
+}));
+
+setSelectedSize("");
+
+}}
+className="btn-primary"
+>
+
+Add
+
+</button>
+
+</div>
+
+<div className="flex gap-2 mt-3">
+
+<input
+value={customSize}
+onChange={(e)=>setCustomSize(e.target.value)}
+placeholder="Custom Size"
+className="input-field flex-1"
+/>
+
+<button
+type="button"
+onClick={()=>{
+
+if(!customSize) return;
+
+if(form.sizes.some(s=>s.size===customSize))
+return;
+
+setForm(f=>({
+
+...f,
+
+sizes:[
+...f.sizes,
+{
+size:customSize,
+stock:Number(f.stock || 0)
+}
+]
+
+}));
+
+setCustomSize("");
+
+}}
+className="btn-outline"
+>
+
+Add Custom
+
+</button>
+
+</div>
+
+</div>
+<div className="flex flex-wrap gap-2 mt-3">
+
+{form.sizes.map((size,index)=>(
+
+<div
+key={index}
+className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2"
+>
+
+{size.size}
+
+<button
+type="button"
+onClick={()=>{
+
+setForm(f=>({
+
+...f,
+
+sizes:f.sizes.filter((_,i)=>i!==index)
+
+}));
+
+}}
+>
+
+✕
+
+</button>
+
+</div>
+
+))}
+
+</div>
+                  <div className="col-span-2">
+
+<label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
+Colors
+</label>
+
+<div className="flex gap-2">
+
+<select
+value={selectedColor}
+onChange={(e)=>setSelectedColor(e.target.value)}
+className="input-field flex-1"
+>
+
+<option value="">Select Color</option>
+
+{COLOR_OPTIONS.map(color=>(
+
+<option key={color}>
+{color}
+</option>
+
+))}
+
+</select>
+
+<button
+type="button"
+onClick={()=>{
+
+if(!selectedColor) return;
+
+if(form.colors.some(c=>c.name===selectedColor))
+return;
+
+setForm(f=>({
+
+...f,
+
+colors:[
+...f.colors,
+{
+name:selectedColor,
+hex:""
+}
+]
+
+}));
+
+setSelectedColor("");
+
+}}
+className="btn-primary"
+>
+
+Add
+
+</button>
+
+</div>
+
+<div className="flex gap-2 mt-3">
+
+<input
+value={customColor}
+onChange={(e)=>setCustomColor(e.target.value)}
+placeholder="Custom Color"
+className="input-field flex-1"
+/>
+
+<button
+type="button"
+onClick={()=>{
+
+if(!customColor) return;
+
+setForm(f=>({
+
+...f,
+
+colors:[
+...f.colors,
+{
+name:customColor,
+hex:""
+}
+]
+
+}));
+
+setCustomColor("");
+
+}}
+className="btn-outline"
+>
+
+Add Custom
+
+</button>
+
+</div>
+
+</div>
+<div className="flex flex-wrap gap-2 mt-3">
+
+{form.colors.map((color,index)=>(
+
+<div
+key={index}
+className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2"
+>
+
+{color.name}
+
+<button
+type="button"
+onClick={()=>{
+
+setForm(f=>({
+
+...f,
+
+colors:f.colors.filter((_,i)=>i!==index)
+
+}));
+
+}}
+>
+
+✕
+
+</button>
+
+</div>
+
+))}
+
+</div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Material</label><input value={form.material} onChange={e => setForm(f=>({...f,material:e.target.value}))} className="input-field text-sm" placeholder="Pure Kanjivaram Silk"/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Description</label><textarea value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} className="input-field text-sm h-24 resize-none" placeholder="Product description..."/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Image *</label>

@@ -6,6 +6,10 @@ const productSchema = new mongoose.Schema({
   slug: { type: String, unique: true },
   description: { type: String, default: '' },
   shortDescription: { type: String },
+  mrp: {
+    type: Number,
+    required: true
+},
   price: { type: Number, required: true, min: 0 },
   originalPrice: { type: Number },
   discountPercent: { type: Number, default: 0 },
@@ -16,13 +20,28 @@ const productSchema = new mongoose.Schema({
 },
   subcategory: { type: String },
   images: [{ url: String, alt: String }],
-  sizes: [{ size: String, stock: Number }],
-  colors: [{ name: String, hex: String }],
+  // sizes: [{ size: String, stock: Number }],
+  // colors: [{ name: String, hex: String }],
+  variants: [
+{
+    color: {
+        name: String,
+        hex: String
+    },
+
+    size: String,
+
+    stock: {
+        type: Number,
+        default: 0
+    }
+}
+],
   material: { type: String },
   occasion: [String],
   brand: { type: String, default: 'Vastra Elegance' },
   sku: { type: String },
-  stock: { type: Number, default: 0 },
+  // stock: { type: Number, default: 0 },
   sold: { type: Number, default: 0 },
   ratings: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
