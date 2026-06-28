@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Order, Cart, Wishlist } = require('../models/index');
 const Product = require('../models/Product');
+const { createShiprocketOrder } = require('../services/shiprocketService');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
@@ -94,6 +95,11 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     order.statusHistory.push({ status, timestamp: new Date(), note });
     if (status === 'delivered') order.deliveredAt = new Date();
     await order.save();
+
+    if (status === 'confirmed' && !order.shiprocketOrderId) {
+      createShiprocketOrder(order._id).catch(err => console.error("Shiprocket async error:", err));
+    }
+
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

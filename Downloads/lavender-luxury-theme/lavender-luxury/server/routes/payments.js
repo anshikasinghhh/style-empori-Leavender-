@@ -3,6 +3,7 @@ const router = express.Router();
 const crypto = require('crypto');
 const { protect } = require('../middleware/auth');
 const { Order, Payment } = require('../models/index');
+const { createShiprocketOrder } = require('../services/shiprocketService');
 
 const PLACEHOLDER_KEYS = new Set([
   'your_razorpay_key_id',
@@ -128,6 +129,9 @@ router.post('/razorpay/verify', protect, async (req, res) => {
       $push: { statusHistory: { status: 'confirmed', timestamp: new Date(), note: 'Payment confirmed via Razorpay' } }
     });
 
+    // Sync order to Shiprocket
+    createShiprocketOrder(orderId).catch(err => console.error("Shiprocket sync error:", err));
+
     await Payment.create({
       order: orderId,
       user: req.user._id,
@@ -161,6 +165,10 @@ router.post('/cod/confirm', protect, async (req, res) => {
       orderStatus: 'confirmed',
       $push: { statusHistory: { status: 'confirmed', timestamp: new Date(), note: 'Cash on Delivery confirmed' } }
     });
+
+    // Sync order to Shiprocket
+    createShiprocketOrder(orderId).catch(err => console.error("Shiprocket sync error:", err));
+
     res.json({ success: true, message: 'COD order confirmed' });
   } catch (err) {
     console.error('COD confirm error:', err);

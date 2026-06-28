@@ -51,7 +51,11 @@ const orderSchema = new mongoose.Schema({
   total: Number,
   estimatedDelivery: Date,
   deliveredAt: Date,
-  notes: String
+  notes: String,
+  shiprocketOrderId: String,
+  shiprocketShipmentId: String,
+  shiprocketSyncStatus: { type: String, enum: ['synced', 'failed', null], default: null },
+  shiprocketSyncError: String
 }, { timestamps: true });
 
 orderSchema.pre('save', function(next) {
