@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Twitter, Youtube, Mail, Phone, MapPin, Heart } from 'lucide-react';
+import { CATEGORIES } from '../../utils/data';
 
 export default function Footer() {
   return (
@@ -30,8 +31,8 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-semibold text-base mb-4">Shop</h4>
             <ul className="space-y-2.5">
-              {[{label:'Sarees',path:'/products?subcategory=sarees'},{label:'Lehengas',path:'/products?subcategory=lehengas'},{label:'Kurtis',path:'/products?subcategory=kurtis'},{label:'Jewelry',path:'/products?category=jewelry'},{label:'Kidswear',path:'/products?category=kidswear'},{label:'Accessories',path:'/products?category=accessories'}].map(item => (
-                <li key={item.label}><Link to={item.path} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.label}</Link></li>
+              {CATEGORIES.map(item => (
+                <li key={item.slug}><Link to={`/products?category=${item.slug}`} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.name}</Link></li>
               ))}
             </ul>
           </div>

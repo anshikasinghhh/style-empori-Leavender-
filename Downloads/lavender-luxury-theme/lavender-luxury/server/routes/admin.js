@@ -19,15 +19,20 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     const totalProducts = await Product.countDocuments({ isActive: true });
     const lowStockProducts = await Product.countDocuments({ stock: { $lt: 10 }, isActive: true });
 
+    const revenueMatch = {
+      orderStatus: { $nin: ['cancelled'] },
+      paymentStatus: { $nin: ['failed', 'refunded'] }
+    };
+
     const revenueAgg = await Order.aggregate([
-      { $match: { paymentStatus: 'paid' } },
+      { $match: revenueMatch },
       { $group: { _id: null, total: { $sum: '$total' } } }
     ]);
     const totalRevenue = revenueAgg[0]?.total || 0;
 
     // Monthly sales for last 12 months
     const monthlyData = await Order.aggregate([
-      { $match: { paymentStatus: 'paid', createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } } },
+      { $match: { ...revenueMatch, createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } } },
       { $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
         revenue: { $sum: '$total' }, orders: { $sum: 1 }
@@ -44,7 +49,7 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     ]);
 
     const categorySales = await Order.aggregate([
-      { $match: { paymentStatus: 'paid' } },
+      { $match: revenueMatch },
       { $unwind: '$items' },
       { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'productData' } },
       { $unwind: { path: '$productData', preserveNullAndEmptyArrays: true } },

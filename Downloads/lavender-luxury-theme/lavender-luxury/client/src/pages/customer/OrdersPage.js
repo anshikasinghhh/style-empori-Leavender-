@@ -1,36 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, ChevronRight, Search } from 'lucide-react';
-import { EmptyState } from '../../components/common/LoadingSpinner';
-import { PRODUCTS, formatPrice } from '../../utils/data';
-
-const DEMO_ORDERS = [
-  { _id:'o1', orderNumber:'VE174521', orderStatus:'delivered', paymentStatus:'paid', total:9499, createdAt:'2025-02-10', items:[{ name:'Royal Kanjivaram Silk Saree', image: PRODUCTS[0].images[0].url }] },
-  { _id:'o2', orderNumber:'VE174522', orderStatus:'shipped',   paymentStatus:'paid', total:28999, createdAt:'2025-02-28', items:[{ name:'Bridal Lehenga — Rani Pink & Gold', image: PRODUCTS[1].images[0].url }] },
-  { _id:'o3', orderNumber:'VE174523', orderStatus:'processing',paymentStatus:'paid', total:2899,  createdAt:'2025-03-05', items:[{ name:'Lucknowi Chikankari Kurti Set', image: PRODUCTS[2].images[0].url }] },
-  { _id:'o4', orderNumber:'VE174524', orderStatus:'placed',    paymentStatus:'pending', total:4599, createdAt:'2025-03-10', items:[{ name:'Polki Kundan Bridal Jewelry Set', image: PRODUCTS[3].images[0].url }] },
-  { _id:'o5', orderNumber:'VE174525', orderStatus:'cancelled', paymentStatus:'refunded', total:6499, createdAt:'2025-01-20', items:[{ name:'Navratri Chaniya Choli', image: PRODUCTS[4].images[0].url }] },
-];
+import { EmptyState, LoadingSpinner } from '../../components/common/LoadingSpinner';
+import { formatPrice } from '../../utils/data';
+import api from '../../utils/api';
 
 const STATUS_STYLES = { placed:'bg-blue-100 text-blue-700', confirmed:'bg-indigo-100 text-indigo-700', processing:'bg-amber-100 text-amber-700', shipped:'bg-primary-100 text-primary', out_for_delivery:'bg-orange-100 text-orange-700', delivered:'bg-emerald-100 text-emerald-700', cancelled:'bg-rose-soft text-rose', returned:'bg-gray-100 text-gray-600' };
 const STATUS_ICONS = { delivered:'✓', shipped:'🚚', processing:'⚙️', placed:'📋', confirmed:'✅', cancelled:'✕', out_for_delivery:'📦', returned:'↩' };
 
 export default function OrdersPage() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const filtered = DEMO_ORDERS.filter(o =>
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await api.get('/orders/my-orders');
+        setOrders(res.data.orders || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const filtered = orders.filter(o =>
     (filter === 'all' || o.orderStatus === filter) &&
-    (o.orderNumber.includes(search) || o.items[0]?.name.toLowerCase().includes(search.toLowerCase()))
+    (o.orderNumber?.includes(search) || o.items?.[0]?.name?.toLowerCase().includes(search.toLowerCase()))
   );
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16 flex justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-3xl font-bold text-gray-900">My Orders</h1>
-        <span className="badge-primary">{DEMO_ORDERS.length} orders</span>
+        <span className="badge-primary">{orders.length} orders</span>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
         {['all','placed','processing','shipped','delivered','cancelled'].map(s => (
           <button key={s} onClick={() => setFilter(s)}
@@ -54,12 +71,12 @@ export default function OrdersPage() {
             <Link key={order._id} to={`/orders/${order._id}`}
               className="bg-white rounded-2xl p-5 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all group flex items-center gap-4 block">
               <div className="w-16 h-18 rounded-xl overflow-hidden bg-champagne-light shrink-0">
-                <img src={order.items[0]?.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+                <img src={order.items[0]?.image || order.items[0]?.product?.images?.[0]?.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-1 flex-wrap">
                   <p className="font-body font-bold text-gray-900 text-sm">#{order.orderNumber}</p>
-                  <span className={`badge text-[11px] ${STATUS_STYLES[order.orderStatus]||'bg-gray-100 text-gray-600'}`}>{STATUS_ICONS[order.orderStatus]} {order.orderStatus.replace('_',' ')}</span>
+                  <span className={`badge text-[11px] ${STATUS_STYLES[order.orderStatus]||'bg-gray-100 text-gray-600'}`}>{STATUS_ICONS[order.orderStatus]} {order.orderStatus?.replace('_',' ')}</span>
                   {order.paymentStatus === 'refunded' && <span className="badge bg-orange-100 text-orange-700 text-[10px]">Refunded</span>}
                 </div>
                 <p className="font-body text-gray-600 text-sm truncate">{order.items[0]?.name}</p>

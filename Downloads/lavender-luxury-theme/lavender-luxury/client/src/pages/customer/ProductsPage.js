@@ -3,14 +3,18 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Filter, X, Search, ChevronDown, SlidersHorizontal } from 'lucide-react';
 import { ProductCard, SkeletonCard, SectionHeader, EmptyState } from '../../components/common/LoadingSpinner';
-import { PRODUCTS, CATEGORIES } from '../../utils/data';
+import { CATEGORIES } from '../../utils/data';
 import { ShoppingBag } from 'lucide-react';
 import api from '../../utils/api';
 
 const normalizeCategory = (value) => {
   if (!value) return '';
-  const raw = typeof value === 'object' ? value.name || '' : String(value);
+  const raw = typeof value === 'object' ? value.name || value.slug || '' : String(value);
   return raw.toLowerCase().replace(/\s+/g, ' ').trim();
+};
+const getProductCategory = (value) => {
+  if (!value) return '';
+  return typeof value === 'object' ? value.name || value.slug || '' : String(value);
 };
 const CATEGORY_SLUG_TO_NAME = Object.fromEntries(CATEGORIES.map(c => [c.slug, normalizeCategory(c.name)]));
 const categoryMatches = (productCategory, categoryParam) => {
@@ -86,52 +90,42 @@ export default function ProductsPage() {
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState('newest');
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search')||'');
   const [mobileFilter, setMobileFilter] = useState(false);
-useEffect(() => {
-  const loadProducts = async () => {
-    try {
-      const res = await api.get('/products');
-      setProducts(res.data.products);
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  loadProducts();
-}, [searchParams]);
-//   loadProducts();
-// }, []);
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const params = { limit: 100 };
+        const category = searchParams.get('category');
+        if (category) params.category = category;
+        if (searchParams.get('isFeatured')) params.isFeatured = 'true';
+        if (searchParams.get('isNewArrival')) params.isNewArrival = 'true';
+        if (searchParams.get('isBestSeller')) params.isBestSeller = 'true';
+        if (searchParams.get('isFlashSale')) params.isFlashSale = 'true';
+        if (searchParams.get('isFestival')) params.isFestival = 'true';
 
-// const loadProducts = async () => {
-//   try {
-//     const res = await api.get('/products');
+        const res = await api.get('/products', { params });
+        setProducts(res.data.products || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-//     if (res.data.success) {
-//       setProducts(res.data.products);
-//     }
-//   } catch (err) {
-//     console.error(err);
-//   }
-// };
+    loadProducts();
+  }, [searchParams]);
   const filtered = useMemo(() => {
-    
     let p = [...products];
-    console.log("Before Filter:", p);
-console.log("Category Param:", searchParams.get("category"));
-    if (searchParams.get('isFeatured')) p = p.filter(x => x.isFeatured);
-    if (searchParams.get('isNewArrival')) p = p.filter(x => x.isNewArrival);
-    if (searchParams.get('isBestSeller')) p = p.filter(x => x.isBestSeller);
-    if (searchParams.get('isFlashSale')) p = p.filter(x => x.isFlashSale);
-    if (searchParams.get('isFestival')) p = p.filter(x => x.isFestival);
     if (searchParams.get('category')) {
       const category = searchParams.get('category');
-      p = p.filter(x => typeof x.category === 'string' && categoryMatches(x.category, category));
+      p = p.filter(x => categoryMatches(getProductCategory(x.category), category));
     }
-    // if (searchParams.get('subcategory')) p = p.filter(x => x.category?.slug === searchParams.get('subcategory'));
-    // if (filters.categories?.length) p = p.filter(x => filters.categories.includes(x.category?.slug));
     if (filters.categories?.length) {
-      p = p.filter(x => typeof x.category === 'string' && filters.categories.some(cat => categoryMatches(x.category, cat)));
+      p = p.filter(x => filters.categories.some(cat => categoryMatches(getProductCategory(x.category), cat)));
     }
     if (filters.minPrice!=null) p = p.filter(x => x.price >= filters.minPrice);
     if (filters.maxPrice!=null && filters.maxPrice!==Infinity) p = p.filter(x => x.price <= filters.maxPrice);
@@ -175,7 +169,11 @@ console.log("Category Param:", searchParams.get("category"));
               </select>
             </div>
           </div>
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : filtered.length === 0 ? (
             <EmptyState icon={ShoppingBag} title="No products found" description="Try adjusting your filters or search query"
               action={<button onClick={() => { setFilters({}); setSearch(''); }} className="btn-primary">Clear Filters</button>}/>
           ) : (

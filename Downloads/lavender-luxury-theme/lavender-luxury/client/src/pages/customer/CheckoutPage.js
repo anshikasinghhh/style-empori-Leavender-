@@ -27,7 +27,8 @@ export default function CheckoutPage() {
 
   const subtotal = enriched.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
   const shipping = subtotal > 999 ? 0 : 99;
-  const total = subtotal + shipping;
+  const tax = Math.round(subtotal * 0.05);
+  const total = subtotal + shipping + tax;
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -104,13 +105,14 @@ export default function CheckoutPage() {
           throw new Error('Failed to load Razorpay SDK. Please check your internet connection.');
         }
 
-        const { data: rzpOrderRes } = await api.post('/payments/razorpay/create-order', {
-          amount: total,
-          orderId
-        });
+        const { data: rzpOrderRes } = await api.post('/payments/razorpay/create-order', { orderId });
 
         if (!rzpOrderRes.success) {
           throw new Error(rzpOrderRes.message || 'Failed to generate payment session');
+        }
+
+        if (!rzpOrderRes.key) {
+          throw new Error('Razorpay is not configured on the server. Contact support.');
         }
 
         const { order: rzpOrder, key } = rzpOrderRes;
@@ -130,8 +132,7 @@ export default function CheckoutPage() {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
-                orderId,
-                amount: total
+                orderId
               };
 
               const { data: verifyRes } = await api.post('/payments/razorpay/verify', verifyData);
@@ -308,6 +309,7 @@ export default function CheckoutPage() {
           <div className="border-t border-gray-50 pt-3 space-y-2 text-sm font-body">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-semibold">{formatPrice(subtotal)}</span></div>
             <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping===0?'text-emerald-600 font-bold':'font-semibold'}>{shipping===0?'FREE':formatPrice(shipping)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-semibold">{formatPrice(tax)}</span></div>
             <div className="flex justify-between font-bold text-base border-t border-gray-50 pt-2 mt-1">
               <span className="font-display text-gray-900">Total</span>
               <span className="font-display text-primary text-lg">{formatPrice(total)}</span>

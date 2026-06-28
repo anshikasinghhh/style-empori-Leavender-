@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../slices/authSlice';
 import toast from 'react-hot-toast';
@@ -13,6 +13,10 @@ const NAV = [
   { icon:Users,           label:'Customers',  path:'/admin/customers',  badge:'3.8K' },
   { icon:Archive,         label:'Inventory',  path:'/admin/inventory',  badge:'3', badgeColor:'amber' },
   { icon:Tag,             label:'Coupons',    path:'/admin/coupons',    badge:null },
+  { icon:Users,           label:'Employees',  path:'/admin/employees',  badge:null },
+  { icon:ClipboardList,   label:'Tasks',      path:'/admin/tasks',      badge:null },
+  { icon:Calendar,        label:'Attendance', path:'/admin/attendance', badge:null },
+  { icon:Archive,         label:'Stock Requests', path:'/admin/inventory-requests', badge:null },
   { icon:Settings,        label:'Settings',   path:'/admin/settings',   badge:null },
 ];
 

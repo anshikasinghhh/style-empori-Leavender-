@@ -4,20 +4,17 @@ import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Heart, Search, Menu, X, LogOut, Settings, Package, User, ChevronDown, Sparkles } from 'lucide-react';
 import { logout } from '../../slices/authSlice';
+import { CATEGORIES } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 const NAV_LINKS = [
   { label:'Home', path:'/' },
-  { label:'Women', path:'/products', sub:[
-    { label:'Sarees', path:'/products?category=sarees' },
-{ label:'Lehengas', path:'/products?category=lehengas' },
-{ label:'Kurtis', path:'/products?category=kurtis' },
-{ label:'Anarkali Suits', path:'/products?category=anarkali' },
-{ label:'Dupattas', path:'/products?category=dupattas' },
-  ]},
+  { label:'Women', path:'/products', sub: CATEGORIES.filter(c => c.slug !== 'kidswear' && c.slug !== 'bags').map(c => ({
+    label: c.name,
+    path: `/products?category=${c.slug}`
+  }))},
   { label:'Kids', path:'/products?category=kidswear' },
-  { label:'Jewelry', path:'/products?category=jewelry' },
-  { label:'Accessories', path:'/products?category=accessories' },
+  { label:'Bags', path:'/products?category=bags' },
   { label:'✨ Sale', path:'/products?isFlashSale=true', highlight:true },
 ];
 
@@ -101,6 +98,7 @@ export default function Navbar() {
                             <p className="font-body text-xs text-gray-400 truncate">{user?.email}</p>
                           </div>
                           {user?.role === 'admin' && <Link to="/admin" className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-primary hover:bg-champagne-light/80 transition-colors"><Sparkles size={15}/> Admin Panel</Link>}
+                          {user?.role === 'employee' && <Link to="/employee" className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-primary hover:bg-champagne-light/80 transition-colors"><Sparkles size={15}/> Employee Dashboard</Link>}
                           <Link to="/profile" className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-gray-700 hover:bg-champagne-light/80 transition-colors"><User size={15}/> My Profile</Link>
                           <Link to="/orders" className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-body text-gray-700 hover:bg-champagne-light/80 transition-colors"><Package size={15}/> My Orders</Link>
                           <div className="border-t border-gray-50 mt-1">
@@ -147,7 +145,7 @@ export default function Navbar() {
               className="w-full max-w-2xl bg-white rounded-2xl shadow-premium p-4">
               <form onSubmit={handleSearch} className="flex gap-3">
                 <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search sarees, lehengas, kurtis, jewelry..." className="flex-1 input-field" autoFocus />
+                  placeholder="Search sarees, kurtis, co-ord sets, bags..." className="flex-1 input-field" autoFocus />
                 <button type="submit" className="btn-primary px-6">Search</button>
                 <button type="button" onClick={() => setSearchOpen(false)} className="p-3 rounded-xl hover:bg-champagne-light/80 transition-colors"><X size={20} className="text-gray-400"/></button>
               </form>

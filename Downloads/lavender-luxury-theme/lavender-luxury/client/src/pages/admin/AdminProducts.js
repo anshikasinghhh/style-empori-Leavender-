@@ -1,7 +1,7 @@
 // import React, { useState } from 'react';
 // import React, {useState,useEffect} from 'react';
 import AdminLayout from './AdminLayout';
-import { Plus, Search, Edit2, Trash2, X, Save, Eye } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Save, Eye, Tag } from 'lucide-react';
 import { CATEGORIES, formatPrice } from '../../utils/data';
 import api from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -55,7 +55,7 @@ const SIZE_OPTIONS = [
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}] };
+const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -89,6 +89,17 @@ const [customColor, setCustomColor] = useState("");
 
 const [selectedSize, setSelectedSize] = useState("");
 const [customSize, setCustomSize] = useState("");
+const [availableCoupons, setAvailableCoupons] = useState([]);
+
+const loadAvailableCoupons = async () => {
+  try {
+    const res = await api.get('/coupons/available');
+    setAvailableCoupons(res.data.coupons || []);
+  } catch (err) {
+    // coupons optional — silent fail
+  }
+};
+
 const filtered = products.filter(
   p =>
     p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -101,6 +112,7 @@ console.log("Filtered:", filtered);
   const openEdit = (p) => { setForm({ ...p, mrp: String(p.mrp || ''),price:String(p.price), originalPrice:String(p.originalPrice||''), stock:String(p.stock) }); setEditId(p._id); setModal(true); };
 useEffect(() => {
     loadProducts();
+    loadAvailableCoupons();
   }, []);
 
   // const handleSave = () => {
@@ -192,7 +204,7 @@ const deleteProduct = async (id) => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body min-w-[700px]">
             <thead className="bg-gray-50/80">
-              <tr>{['Product','Category','MRP' ,'Price','Stock','Tags','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+              <tr>{['Product','Category','MRP' ,'Price','Stock','Coupon','Tags','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(p => (
@@ -209,6 +221,15 @@ const deleteProduct = async (id) => {
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.mrp)}</p></td>
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.price)}</p>{p.originalPrice && <p className="text-xs text-gray-400 line-through">{formatPrice(p.originalPrice)}</p>}</td>
                   <td className="px-4 py-3"><span className={`badge text-xs font-bold ${p.stock < 10 ? 'bg-rose-soft text-rose' : p.stock < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{p.stock} left</span></td>
+                  <td className="px-4 py-3">
+                    {p.couponCode ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-champagne-light/80 text-primary text-[10px] font-bold tracking-widest border border-primary-100">
+                        <Tag size={9}/> {p.couponCode}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-1">
                       {p.isFeatured && <span className="badge-primary text-[10px]">Featured</span>}
@@ -587,6 +608,51 @@ colors:f.colors.filter((_,i)=>i!==index)
                         </label>
                       ))}
                     </div>
+                  </div>
+                  {/* ── Coupon Code ── */}
+                  <div className="col-span-2">
+                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Coupon Code (Optional)</label>
+                    <div className="flex gap-2 items-center">
+                      <select
+                        value={availableCoupons.some(c => c.code === form.couponCode) ? form.couponCode : '__custom__'}
+                        onChange={e => {
+                          if (e.target.value === '__none__') setForm(f => ({...f, couponCode: ''}));
+                          else if (e.target.value !== '__custom__') setForm(f => ({...f, couponCode: e.target.value}));
+                        }}
+                        className="input-field text-sm flex-1"
+                      >
+                        <option value="__none__">— No Coupon —</option>
+                        {availableCoupons.map(c => (
+                          <option key={c._id} value={c.code}>
+                            {c.code} · {c.type === 'percentage' ? `${c.value}% off` : `₹${c.value} off`}
+                          </option>
+                        ))}
+                        <option value="__custom__">✏️ Type custom code…</option>
+                      </select>
+                      {(form.couponCode && !availableCoupons.some(c => c.code === form.couponCode)) || !availableCoupons.some(c => c.code === form.couponCode) ? (
+                        <input
+                          value={form.couponCode}
+                          onChange={e => setForm(f => ({...f, couponCode: e.target.value.toUpperCase().replace(/\s/g, '')}))}
+                          placeholder="e.g. SAVE20"
+                          className="input-field text-sm font-bold tracking-widest flex-1"
+                        />
+                      ) : null}
+                      {form.couponCode && (
+                        <button
+                          type="button"
+                          onClick={() => setForm(f => ({...f, couponCode: ''}))}
+                          className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose text-rose hover:text-white flex items-center justify-center transition-all shrink-0"
+                          title="Clear coupon"
+                        >
+                          <X size={13}/>
+                        </button>
+                      )}
+                    </div>
+                    {form.couponCode && (
+                      <p className="mt-1.5 text-[10px] font-body text-primary font-semibold flex items-center gap-1">
+                        <Tag size={9}/> Coupon <span className="tracking-widest font-black">{form.couponCode}</span> will be attached to this product
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

@@ -59,7 +59,15 @@ export default function ProductDetailPage() {
 
   const discount = product.originalPrice ? getDiscount(product.originalPrice, product.price) : 0;
   const effectivePrice = product.isFlashSale && product.flashSalePrice ? product.flashSalePrice : product.price;
-  const related = allProducts.filter(p => p._id !== product._id && p.category?.slug === product.category?.slug).slice(0,4);
+  const productCategory = (cat) => {
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat.toLowerCase();
+    return (cat.slug || cat.name || '').toLowerCase();
+  };
+  const related = allProducts.filter(p => {
+    if (p._id === product._id) return false;
+    return productCategory(p.category) === productCategory(product.category);
+  }).slice(0, 4);
   const images = product.images?.length >= 3 ? product.images : [
     ...product.images,
     { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },

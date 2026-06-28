@@ -1,7 +1,7 @@
 // import React, { useState } from 'react';
 import React from 'react';
 import AdminLayout from './AdminLayout';
-import { AlertTriangle, Package, TrendingDown, Search, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Package, TrendingDown, Search, RefreshCw, Tag } from 'lucide-react';
 import { formatPrice } from '../../utils/data';
 import api from '../../utils/api';
 import { useState, useEffect } from 'react';// 
@@ -126,7 +126,7 @@ useEffect(() => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body min-w-[700px]">
             <thead className="bg-gray-50/80">
-              <tr>{['Product','Category','Price','In Stock','Sold','Status','Stock Level','Action'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+              <tr>{['Product','Category','Price','In Stock','Sold','Status','Stock Level','Coupon','Action'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(p => {
@@ -152,6 +152,15 @@ useEffect(() => {
                         <div className={`h-full rounded-full transition-all ${st.bar}`} style={{ width:`${pct}%` }}/>
                       </div>
                       <p className="text-[10px] text-gray-400 mt-0.5">{Math.round(pct)}%</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.couponCode ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-champagne-light/80 text-primary text-[10px] font-bold tracking-widest border border-primary-100">
+                          <Tag size={9}/> {p.couponCode}
+                        </span>
+                      ) : (
+                        <span className="text-gray-300 text-xs">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => restock(p._id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-champagne-light/80 hover:bg-primary text-primary hover:text-white text-xs font-semibold transition-all">

@@ -31,6 +31,14 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/users', require('./routes/users'));
 app.use("/api/chat", chatRoutes);
+app.use('/api/shiprocket', require('./routes/shiprocket'));
+
+// Employee Management routes
+app.use('/api/employee/attendance', require('./routes/attendance'));
+app.use('/api/employee/tasks', require('./routes/tasks'));
+app.use('/api/employee/inventory-requests', require('./routes/inventoryRequests'));
+app.use('/api/employee/admin', require('./routes/employeeAdmin'));
+app.use('/api/loyalty-settings', require('./routes/loyaltySettings'));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Vastra Elegance API is running' });
@@ -72,7 +80,8 @@ const connectToDatabase = async () => {
 const seedDefaultUsers = async () => {
   const defaultUsers = [
     { name: 'Admin User', email: 'admin@vastra.com', password: 'admin123', role: 'admin' },
-    { name: 'Customer User', email: 'customer@vastra.com', password: 'customer123', role: 'customer' }
+    { name: 'Customer User', email: 'customer@vastra.com', password: 'customer123', role: 'customer' },
+    { name: 'Employee User', email: 'employee@vastra.com', password: 'employee123', role: 'employee' }
   ];
 
   for (const userData of defaultUsers) {

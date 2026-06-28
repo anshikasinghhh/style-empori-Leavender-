@@ -257,20 +257,20 @@ const festive = products.filter(p => p.isFestival);
       <TrustBanner/>
 
       {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <SectionHeader title="Shop by Category" subtitle="Find your perfect style"/>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 sm:gap-3">
           {CATEGORIES.map((cat,i) => (
-            <motion.div key={cat._id} initial={{ opacity:0, scale:0.92 }} animate={{ opacity:1, scale:1 }} transition={{ delay:i*0.06 }} whileHover={{ scale:1.03 }}>
-              <Link to={`/products?category=${cat.slug}`} className="group block bg-white rounded-2xl overflow-hidden shadow-card hover:shadow-hover transition-all border border-gold-pale/60/60">
-                <div className="aspect-square overflow-hidden bg-champagne-light">
+            <motion.div key={cat._id} initial={{ opacity:0, scale:0.92 }} animate={{ opacity:1, scale:1 }} transition={{ delay:i*0.04 }} whileHover={{ scale:1.04 }}>
+              <Link to={`/products?category=${cat.slug}`} className="group block bg-white rounded-xl overflow-hidden shadow-card hover:shadow-hover transition-all border border-gold-pale/60">
+                <div className="aspect-[4/5] overflow-hidden bg-champagne-light">
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
                 </div>
-                <div className="p-4 flex items-center gap-2.5" style={{ background: cat.color }}>
-                  <span className="text-2xl">{cat.icon}</span>
-                  <div>
-                    <p className="font-body font-bold text-gray-900 text-sm">{cat.name}</p>
-                    <p className="font-body text-gray-500 text-[10px] mt-0.5" style={{ color: cat.accent }}>Explore →</p>
+                <div className="px-2.5 py-2 flex items-center gap-1.5" style={{ background: cat.color }}>
+                  <span className="text-base leading-none">{cat.icon}</span>
+                  <div className="min-w-0">
+                    <p className="font-body font-bold text-gray-900 text-[11px] leading-tight truncate">{cat.name}</p>
+                    <p className="font-body text-[9px] mt-0.5 hidden sm:block" style={{ color: cat.accent }}>Explore →</p>
                   </div>
                 </div>
               </Link>

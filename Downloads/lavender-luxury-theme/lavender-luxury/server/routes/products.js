@@ -3,6 +3,30 @@ const router = express.Router();
 const Product = require('../models/Product');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
+
+const CATEGORY_SLUG_TO_NAME = {
+  saree: 'Saree',
+  kurti: 'Kurti',
+  croptop: 'Crop Top',
+  pants: 'Pants',
+  shawl: 'Shawl',
+  kidswear: 'Kidswear',
+  'night-gown': 'Night Gown',
+  'coord-sets': 'Co-ord Sets',
+  bags: 'Bags',
+  bodycon: 'Bodycon',
+  casuals: 'Casuals',
+  'churidar-sets': 'Churidar Sets',
+};
+
+const buildCategoryQuery = (category) => {
+  const normalized = category.trim().toLowerCase();
+  const displayName = CATEGORY_SLUG_TO_NAME[normalized];
+  if (displayName) {
+    return { $regex: new RegExp('^' + displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') };
+  }
+  return { $regex: new RegExp('^' + normalized.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:\\s|$)', 'i') };
+};
 // @GET /api/products - Get all products with filters
 router.get('/', async (req, res) => {
   try {
@@ -15,8 +39,7 @@ router.get('/', async (req, res) => {
     
     const query = { isActive: true };
     if (category) {
-      const normalized = category.trim();
-      query.category = { $regex: new RegExp('^' + normalized + '(?:\\s|$)', 'i') };
+      query.category = buildCategoryQuery(category);
     }
     if (subcategory) query.subcategory = { $regex: new RegExp('^' + subcategory + '$', 'i') };
     if (minPrice || maxPrice) query.price = {};

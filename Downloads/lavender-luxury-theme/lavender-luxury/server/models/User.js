@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: '' },
   role: {
     type: String,
-    enum: ['customer', 'admin'],
+    enum: ['customer', 'admin', 'employee'],
     default: 'customer'
   },
   addresses: [{
@@ -39,6 +39,14 @@ const userSchema = new mongoose.Schema({
   }],
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
+  loyaltyCoupons: [{
+    code: String,
+    earnedAt: { type: Date, default: Date.now },
+    isUsed: { type: Boolean, default: false },
+    expiresAt: Date,
+    discountValue: Number,
+    couponType: String
+  }],
   resetPasswordToken: String,
   resetPasswordExpire: Date
 }, { timestamps: true });

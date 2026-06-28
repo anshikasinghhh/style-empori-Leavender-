@@ -77,6 +77,21 @@ module.exports.couponRouter = (() => {
       res.json({ success: true, coupon, discount: Math.round(discount) });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
+  // Available coupons — accessible by both admin and employee (no adminOnly guard)
+  r.get('/available', protect, async (req, res) => {
+    try {
+      const now = new Date();
+      const coupons = await require('mongoose').model('Coupon').find({
+        isActive: true,
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: null },
+          { expiresAt: { $gt: now } }
+        ]
+      }).select('code type value minOrderValue maxDiscount expiresAt').sort({ createdAt: -1 });
+      res.json({ success: true, coupons });
+    } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  });
   r.get('/', protect, adminOnly, async (req, res) => {
     try {
       const coupons = await require('mongoose').model('Coupon').find();

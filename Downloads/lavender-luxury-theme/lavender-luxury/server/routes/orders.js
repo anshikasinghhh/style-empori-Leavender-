@@ -53,20 +53,6 @@ router.get('/my-orders', protect, async (req, res) => {
   }
 });
 
-// @GET /api/orders/:id
-router.get('/:id', protect, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id).populate('items.product').populate('user', 'name email');
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-    res.json({ success: true, order });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
 // @GET /api/orders - Admin: all orders
 router.get('/', protect, adminOnly, async (req, res) => {
   try {
@@ -79,6 +65,20 @@ router.get('/', protect, adminOnly, async (req, res) => {
       .skip((Number(page) - 1) * Number(limit));
     const total = await Order.countDocuments(query);
     res.json({ success: true, orders, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @GET /api/orders/:id
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('items.product').populate('user', 'name email');
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

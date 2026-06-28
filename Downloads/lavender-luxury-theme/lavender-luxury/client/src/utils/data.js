@@ -1,12 +1,16 @@
 export const CATEGORIES = [
-  { _id:'c1', name:'Sarees',         slug:'sarees',      icon:'🥻', image:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80', color:'#F8F0FF', accent:'#4A1068' },
-  { _id:'c2', name:'Lehengas',       slug:'lehengas',    icon:'👗', image:'https://images.unsplash.com/photo-1609502855685-5f4c4b59aabd?w=500&q=80', color:'#FBF0D5', accent:'#C9963C' },
-  { _id:'c3', name:'Kurtis',         slug:'kurtis',      icon:'👘', image:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=500&q=80', color:'#EDD6FF', accent:'#4A1068' },
-  { _id:'c4', name:'Jewelry',        slug:'jewelry',     icon:'💍', image:'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500&q=80', color:'#FEF3C7', accent:'#B45309' },
-  { _id:'c5', name:'Kidswear',       slug:'kidswear',    icon:'🎀', image:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=500&q=80', color:'#ECFDF5', accent:'#059669' },
-  { _id:'c6', name:'Accessories',    slug:'accessories', icon:'👜', image:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=500&q=80', color:'#FFF7ED', accent:'#EA580C' },
-  { _id:'c7', name:'Anarkali Suits', slug:'anarkali',    icon:'✨', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=500&q=80', color:'#F8F0FF', accent:'#4A1068' },
-  { _id:'c8', name:'Dupattas',       slug:'dupattas',    icon:'🧣', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80', color:'#FDF2F8', accent:'#BE185D' },
+  { _id:'c1',  name:'Saree',          slug:'saree',          icon:'🥻', image:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
+  { _id:'c2',  name:'Kurti',          slug:'kurti',          icon:'👘', image:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=400&q=80', color:'#EDD6FF', accent:'#4A1068' },
+  { _id:'c3',  name:'Crop Top',       slug:'croptop',        icon:'👚', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#FDF2F8', accent:'#BE185D' },
+  { _id:'c4',  name:'Pants',          slug:'pants',          icon:'👖', image:'https://images.unsplash.com/photo-1594633312681-425a7b956cc2?w=400&q=80', color:'#EFF6FF', accent:'#2563EB' },
+  { _id:'c5',  name:'Shawl',          slug:'shawl',          icon:'🧣', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', color:'#FFF7ED', accent:'#EA580C' },
+  { _id:'c6',  name:'Kidswear',       slug:'kidswear',       icon:'🎀', image:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400&q=80', color:'#ECFDF5', accent:'#059669' },
+  { _id:'c7',  name:'Night Gown',     slug:'night-gown',     icon:'🌙', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#F5F3FF', accent:'#7C3AED' },
+  { _id:'c8',  name:'Co-ord Sets',    slug:'coord-sets',     icon:'✨', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#FBF0D5', accent:'#C9963C' },
+  { _id:'c9',  name:'Bags',           slug:'bags',           icon:'👜', image:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400&q=80', color:'#FEF3C7', accent:'#B45309' },
+  { _id:'c10', name:'Bodycon',        slug:'bodycon',        icon:'💃', image:'https://images.unsplash.com/photo-1595777459346-9a9521c3696e?w=400&q=80', color:'#FCE7F3', accent:'#DB2777' },
+  { _id:'c11', name:'Casuals',        slug:'casuals',        icon:'🌸', image:'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400&q=80', color:'#F0FDF4', accent:'#16A34A' },
+  { _id:'c12', name:'Churidar Sets',  slug:'churidar-sets',  icon:'🪷', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
 ];
 
 export const PRODUCTS = [

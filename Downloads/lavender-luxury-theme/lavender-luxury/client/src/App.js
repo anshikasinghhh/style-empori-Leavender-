@@ -32,6 +32,17 @@ import AdminCustomers from './pages/admin/AdminCustomers';
 import AdminInventory from './pages/admin/AdminInventory';
 import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminEmployees from './pages/admin/AdminEmployees';
+import AdminTasks from './pages/admin/AdminTasks';
+import AdminAttendance from './pages/admin/AdminAttendance';
+import AdminInventoryRequests from './pages/admin/AdminInventoryRequests';
+
+// Employee pages
+import EmployeeDashboard from './pages/employee/EmployeeDashboard';
+import EmployeeTasks from './pages/employee/EmployeeTasks';
+import EmployeeAttendance from './pages/employee/EmployeeAttendance';
+import EmployeeInventory from './pages/employee/EmployeeInventory';
+import EmployeeProfile from './pages/employee/EmployeeProfile';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useSelector(s => s.auth);
@@ -41,6 +52,12 @@ const AdminRoute = ({ children }) => {
   const { token, user } = useSelector(s => s.auth);
   if (!token) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  return children;
+};
+const EmployeeRoute = ({ children }) => {
+  const { token, user } = useSelector(s => s.auth);
+  if (!token) return <Navigate to="/login" replace />;
+  if (user?.role !== 'employee') return <Navigate to="/" replace />;
   return children;
 };
 const CustomerLayout = ({ children }) => (
@@ -96,6 +113,16 @@ export default function App() {
         <Route path="/admin/inventory" element={<AdminRoute><AdminInventory /></AdminRoute>} />
         <Route path="/admin/coupons" element={<AdminRoute><AdminCoupons /></AdminRoute>} />
         <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+        <Route path="/admin/employees" element={<AdminRoute><AdminEmployees /></AdminRoute>} />
+        <Route path="/admin/tasks" element={<AdminRoute><AdminTasks /></AdminRoute>} />
+        <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance /></AdminRoute>} />
+        <Route path="/admin/inventory-requests" element={<AdminRoute><AdminInventoryRequests /></AdminRoute>} />
+        {/* Employee */}
+        <Route path="/employee" element={<EmployeeRoute><EmployeeDashboard /></EmployeeRoute>} />
+        <Route path="/employee/tasks" element={<EmployeeRoute><EmployeeTasks /></EmployeeRoute>} />
+        <Route path="/employee/attendance" element={<EmployeeRoute><EmployeeAttendance /></EmployeeRoute>} />
+        <Route path="/employee/inventory" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
+        <Route path="/employee/profile" element={<EmployeeRoute><EmployeeProfile /></EmployeeRoute>} />
         {/* 404 */}
         <Route path="*" element={<CustomerLayout><div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><p className="font-display text-6xl font-bold text-primary-100 mb-4">404</p><h2 className="font-display text-2xl font-bold text-gray-800 mb-3">Page Not Found</h2><p className="font-body text-gray-500 mb-6">The page you're looking for doesn't exist.</p><a href="/" className="btn-primary inline-flex">Go Home</a></div></div></CustomerLayout>} />
       </Routes>
