@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
-import { Save, Store, Bell, Shield, Palette, Mail, CreditCard, Globe } from 'lucide-react';
+import { Save, Store, Bell, Shield, Palette, Mail, CreditCard, Globe, Info } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
@@ -21,6 +21,32 @@ export default function AdminSettings() {
   const [payments, setPayments] = useState({ codEnabled:true, razorpayEnabled:true, stripeEnabled:false });
   const [notifs, setNotifs] = useState({ newOrder:true, lowStock:true, customerReview:false, paymentFail:true, dailyReport:false, weeklyReport:true });
   const [brand, setBrand] = useState({ primaryColor:'#4A1068', accentColor:'#C9963C', goldColor:'#B45309' });
+  const [cancellationFee, setCancellationFee] = useState(100);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/loyalty-settings');
+        if (res.data.success && res.data.settings) {
+          setCancellationFee(res.data.settings.cancellationFee ?? 100);
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSaveCancellationFee = async () => {
+    try {
+      const res = await api.put('/loyalty-settings', { cancellationFee });
+      if (res.data.success) {
+        toast.success("Cancellation settings saved! ✓");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to save settings");
+    }
+  };
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -138,6 +164,42 @@ export default function AdminSettings() {
             <div><p className="font-body text-xs font-bold text-gray-800">Preview</p><p className="font-body text-[11px] text-gray-500">Brand gradient looks like this ↑</p></div>
           </div>
           <button onClick={() => save('Brand')} className="w-full btn-primary text-sm gap-2 py-3"><Save size={14}/>Save Brand Settings</button>
+        </div>
+
+        {/* Order Cancellation Settings */}
+        <div className="bg-white rounded-2xl p-6 shadow-card border border-gray-50 flex flex-col justify-between">
+          <div>
+            <h3 className="font-display font-bold text-gray-900 mb-5 flex items-center gap-2">
+              <Shield size={18} className="text-primary"/> Order Cancellation Settings
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">
+                  Shipped Order Cancellation Fee (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-body text-sm font-semibold">₹</span>
+                  <input 
+                    type="number" 
+                    value={cancellationFee} 
+                    onChange={e => setCancellationFee(Number(e.target.value))} 
+                    className="input-field text-sm pl-8" 
+                    placeholder="100"
+                  />
+                </div>
+                <p className="font-body text-gray-400 text-xs mt-2 flex items-start gap-1">
+                  <Info size={12} className="shrink-0 mt-0.5" />
+                  This fee is charged if a shipped order gets cancelled. Placed, confirmed, or processing orders can be cancelled for free.
+                </p>
+              </div>
+            </div>
+          </div>
+          <button 
+            onClick={handleSaveCancellationFee} 
+            className="w-full btn-primary mt-6 text-sm gap-2 py-3"
+          >
+            <Save size={14}/> Save Cancellation Settings
+          </button>
         </div>
       </div>
     </AdminLayout>

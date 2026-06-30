@@ -3,6 +3,7 @@ const router = express.Router();
 const { Order, Cart, Wishlist } = require('../models/index');
 const Product = require('../models/Product');
 const StoreSettings = require('../models/StoreSettings');
+const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
 const { createShiprocketOrder } = require('../services/shiprocketService');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
@@ -96,6 +97,15 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     const { status, note } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    // Apply cancellation fee if order is being cancelled and current status is 'shipped'
+    if (status === 'cancelled' && order.orderStatus === 'shipped') {
+      const settings = await LoyaltyCouponSettings.findOne({ key: 'global' });
+      const fee = settings ? (settings.cancellationFee || 100) : 100;
+      order.cancellationFee = fee;
+      order.refundAmount = Math.max(0, order.total - fee);
+    }
+
     order.orderStatus = status;
     order.statusHistory.push({ status, timestamp: new Date(), note });
     if (status === 'delivered') order.deliveredAt = new Date();
@@ -106,6 +116,51 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     }
 
     res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @PUT /api/orders/:id/cancel - Customer cancel order
+router.put('/:id/cancel', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    
+    // Check ownership
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    // Check if cancelable
+    const nonCancelable = ['delivered', 'cancelled', 'returned'];
+    if (nonCancelable.includes(order.orderStatus)) {
+      return res.status(400).json({ success: false, message: `Cannot cancel an order that is already ${order.orderStatus}` });
+    }
+
+    let cancellationFee = 0;
+    let note = 'Order cancelled by customer.';
+
+    // Apply cancellation fee if order has been shipped
+    if (order.orderStatus === 'shipped') {
+      const settings = await LoyaltyCouponSettings.findOne({ key: 'global' });
+      cancellationFee = settings ? (settings.cancellationFee || 100) : 100;
+      order.cancellationFee = cancellationFee;
+      order.refundAmount = Math.max(0, order.total - cancellationFee);
+      note += ` Shipped order cancellation fee of ₹${cancellationFee} applied.`;
+    } else {
+      order.refundAmount = order.total;
+    }
+
+    if (order.paymentStatus === 'paid') {
+      order.paymentStatus = 'refunded';
+    }
+
+    order.orderStatus = 'cancelled';
+    order.statusHistory.push({ status: 'cancelled', timestamp: new Date(), note });
+    await order.save();
+
+    res.json({ success: true, message: 'Order cancelled successfully', order });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
