@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { Wishlist, Review, Coupon, Category } = require('../models/index');
 const StoreSettings = require('../models/StoreSettings');
+const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
@@ -70,6 +71,13 @@ module.exports.couponRouter = (() => {
   r.post('/validate', async (req, res) => {
     try {
       const { code, orderValue } = req.body;
+
+      // Check if coupons are enabled globally
+      const settings = await LoyaltyCouponSettings.findOne({ key: 'global' });
+      if (settings && !settings.enabled) {
+        return res.status(400).json({ success: false, message: 'Coupons are currently disabled by the administrator' });
+      }
+
       const coupon = await require('mongoose').model('Coupon').findOne({ code: code.toUpperCase(), isActive: true });
       if (!coupon) return res.status(404).json({ success: false, message: 'Invalid coupon code' });
       if (coupon.expiresAt && new Date() > coupon.expiresAt) return res.status(400).json({ success: false, message: 'Coupon expired' });
@@ -82,6 +90,12 @@ module.exports.couponRouter = (() => {
   // Available coupons — visible to customers during checkout and also used by staff/admin
   r.get('/available', async (req, res) => {
     try {
+      // Check if coupons are enabled globally
+      const settings = await LoyaltyCouponSettings.findOne({ key: 'global' });
+      if (settings && !settings.enabled) {
+        return res.json({ success: true, coupons: [] });
+      }
+
       const now = new Date();
       const coupons = await require('mongoose').model('Coupon').find({
         isActive: true,
