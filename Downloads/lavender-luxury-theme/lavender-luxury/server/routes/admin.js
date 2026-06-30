@@ -9,6 +9,7 @@ const { Order, Payment } = require('../models/index');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const { Coupon } = require('../models/index');
+const StoreSettings = require('../models/StoreSettings');
 
 // @GET /api/admin/dashboard - Analytics overview
 router.get('/dashboard', protect, adminOnly, async (req, res) => {
@@ -53,14 +54,13 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
       { $unwind: '$items' },
       { $lookup: { from: 'products', localField: 'items.product', foreignField: '_id', as: 'productData' } },
       { $unwind: { path: '$productData', preserveNullAndEmptyArrays: true } },
-      { $match: { 'productData.category': { $exists: true, $ne: null } } },
       { $group: {
-        _id: '$productData.category',
+        _id: { $ifNull: ['$productData.category', 'Uncategorized'] },
         revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
         orders: { $sum: 1 },
         unitsSold: { $sum: '$items.quantity' }
       } },
-      { $project: { _id: 0, category: '$_id', revenue: 1, orders: 1, unitsSold: 1 } },
+      { $project: { _id: 0, category: '$_id', revenue: { $round: ['$revenue', 2] }, orders: 1, unitsSold: 1 } },
       { $sort: { revenue: -1 } },
       { $limit: 8 }
     ]);
@@ -95,10 +95,16 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
   }
 });
 //-----------coupons----------
+// Middleware: admin OR employee with canManageCoupons
+const couponAccess = (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  if (req.user.role === 'employee' && req.user.canManageCoupons) return next();
+  return res.status(403).json({ success: false, message: 'Not authorized to manage coupons' });
+};
 router.delete(
   '/coupon/:id',
   protect,
-  adminOnly,
+  couponAccess,
   async (req, res) => {
     try {
 
@@ -120,7 +126,7 @@ router.delete(
 router.put(
   '/coupon/:id',
   protect,
-  adminOnly,
+  couponAccess,
   async (req, res) => {
 
     try {
@@ -146,7 +152,7 @@ router.put(
 
     }
 });
-router.post('/coupon', protect, adminOnly, async (req, res) => {
+router.post('/coupon', protect, couponAccess, async (req, res) => {
   try {
     const coupon = await Coupon.create(req.body);
 
@@ -161,7 +167,7 @@ router.post('/coupon', protect, adminOnly, async (req, res) => {
     });
   }
 });
-router.get('/coupons', protect, adminOnly, async (req, res) => {
+router.get('/coupons', protect, couponAccess, async (req, res) => {
   try {
     const coupons = await Coupon.find().sort({
       createdAt: -1
@@ -178,7 +184,7 @@ router.get('/coupons', protect, adminOnly, async (req, res) => {
     });
   }
 });
-router.post('/coupon', protect, adminOnly, async (req, res) => {
+router.post('/coupon', protect, couponAccess, async (req, res) => {
   try {
     const coupon = await Coupon.create(req.body);
 
@@ -195,6 +201,29 @@ router.post('/coupon', protect, adminOnly, async (req, res) => {
   }
 });
 // @GET /api/admin/customers
+router.get('/settings', protect, adminOnly, async (req, res) => {
+  try {
+    const settings = await StoreSettings.findOneAndUpdate({ key: 'global' }, { $setOnInsert: { key: 'global' } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+    res.json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/settings', protect, adminOnly, async (req, res) => {
+  try {
+    const { handlingCharge } = req.body;
+    const settings = await StoreSettings.findOneAndUpdate(
+      { key: 'global' },
+      { $set: { handlingCharge: Number(handlingCharge || 0), updatedBy: req.user._id } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    res.json({ success: true, settings });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.get('/customers', protect, adminOnly, async (req, res) => {
   try {
     const { page = 1, limit = 20, search } = req.query;

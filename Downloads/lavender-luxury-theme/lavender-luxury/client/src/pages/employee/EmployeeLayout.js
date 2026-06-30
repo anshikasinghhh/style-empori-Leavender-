@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, Calendar, Archive, User, LogOut, Menu, X, Bell, ChevronRight, Sparkles } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Calendar, Archive, User, LogOut, Menu, X, Bell, ChevronRight, Sparkles, Package, Boxes, Tag } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../slices/authSlice';
+import { logout, fetchMe } from '../../slices/authSlice';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const NAV = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/employee' },
-  { icon: ClipboardList, label: 'My Tasks', path: '/employee/tasks' },
-  { icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
-  { icon: Archive, label: 'Update Stock', path: '/employee/inventory' },
-  { icon: User, label: 'Profile', path: '/employee/profile' }
-];
 
 export default function EmployeeLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -21,6 +13,22 @@ export default function EmployeeLayout({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector(s => s.auth);
+
+  // Always fetch fresh user data on page navigation to stay in sync with admin changes
+  useEffect(() => {
+    dispatch(fetchMe());
+  }, [location.pathname, dispatch]);
+
+  const NAV = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/employee' },
+    { icon: ClipboardList, label: 'My Tasks', path: '/employee/tasks' },
+    { icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
+    { icon: Package, label: 'Products', path: '/employee/products' },
+    { icon: Boxes, label: 'Inventory', path: '/employee/inventory' },
+    { icon: Archive, label: 'Stock Requests', path: '/employee/stock-requests' },
+    ...(user?.canManageCoupons ? [{ icon: Tag, label: 'Coupons', path: '/employee/coupons' }] : []),
+    { icon: User, label: 'Profile', path: '/employee/profile' }
+  ];
 
   const handleLogout = () => {
     dispatch(logout());

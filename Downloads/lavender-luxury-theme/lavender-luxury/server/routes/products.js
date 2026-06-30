@@ -3,6 +3,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
+const { staffOnly } = require('../middleware/staff');
 
 const CATEGORY_SLUG_TO_NAME = {
   saree: 'Saree',
@@ -84,8 +85,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// @POST /api/products - Admin only
-router.post('/', protect, adminOnly, async (req, res) => {
+// @POST /api/products - Admin & employee
+router.post('/', protect, staffOnly, async (req, res) => {
   try {
     const product = await Product.create(req.body);
     res.status(201).json({ success: true, product });
@@ -94,8 +95,8 @@ router.post('/', protect, adminOnly, async (req, res) => {
   }
 });
 
-// @PUT /api/products/:id - Admin only
-router.put('/:id', protect, adminOnly, async (req, res) => {
+// @PUT /api/products/:id - Admin & employee
+router.put('/:id', protect, staffOnly, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
@@ -105,8 +106,8 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
   }
 });
 
-// @DELETE /api/products/:id - Admin only
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+// @DELETE /api/products/:id - Admin & employee
+router.delete('/:id', protect, staffOnly, async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false });
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });

@@ -17,7 +17,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c01', name:'Royal Kanjivaram Silk Saree',
     price:9499, originalPrice:14999,
-    category:{ name:'Sarees', slug:'sarees' },
+    category:{ name:'Saree', slug:'saree' },
     images:[
       { url:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=700&q=85', alt:'Kanjivaram Saree' },
       { url:'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=700&q=85', alt:'Saree drape' },
@@ -35,7 +35,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c02', name:'Bridal Lehenga — Rani Pink & Gold',
     price:28999, originalPrice:42000,
-    category:{ name:'Lehengas', slug:'lehengas' },
+    category:{ name:'Churidar Sets', slug:'churidar-sets' },
     images:[
       { url:'https://images.unsplash.com/photo-1609502855685-5f4c4b59aabd?w=700&q=85', alt:'Bridal Lehenga' },
       { url:'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=700&q=85', alt:'Lehenga detail' },
@@ -50,7 +50,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c03', name:'Lucknowi Chikankari Kurti Set',
     price:2899, originalPrice:4200,
-    category:{ name:'Kurtis', slug:'kurtis' },
+    category:{ name:'Kurti', slug:'kurti' },
     images:[
       { url:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=700&q=85', alt:'Chikankari Kurti' },
       { url:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=700&q=85', alt:'Kurti detail' },
@@ -65,7 +65,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c04', name:'Polki Kundan Bridal Jewelry Set',
     price:4599, originalPrice:7200,
-    category:{ name:'Jewelry', slug:'jewelry' },
+    category:{ name:'Bags', slug:'bags' },
     images:[
       { url:'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=700&q=85', alt:'Kundan Set' },
       { url:'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700&q=85', alt:'Necklace close up' },
@@ -81,7 +81,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c05', name:'Navratri Chaniya Choli — Peacock Blue',
     price:6499, originalPrice:9800,
-    category:{ name:'Lehengas', slug:'lehengas' },
+    category:{ name:'Churidar Sets', slug:'churidar-sets' },
     images:[
       { url:'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=700&q=85', alt:'Chaniya Choli' },
       { url:'https://images.unsplash.com/photo-1617627143233-51eba64c4756?w=700&q=85', alt:'Embroidery detail' },
@@ -96,7 +96,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c06', name:'Banarasi Brocade Saree — Midnight Blue',
     price:5499, originalPrice:10500,
-    category:{ name:'Sarees', slug:'sarees' },
+    category:{ name:'Saree', slug:'saree' },
     images:[
       { url:'https://images.unsplash.com/photo-1617627143233-51eba64c4756?w=700&q=85', alt:'Brocade Saree' },
       { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Brocade weave' },
@@ -111,7 +111,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c07', name:'Phulkari Embroidered Dupatta',
     price:1599, originalPrice:2400,
-    category:{ name:'Dupattas', slug:'dupattas' },
+    category:{ name:'Shawl', slug:'shawl' },
     images:[
       { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Phulkari Dupatta' },
       { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Phulkari close up' },
@@ -141,7 +141,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c09', name:'Hand-Block Print Anarkali Suit',
     price:3499, originalPrice:5200,
-    category:{ name:'Anarkali Suits', slug:'anarkali' },
+    category:{ name:'Churidar Sets', slug:'churidar-sets' },
     images:[
       { url:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=700&q=85', alt:'Anarkali Suit' },
       { url:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=700&q=85', alt:'Block print detail' },
@@ -156,7 +156,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c0a', name:'Oxidised Silver Jhumka Set',
     price:899, originalPrice:1400,
-    category:{ name:'Jewelry', slug:'jewelry' },
+    category:{ name:'Bags', slug:'bags' },
     images:[
       { url:'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700&q=85', alt:'Jhumka earrings' },
       { url:'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=700&q=85', alt:'Earrings close up' },
@@ -171,7 +171,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c0b', name:'Embroidered Velvet Potli Bag',
     price:1299, originalPrice:1999,
-    category:{ name:'Accessories', slug:'accessories' },
+    category:{ name:'Bags', slug:'bags' },
     images:[
       { url:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=700&q=85', alt:'Potli bag' },
       { url:'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700&q=85', alt:'Bag interior' },
@@ -186,7 +186,7 @@ export const PRODUCTS = [
   {
     _id:'60d5ec4f9b19ca22a03e2c0c', name:'Pashmina Sozni Embroidered Shawl',
     price:4299, originalPrice:6500,
-    category:{ name:'Accessories', slug:'accessories' },
+    category:{ name:'Shawl', slug:'shawl' },
     images:[
       { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Pashmina Shawl' },
       { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Shawl embroidery' },
@@ -219,7 +219,6 @@ export const TRUST_BADGES = [
   { icon:'🚚', title:'Free Shipping', desc:'On orders above ₹999' },
   { icon:'🔒', title:'Secure Payment', desc:'100% safe transactions' },
   { icon:'↩️', title:'Easy Returns', desc:'7-day hassle-free returns' },
-  { icon:'🎁', title:'Gift Wrapping', desc:'Free on all orders' },
   { icon:'🪡', title:'Artisan Made', desc:'Supporting Indian craftsmen' },
   { icon:'⭐', title:'Premium Quality', desc:'Curated with care' },
 ];

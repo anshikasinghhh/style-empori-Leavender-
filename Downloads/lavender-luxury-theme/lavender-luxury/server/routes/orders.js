@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Order, Cart, Wishlist } = require('../models/index');
 const Product = require('../models/Product');
+const StoreSettings = require('../models/StoreSettings');
 const { createShiprocketOrder } = require('../services/shiprocketService');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
@@ -10,16 +11,20 @@ const { adminOnly } = require('../middleware/admin');
 // @POST /api/orders
 router.post('/', protect, async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod, couponCode, couponDiscount } = req.body;
+    const { items, shippingAddress, paymentMethod, couponCode, couponDiscount, giftWrap, donationAmount } = req.body;
     let subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shippingCost = subtotal > 999 ? 0 : 99;
+    const settings = await StoreSettings.findOne({ key: 'global' });
+    const handlingCharge = Number(settings?.handlingCharge || 0);
     const tax = Math.round(subtotal * 0.05);
-    const total = subtotal - (couponDiscount || 0) + shippingCost + tax;
+    const giftWrapCost = giftWrap ? 50 : 0;
+    const donation = Math.max(0, Number(donationAmount) || 0);
+    const total = subtotal - (couponDiscount || 0) + shippingCost + handlingCharge + tax + giftWrapCost + donation;
 
     const order = await Order.create({
       user: req.user._id, items, shippingAddress, paymentMethod,
       couponCode, couponDiscount: couponDiscount || 0,
-      subtotal, shippingCost, tax, total,
+      subtotal, shippingCost, handlingCharge, tax, giftWrap: !!giftWrap, giftWrapCost, donationAmount: donation, total,
       statusHistory: [{ status: 'placed', timestamp: new Date() }],
       estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     });

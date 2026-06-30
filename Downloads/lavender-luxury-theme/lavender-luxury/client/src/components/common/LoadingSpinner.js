@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Star, Zap } from 'lucide-react';
+import { Heart, ShoppingBag, Star, Zap, AlertTriangle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../slices/cartSlice';
 import { toggleWishlist } from '../../slices/wishlistSlice';
@@ -49,7 +49,14 @@ export function ProductCard({ product, index = 0 }) {
     e.preventDefault();
     if (!token) { toast.error('Please login to add to cart'); return; }
     dispatch(addToCart({ productId: product._id, quantity: 1, size: product.sizes?.[0]?.size || 'Free Size' }));
-    toast.success('Added to cart! 🛍️');
+    const stock = product.stock ?? 999;
+    if (stock <= 3 && stock > 0) {
+      toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
+    } else if (stock <= 8) {
+      toast(`Stock is limited — only ${stock} left!`, { icon: '⏰', duration: 3000 });
+    } else {
+      toast.success('Added to cart! 🛍️');
+    }
   };
   const handleWishlist = (e) => {
     e.preventDefault();
@@ -74,6 +81,11 @@ export function ProductCard({ product, index = 0 }) {
               {discount > 0 && <span className="badge bg-rose text-white text-[11px] shadow-sm">{discount}% OFF</span>}
               {product.badge && <span className={`badge text-[10px] shadow-sm ${badgeStyle}`}>{product.badge}</span>}
               {product.isFlashSale && <span className="badge bg-gold text-white text-[10px] shadow-sm flex items-center gap-1"><Zap size={9} fill="white"/>Flash</span>}
+              {product.stock <= 5 && product.stock > 0 && (
+                <span className="badge bg-amber-500 text-white text-[10px] shadow-sm flex items-center gap-1 animate-pulse">
+                  <AlertTriangle size={9}/>Only {product.stock} left!
+                </span>
+              )}
             </div>
 
             {/* Wishlist btn */}

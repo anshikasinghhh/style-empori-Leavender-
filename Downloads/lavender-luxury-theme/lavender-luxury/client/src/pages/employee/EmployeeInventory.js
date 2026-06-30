@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import EmployeeLayout from './EmployeeLayout';
 import { Package, Search, PlusCircle, HelpCircle, Tag, ChevronDown } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 export default function EmployeeInventory() {
+  const { user } = useSelector(s => s.auth);
+  const canManageCoupons = user?.canManageCoupons || false;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const paramProductId = searchParams.get('productId');
@@ -56,8 +59,9 @@ export default function EmployeeInventory() {
     loadProductsAndProduct();
   }, [paramProductId]);
 
-  // Load active coupons for reference/suggestion
+  // Load active coupons for reference/suggestion (only if employee has coupon access)
   useEffect(() => {
+    if (!canManageCoupons) return;
     const loadCoupons = async () => {
       try {
         const res = await api.get('/coupons/available');
@@ -65,7 +69,7 @@ export default function EmployeeInventory() {
       } catch (err) { /* silent */ }
     };
     loadCoupons();
-  }, []);
+  }, [canManageCoupons]);
 
   const handleProductChange = (productId) => {
     const match = products.find(p => p._id === productId);
@@ -128,7 +132,7 @@ export default function EmployeeInventory() {
         variant: variantData,
         updatedStock: Number(updatedStock),
         remarks: remarks.trim(),
-        suggestedCouponCode: suggestedCouponCode.trim().toUpperCase() || undefined
+        ...(canManageCoupons ? { suggestedCouponCode: suggestedCouponCode.trim().toUpperCase() || undefined } : {})
       });
 
       toast.success('Inventory update request submitted for admin review!');
@@ -189,14 +193,14 @@ export default function EmployeeInventory() {
                     <p className="font-body text-xs text-gray-400 mt-0.5">Code: {selectedProduct.productCode}</p>
                     <p className="font-body text-xs text-primary font-bold mt-2">Total Catalog Stock: {selectedProduct.stock || 0} units</p>
                     {selectedProduct.couponCode ? (
-                      <p className="font-body text-xs mt-1.5 flex items-center gap-1">
-                        <Tag size={10} className="text-primary"/>
-                        <span className="text-gray-500">Coupon attached:</span>
-                        <span className="font-black tracking-widest text-primary">{selectedProduct.couponCode}</span>
-                      </p>
-                    ) : (
-                      <p className="font-body text-xs text-gray-400 mt-1">No coupon attached to this product</p>
-                    )}
+                      canManageCoupons ? (
+                        <p className="font-body text-xs mt-1.5 flex items-center gap-1">
+                          <Tag size={10} className="text-primary"/>
+                          <span className="text-gray-500">Coupon attached:</span>
+                          <span className="font-black tracking-widest text-primary">{selectedProduct.couponCode}</span>
+                        </p>
+                      ) : null
+                    ) : null}
                   </div>
                 </div>
 
@@ -315,7 +319,8 @@ export default function EmployeeInventory() {
                   />
                 </div>
 
-                {/* Suggest Coupon Code */}
+                {/* Suggest Coupon Code — only visible if employee has coupon access */}
+                {canManageCoupons && (
                 <div className="bg-champagne-light/30 border border-gold-pale/40 rounded-xl p-4">
                   <label className="block text-xs font-body font-bold text-gray-700 mb-1 uppercase tracking-wide flex items-center gap-1.5">
                     <Tag size={11} className="text-primary"/> Suggest Coupon Code (Optional)
@@ -353,6 +358,7 @@ export default function EmployeeInventory() {
                     </p>
                   )}
                 </div>
+                )}
 
                 {/* Submit button */}
                 <div className="pt-2">

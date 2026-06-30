@@ -169,15 +169,16 @@ export default function AdminDashboard() {
     }
   ];
 
-  const totalCategoryRevenue = categorySales.reduce((sum, item) => sum + (item.revenue || 0), 0);
-  const pieData = categorySales.length
+  const totalCategoryRevenue = categorySales.reduce((sum, item) => sum + (Number(item.revenue) || 0), 0);
+  const pieData = categorySales.length && totalCategoryRevenue > 0
     ? categorySales.map((item, index) => ({
-        name: item.category,
-        value: Number(((item.revenue || 0) / totalCategoryRevenue) * 100).toFixed(1),
-        revenue: item.revenue || 0,
+        name: item.category || 'Uncategorized',
+        value: Number(item.revenue) || 0,
+        revenue: Number(item.revenue) || 0,
+        percent: totalCategoryRevenue > 0 ? Number(((Number(item.revenue) || 0) / totalCategoryRevenue) * 100).toFixed(1) : 0,
         color: pieColors[index % pieColors.length]
       }))
-    : [{ name: 'No data', value: 100, revenue: 0, color: '#E5E7EB' }];
+    : [{ name: 'No data', value: 1, revenue: 0, percent: 100, color: '#E5E7EB' }];
 
   if (loading) {
     return (
@@ -278,7 +279,7 @@ export default function AdminDashboard() {
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip content={<DashboardTooltip />} formatter={(value) => [`${value}%`, 'Share']} />
+                  <Tooltip content={<DashboardTooltip />} formatter={(value, name, entry) => [`${entry?.payload?.percent ?? 0}%`, 'Share']} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-1.5 mt-1">
@@ -288,7 +289,7 @@ export default function AdminDashboard() {
                       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: entry.color }} />
                       <span className="text-gray-600">{entry.name}</span>
                     </div>
-                    <span className="font-bold text-gray-700">{entry.value}%</span>
+                    <span className="font-bold text-gray-700">{entry.percent}%</span>
                   </div>
                 ))}
               </div>

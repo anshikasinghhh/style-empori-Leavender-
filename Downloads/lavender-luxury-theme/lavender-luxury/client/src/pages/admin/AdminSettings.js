@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import { Save, Store, Bell, Shield, Palette, Mail, CreditCard, Globe } from 'lucide-react';
 import toast from 'react-hot-toast';
+import api from '../../utils/api';
 
 const Toggle = ({ value, onChange, label, desc }) => (
   <div className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl hover:bg-champagne-light/80/50 transition-colors cursor-pointer" onClick={onChange}>
@@ -16,12 +17,35 @@ const Toggle = ({ value, onChange, label, desc }) => (
 );
 
 export default function AdminSettings() {
-  const [store, setStore] = useState({ name:'Lavender', email:'hello@lavender-styleemporio.in', phone:'+91 98765 43210', address:'Fashion District, Bandra, Mumbai 400050', currency:'INR', freeShippingThreshold:999, tagline:'The Style Emporio', metaDesc:'Premium ethnic & traditional fashion' });
+  const [store, setStore] = useState({ name:'Lavender', email:'hello@lavender-styleemporio.in', phone:'+91 98765 43210', address:'Fashion District, Bandra, Mumbai 400050', currency:'INR', freeShippingThreshold:999, tagline:'The Style Emporio', metaDesc:'Premium ethnic & traditional fashion', handlingCharge:0 });
   const [payments, setPayments] = useState({ codEnabled:true, razorpayEnabled:true, stripeEnabled:false });
   const [notifs, setNotifs] = useState({ newOrder:true, lowStock:true, customerReview:false, paymentFail:true, dailyReport:false, weeklyReport:true });
   const [brand, setBrand] = useState({ primaryColor:'#4A1068', accentColor:'#C9963C', goldColor:'#B45309' });
 
-  const save = (section) => toast.success(`${section} settings saved! ✓`);
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const { data } = await api.get('/admin/settings');
+        if (data.settings) {
+          setStore((prev) => ({ ...prev, ...data.settings }));
+        }
+      } catch (error) {
+        console.error('Failed to load settings', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  const save = async (section) => {
+    try {
+      if (section === 'Store') {
+        await api.put('/admin/settings', { handlingCharge: store.handlingCharge });
+      }
+      toast.success(`${section} settings saved! ✓`);
+    } catch (error) {
+      toast.error('Failed to save settings');
+    }
+  };
 
   return (
     <AdminLayout>
@@ -48,6 +72,10 @@ export default function AdminSettings() {
             <div>
               <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Free Shipping Threshold (₹)</label>
               <input type="number" value={store.freeShippingThreshold} onChange={e => setStore(s=>({...s,freeShippingThreshold:Number(e.target.value)}))} className="input-field text-sm"/>
+            </div>
+            <div>
+              <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Handling Charge (₹)</label>
+              <input type="number" value={store.handlingCharge} onChange={e => setStore(s=>({...s,handlingCharge:Number(e.target.value)}))} className="input-field text-sm"/>
             </div>
           </div>
           <button onClick={() => save('Store')} className="w-full btn-primary mt-5 text-sm gap-2 py-3"><Save size={14}/>Save Store Settings</button>

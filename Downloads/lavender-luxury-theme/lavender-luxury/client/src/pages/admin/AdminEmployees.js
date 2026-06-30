@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
-import { Users, UserPlus, Trash2, Award, BookOpen, Clock, Activity, Search, X } from 'lucide-react';
+import { Users, UserPlus, Trash2, Award, BookOpen, Clock, Activity, Search, X, Tag, ToggleLeft, ToggleRight } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -73,6 +73,16 @@ export default function AdminEmployees() {
     }
   };
 
+  const handleToggleCouponAccess = async (id, empName) => {
+    try {
+      const res = await api.put(`/employee/admin/employees/${id}/coupon-access`);
+      toast.success(res.data.message);
+      loadData();
+    } catch (err) {
+      toast.error('Failed to update coupon access');
+    }
+  };
+
   const filtered = performance.filter(p => 
     p.employee?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.employee?.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -141,7 +151,7 @@ export default function AdminEmployees() {
             <table className="w-full text-sm font-body min-w-[900px]">
               <thead className="bg-gray-50/80">
                 <tr className="border-b border-gray-100">
-                  {['Employee Info', 'Attendance %', 'Working Hours', 'Task Completed', 'Updates Sent', 'Productivity', 'Action'].map(h => (
+                  {['Employee Info', 'Attendance %', 'Working Hours', 'Task Completed', 'Updates Sent', 'Productivity', 'Coupon Access', 'Action'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                       {h}
                     </th>
@@ -177,6 +187,20 @@ export default function AdminEmployees() {
                         </div>
                         <span className="font-bold text-xs text-gray-800">{productivityScore}%</span>
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleToggleCouponAccess(employee._id, employee.name)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          employee.canManageCoupons 
+                            ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' 
+                            : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                        }`}
+                        title={employee.canManageCoupons ? 'Revoke coupon access' : 'Grant coupon access'}
+                      >
+                        {employee.canManageCoupons ? <ToggleRight size={16} className="text-emerald-500"/> : <ToggleLeft size={16}/>}
+                        {employee.canManageCoupons ? 'Enabled' : 'Disabled'}
+                      </button>
                     </td>
                     <td className="px-4 py-3">
                       <button 

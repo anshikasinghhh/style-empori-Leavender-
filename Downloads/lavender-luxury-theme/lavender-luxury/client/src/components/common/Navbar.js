@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Search, Menu, X, LogOut, Settings, Package, User, ChevronDown, Sparkles } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, LogOut, Settings, Package, User, ChevronDown, Sparkles, AlertTriangle, Flame } from 'lucide-react';
 import { logout } from '../../slices/authSlice';
-import { CATEGORIES } from '../../utils/data';
+import { CATEGORIES, PRODUCTS } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 const NAV_LINKS = [
@@ -32,6 +32,23 @@ export default function Navbar() {
 
   useEffect(() => { const fn = () => setScrolled(window.scrollY > 24); window.addEventListener('scroll', fn); return () => window.removeEventListener('scroll', fn); }, []);
   useEffect(() => { setMobileOpen(false); setUserMenu(false); }, [location]);
+
+  // Detect low-stock items in cart for notification
+  const cartUrgency = useMemo(() => {
+    if (!cartItems?.length) return null;
+    const enriched = cartItems.map(item => {
+      const product = item.product?.price ? item.product : PRODUCTS.find(p => p._id === (item.product?._id || item.product)) || item.product;
+      return { name: product?.name, stock: product?.stock ?? 999, sold: product?.sold ?? 0 };
+    });
+    const lowStock = enriched.filter(i => i.stock <= 5 && i.stock > 0);
+    const outOfStock = enriched.filter(i => i.stock <= 0);
+    if (outOfStock.length > 0) return { type: 'out', count: outOfStock.length, message: `${outOfStock.length} item${outOfStock.length > 1 ? 's' : ''} in your cart ${outOfStock.length > 1 ? 'are' : 'is'} out of stock!` };
+    if (lowStock.length > 0) return { type: 'low', count: lowStock.length, message: `${lowStock.length} item${lowStock.length > 1 ? 's' : ''} in your cart ${lowStock.length > 1 ? 'are' : 'is'} running low on stock!` };
+    return null;
+  }, [cartItems]);
+
+  // Don't show urgency banner on cart page (it has its own detailed alerts)
+  const showUrgencyBanner = cartUrgency && location.pathname !== '/cart' && location.pathname !== '/checkout';
 
   const handleLogout = () => { dispatch(logout()); toast.success('Logged out successfully'); navigate('/'); };
   const handleSearch = (e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(`/products?search=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(''); } };
@@ -134,6 +151,26 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </motion.nav>
+
+      {/* Cart urgency notification bar */}
+      <AnimatePresence>
+        {showUrgencyBanner && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className={`fixed top-16 lg:top-20 left-0 right-0 z-40 ${cartUrgency.type === 'out' ? 'bg-rose' : 'bg-amber-500'} text-white overflow-hidden`}
+          >
+            <Link to="/cart" className="flex items-center justify-center gap-2 px-4 py-2 hover:bg-black/10 transition-colors">
+              {cartUrgency.type === 'out' ? <AlertTriangle size={14} /> : <Flame size={14} />}
+              <span className="font-body text-xs sm:text-sm font-medium text-center">
+                {cartUrgency.message}
+                <span className="ml-2 underline font-bold">View Cart →</span>
+              </span>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search overlay */}
       <AnimatePresence>

@@ -143,6 +143,8 @@ export default function OrderDetailPage() {
             <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={order.shippingCost === 0 ? 'text-emerald-600 font-semibold' : 'font-semibold'}>{order.shippingCost === 0 ? 'FREE' : formatPrice(order.shippingCost)}</span></div>
             {order.tax > 0 && <div className="flex justify-between text-gray-600"><span>Tax</span><span className="font-semibold">{formatPrice(order.tax)}</span></div>}
             {order.couponDiscount > 0 && <div className="flex justify-between text-gray-600"><span>Coupon</span><span className="text-emerald-600 font-semibold">-{formatPrice(order.couponDiscount)}</span></div>}
+            {order.giftWrapCost > 0 && <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-semibold">{formatPrice(order.giftWrapCost)}</span></div>}
+            {order.donationAmount > 0 && <div className="flex justify-between text-gray-600"><span>Donation</span><span className="font-semibold text-rose">{formatPrice(order.donationAmount)}</span></div>}
             <div className="flex justify-between text-gray-600"><span>Payment via</span><span className="font-semibold capitalize">{order.paymentMethod}</span></div>
             <div className="flex justify-between font-bold border-t border-gray-50 pt-2 mt-1">
               <span className="font-display text-gray-900">Total</span>

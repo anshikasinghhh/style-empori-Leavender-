@@ -14,7 +14,7 @@ router.post('/register', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar }
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, canManageCoupons: user.canManageCoupons || false }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -35,7 +35,7 @@ router.post('/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar }
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, canManageCoupons: user.canManageCoupons || false }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

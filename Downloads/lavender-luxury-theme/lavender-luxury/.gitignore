@@ -2,8 +2,8 @@ node_modules/
 client/node_modules/
 server/node_modules/
 client/build/
-server/.env
 .env
+server/.env
 .env.example
 .DS_Store
 *.log

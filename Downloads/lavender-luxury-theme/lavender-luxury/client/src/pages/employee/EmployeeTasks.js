@@ -142,7 +142,7 @@ export default function EmployeeTasks() {
 
               <div className="flex items-center justify-between gap-3 mt-2 pt-3 border-t border-gray-50">
                 {task.type === 'Inventory' && task.product && (
-                  <Link to={`/employee/inventory?productId=${task.product._id}`} className="text-xs font-bold text-primary hover:underline">
+                  <Link to={`/employee/stock-requests?productId=${task.product._id}`} className="text-xs font-bold text-primary hover:underline">
                     ✦ Open Product Stock
                   </Link>
                 )}

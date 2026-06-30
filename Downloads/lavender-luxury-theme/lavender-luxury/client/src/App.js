@@ -42,7 +42,10 @@ import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import EmployeeTasks from './pages/employee/EmployeeTasks';
 import EmployeeAttendance from './pages/employee/EmployeeAttendance';
 import EmployeeInventory from './pages/employee/EmployeeInventory';
+import EmployeeInventoryStock from './pages/employee/EmployeeInventoryStock';
+import EmployeeProducts from './pages/employee/EmployeeProducts';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
+import EmployeeCoupons from './pages/employee/EmployeeCoupons';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useSelector(s => s.auth);
@@ -121,8 +124,11 @@ export default function App() {
         <Route path="/employee" element={<EmployeeRoute><EmployeeDashboard /></EmployeeRoute>} />
         <Route path="/employee/tasks" element={<EmployeeRoute><EmployeeTasks /></EmployeeRoute>} />
         <Route path="/employee/attendance" element={<EmployeeRoute><EmployeeAttendance /></EmployeeRoute>} />
-        <Route path="/employee/inventory" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
+        <Route path="/employee/products" element={<EmployeeRoute><EmployeeProducts /></EmployeeRoute>} />
+        <Route path="/employee/inventory" element={<EmployeeRoute><EmployeeInventoryStock /></EmployeeRoute>} />
+        <Route path="/employee/stock-requests" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
         <Route path="/employee/profile" element={<EmployeeRoute><EmployeeProfile /></EmployeeRoute>} />
+        <Route path="/employee/coupons" element={<EmployeeRoute><EmployeeCoupons /></EmployeeRoute>} />
         {/* 404 */}
         <Route path="*" element={<CustomerLayout><div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><p className="font-display text-6xl font-bold text-primary-100 mb-4">404</p><h2 className="font-display text-2xl font-bold text-gray-800 mb-3">Page Not Found</h2><p className="font-body text-gray-500 mb-6">The page you're looking for doesn't exist.</p><a href="/" className="btn-primary inline-flex">Go Home</a></div></div></CustomerLayout>} />
       </Routes>

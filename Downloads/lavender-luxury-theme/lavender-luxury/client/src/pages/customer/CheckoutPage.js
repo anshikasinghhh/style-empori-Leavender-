@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CreditCard, Truck, CheckCircle, MapPin, Shield, ChevronRight } from 'lucide-react';
+import { CreditCard, Truck, CheckCircle, MapPin, Shield, ChevronRight, Heart, Gift } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { PRODUCTS, formatPrice } from '../../utils/data';
 import { clearCart } from '../../slices/cartSlice';
@@ -9,12 +9,23 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const STEPS = ['Address', 'Payment', 'Confirm'];
+const GIFT_WRAP_COST = 50;
+const DONATION_PRESETS = [3, 5, 10];
 
 export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [addr, setAddr] = useState({ name:'', street:'', city:'', state:'', pincode:'', phone:'' });
   const [payMethod, setPayMethod] = useState('razorpay');
   const [loading, setLoading] = useState(false);
+  const [giftWrap, setGiftWrap] = useState(false);
+  const [donationPreset, setDonationPreset] = useState(null);
+  const [customDonation, setCustomDonation] = useState('');
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [selectedCouponCode, setSelectedCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponMessage, setCouponMessage] = useState('');
+  const [handlingCharge, setHandlingCharge] = useState(0);
   const { items } = useSelector(s => s.cart);
   const { user } = useSelector(s => s.auth);
   const navigate = useNavigate();
@@ -28,7 +39,100 @@ export default function CheckoutPage() {
   const subtotal = enriched.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
   const shipping = subtotal > 999 ? 0 : 99;
   const tax = Math.round(subtotal * 0.05);
-  const total = subtotal + shipping + tax;
+  const giftWrapCost = giftWrap ? GIFT_WRAP_COST : 0;
+  const donationAmount =
+    donationPreset === 'custom'
+      ? Math.max(0, Number(customDonation) || 0)
+      : donationPreset
+        ? donationPreset
+        : 0;
+  const total = Math.max(0, subtotal - couponDiscount + shipping + handlingCharge + tax + giftWrapCost + donationAmount);
+
+  useEffect(() => {
+    const loadAvailableCoupons = async () => {
+      try {
+        const { data } = await api.get('/coupons/available');
+        setAvailableCoupons(data.coupons || []);
+      } catch (error) {
+        console.error('Failed to load coupons', error);
+      }
+    };
+
+    const loadHandlingCharge = async () => {
+      try {
+        const { data } = await api.get('/coupons/settings');
+        setHandlingCharge(Number(data.settings?.handlingCharge || 0));
+      } catch (error) {
+        console.error('Failed to load handling charge', error);
+      }
+    };
+
+    loadAvailableCoupons();
+    loadHandlingCharge();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCouponCode) return;
+    const selectedCoupon = availableCoupons.find((coupon) => coupon.code === selectedCouponCode);
+    if (!selectedCoupon) {
+      setSelectedCouponCode('');
+      setCouponDiscount(0);
+      setCouponMessage('');
+    }
+  }, [availableCoupons, selectedCouponCode]);
+
+  const selectDonation = (amount) => {
+    if (donationPreset === amount) {
+      setDonationPreset(null);
+      setCustomDonation('');
+      return;
+    }
+    setDonationPreset(amount);
+    if (amount !== 'custom') setCustomDonation('');
+  };
+
+  const handleApplyCoupon = async (code) => {
+    const normalizedCode = code?.trim().toUpperCase();
+    if (!normalizedCode) {
+      setSelectedCouponCode('');
+      setCouponDiscount(0);
+      setCouponMessage('');
+      return;
+    }
+
+    setCouponLoading(true);
+    setCouponMessage('');
+
+    try {
+      const { data } = await api.post('/coupons/validate', {
+        code: normalizedCode,
+        orderValue: subtotal
+      });
+
+      if (!data.success) {
+        throw new Error(data.message || 'Coupon could not be applied');
+      }
+
+      setSelectedCouponCode(data.coupon.code);
+      setCouponDiscount(data.discount || 0);
+      setCouponMessage(`${data.coupon.code} applied successfully`);
+      toast.success(`${data.coupon.code} applied successfully`);
+    } catch (error) {
+      setSelectedCouponCode('');
+      setCouponDiscount(0);
+      const message = error.response?.data?.message || error.message || 'Coupon could not be applied';
+      setCouponMessage(message);
+      toast.error(message);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setSelectedCouponCode('');
+    setCouponDiscount(0);
+    setCouponMessage('');
+  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -68,7 +172,11 @@ export default function CheckoutPage() {
           pincode: addr.pincode,
           phone: addr.phone
         },
-        paymentMethod: payMethod
+        paymentMethod: payMethod,
+        couponCode: selectedCouponCode || undefined,
+        couponDiscount,
+        giftWrap,
+        donationAmount,
       };
 
       const { data: orderRes } = await api.post('/orders', orderData);
@@ -279,6 +387,8 @@ export default function CheckoutPage() {
                   <p className="font-body font-bold text-gray-800 text-xs uppercase tracking-wide mb-2 flex items-center gap-1.5"><CreditCard size={12} className="text-primary"/>Payment Via</p>
                   <p className="font-body text-sm text-gray-700 font-semibold capitalize">{payMethod === 'cod' ? 'Cash on Delivery' : payMethod.charAt(0).toUpperCase()+payMethod.slice(1)}</p>
                   <p className="font-body text-xs text-gray-500 mt-0.5">Estimated delivery: 5–7 business days</p>
+                  {giftWrap && <p className="font-body text-xs text-primary mt-1 flex items-center gap-1"><Gift size={11}/> Gift wrap included (+{formatPrice(GIFT_WRAP_COST)})</p>}
+                  {donationAmount > 0 && <p className="font-body text-xs text-rose mt-1 flex items-center gap-1"><Heart size={11}/> Donation: {formatPrice(donationAmount)}</p>}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -308,11 +418,117 @@ export default function CheckoutPage() {
           </div>
           <div className="border-t border-gray-50 pt-3 space-y-2 text-sm font-body">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-semibold">{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping===0?'text-emerald-600 font-bold':'font-semibold'}>{shipping===0?'FREE':formatPrice(shipping)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold">{formatPrice(shipping)}</span></div>
+            {handlingCharge > 0 && (
+              <div className="flex justify-between text-gray-600"><span>Handling Charge</span><span className="font-semibold">{formatPrice(handlingCharge)}</span></div>
+            )}
+            {couponDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600"><span>Coupon Discount</span><span className="font-semibold">-{formatPrice(couponDiscount)}</span></div>
+            )}
             <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-semibold">{formatPrice(tax)}</span></div>
+            {giftWrapCost > 0 && (
+              <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-semibold">{formatPrice(giftWrapCost)}</span></div>
+            )}
+            {donationAmount > 0 && (
+              <div className="flex justify-between text-gray-600"><span>Donation</span><span className="font-semibold text-rose">{formatPrice(donationAmount)}</span></div>
+            )}
             <div className="flex justify-between font-bold text-base border-t border-gray-50 pt-2 mt-1">
               <span className="font-display text-gray-900">Total</span>
               <span className="font-display text-primary text-lg">{formatPrice(total)}</span>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-50 mt-5 pt-5 space-y-5">
+            <div>
+              <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                <Gift size={15} className="text-primary" /> Coupons
+              </p>
+              <p className="font-body text-xs text-gray-500 mb-3">Available offers from admin and staff are shown here for today’s order.</p>
+              <select
+                value={selectedCouponCode}
+                onChange={(e) => handleApplyCoupon(e.target.value)}
+                disabled={couponLoading || availableCoupons.length === 0}
+                className="input-field text-sm"
+              >
+                <option value="">{availableCoupons.length ? 'Select a coupon' : 'No coupons available'}</option>
+                {availableCoupons.map((coupon) => {
+                  const isEligible = subtotal >= (coupon.minOrderValue || 0);
+                  return (
+                    <option key={coupon._id} value={coupon.code}>
+                      {coupon.code} · {coupon.type === 'percentage' ? `${coupon.value}%` : `₹${coupon.value}`} off{isEligible ? '' : ` · Min ₹${coupon.minOrderValue || 0}`}
+                    </option>
+                  );
+                })}
+              </select>
+              {couponMessage && (
+                <p className={`font-body text-xs mt-2 ${couponDiscount > 0 ? 'text-emerald-600' : 'text-rose'}`}>{couponMessage}</p>
+              )}
+              {couponDiscount > 0 && (
+                <button type="button" onClick={clearCoupon} className="text-xs font-semibold text-primary mt-2">
+                  Remove coupon
+                </button>
+              )}
+            </div>
+
+            <div>
+              <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                <Gift size={15} className="text-primary" /> Gift Wrap
+              </p>
+              <p className="font-body text-xs text-gray-500 mb-3">Premium packaging for a special touch</p>
+              <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${giftWrap ? 'border-primary bg-champagne-light/80' : 'border-gray-100 hover:border-primary-200'}`}>
+                <input
+                  type="checkbox"
+                  checked={giftWrap}
+                  onChange={(e) => setGiftWrap(e.target.checked)}
+                  className="w-4 h-4 text-primary rounded"
+                />
+                <span className="font-body text-sm text-gray-800 flex-1">Add gift wrap</span>
+                <span className="font-body text-sm font-bold text-primary">+{formatPrice(GIFT_WRAP_COST)}</span>
+              </label>
+            </div>
+
+            <div>
+              <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                <Heart size={15} className="text-rose" /> Donate
+              </p>
+              <p className="font-body text-xs text-gray-500 mb-3">Support a cause with your order (optional)</p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {DONATION_PRESETS.map((amount) => (
+                  <button
+                    key={amount}
+                    type="button"
+                    onClick={() => selectDonation(amount)}
+                    className={`px-3 py-2 rounded-xl text-sm font-body font-semibold border-2 transition-all ${
+                      donationPreset === amount
+                        ? 'border-primary bg-champagne-light/80 text-primary'
+                        : 'border-gray-100 text-gray-600 hover:border-primary-200'
+                    }`}
+                  >
+                    ₹{amount}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => selectDonation('custom')}
+                  className={`px-3 py-2 rounded-xl text-sm font-body font-semibold border-2 transition-all ${
+                    donationPreset === 'custom'
+                      ? 'border-primary bg-champagne-light/80 text-primary'
+                      : 'border-gray-100 text-gray-600 hover:border-primary-200'
+                  }`}
+                >
+                  Other
+                </button>
+              </div>
+              {donationPreset === 'custom' && (
+                <input
+                  type="number"
+                  min="1"
+                  value={customDonation}
+                  onChange={(e) => setCustomDonation(e.target.value)}
+                  placeholder="Enter amount (₹)"
+                  className="input-field text-sm"
+                />
+              )}
             </div>
           </div>
         </div>

@@ -79,7 +79,15 @@ export default function ProductDetailPage() {
     if (product.sizes?.length > 0 && !selSize) { toast.error('Please select a size'); return; }
     dispatch(addToCart({ productId: product._id, quantity: qty, size: selSize || 'Free Size' }));
     setAddedToCart(true);
-    toast.success('Added to cart! 🛍️');
+    // Stock urgency warning
+    const stock = product.stock ?? 999;
+    if (stock <= 3 && stock > 0) {
+      toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
+    } else if (stock <= 8) {
+      toast(`Stock is limited — only ${stock} left!`, { icon: '⏰', duration: 3000 });
+    } else {
+      toast.success('Added to cart! 🛍️');
+    }
     setTimeout(() => setAddedToCart(false), 2500);
   };
   const handleWishlist = () => {
@@ -127,6 +135,26 @@ export default function ProductDetailPage() {
               <span className={`font-body text-sm font-semibold ${product.stock < 10 ? 'text-rose' : 'text-emerald-600'}`}>{product.stock < 10 ? `Only ${product.stock} left!` : 'In Stock'}</span>
             </div>
           </div>
+
+          {/* Stock urgency banner */}
+          {product.stock <= 5 && product.stock > 0 && (
+            <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200">
+              <span className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center animate-pulse shrink-0">
+                <span className="text-base">🔥</span>
+              </span>
+              <div>
+                <p className="font-display font-bold text-gray-900 text-sm">This product is waiting for you!</p>
+                <p className="font-body text-xs text-rose font-semibold">Only {product.stock} left — stock is getting finished. Order now!</p>
+              </div>
+            </motion.div>
+          )}
+          {product.stock <= 0 && (
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
+              <span className="text-base">😔</span>
+              <p className="font-body text-sm font-semibold text-gray-500">Out of stock — this item is currently unavailable</p>
+            </div>
+          )}
 
           {/* Price */}
           <div className="flex items-baseline gap-3 py-2">

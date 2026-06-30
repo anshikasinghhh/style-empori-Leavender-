@@ -82,6 +82,32 @@ router.delete('/employees/:id', protect, authorize('admin'), async (req, res) =>
   }
 });
 
+// @PUT /api/employee/admin/employees/:id/coupon-access - Toggle coupon management access (Admin only)
+router.put('/employees/:id/coupon-access', protect, authorize('admin'), async (req, res) => {
+  try {
+    const employee = await User.findById(req.params.id);
+    if (!employee || employee.role !== 'employee') {
+      return res.status(404).json({ success: false, message: 'Employee not found.' });
+    }
+
+    employee.canManageCoupons = !employee.canManageCoupons;
+    await employee.save();
+
+    res.json({
+      success: true,
+      message: `Coupon access ${employee.canManageCoupons ? 'granted to' : 'revoked from'} ${employee.name}`,
+      employee: {
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        canManageCoupons: employee.canManageCoupons
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @GET /api/employee/admin/performance - Get all employee performance metrics (Admin only)
 router.get('/performance', protect, authorize('admin'), async (req, res) => {
   try {
@@ -122,7 +148,8 @@ router.get('/performance', protect, authorize('admin'), async (req, res) => {
           _id: emp._id,
           name: emp.name,
           email: emp.email,
-          phone: emp.phone
+          phone: emp.phone,
+          canManageCoupons: emp.canManageCoupons || false
         },
         attendancePercentage: attendancePct,
         totalWorkingHours: parseFloat(totalHours.toFixed(1)),

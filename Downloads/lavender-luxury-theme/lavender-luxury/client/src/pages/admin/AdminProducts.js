@@ -1,12 +1,13 @@
 // import React, { useState } from 'react';
 // import React, {useState,useEffect} from 'react';
 import AdminLayout from './AdminLayout';
-import { Plus, Search, Edit2, Trash2, X, Save, Eye, Tag } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Save, Tag } from 'lucide-react';
 import { CATEGORIES, formatPrice } from '../../utils/data';
 import api from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useState, useEffect } from 'react';
+import ProductCouponSection, { EMPTY_CUSTOM_COUPON, resolveProductCouponCode } from '../../components/staff/ProductCouponSection';
 
 const COLOR_OPTIONS = [
   "Black",
@@ -57,7 +58,7 @@ const SIZE_OPTIONS = [
 
 const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
 
-export default function AdminProducts() {
+export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
   const loadProducts = async () => {
   try {
@@ -90,6 +91,8 @@ const [customColor, setCustomColor] = useState("");
 const [selectedSize, setSelectedSize] = useState("");
 const [customSize, setCustomSize] = useState("");
 const [availableCoupons, setAvailableCoupons] = useState([]);
+const [couponMode, setCouponMode] = useState('none');
+const [customCoupon, setCustomCoupon] = useState(EMPTY_CUSTOM_COUPON);
 
 const loadAvailableCoupons = async () => {
   try {
@@ -108,8 +111,27 @@ const filtered = products.filter(
 console.log("Products:", products);
 console.log("Filtered:", filtered);
   // console.log("Current Products State:", products);
-  const openAdd = () => { setForm(EMPTY); setEditId(null); setModal(true); };
-  const openEdit = (p) => { setForm({ ...p, mrp: String(p.mrp || ''),price:String(p.price), originalPrice:String(p.originalPrice||''), stock:String(p.stock) }); setEditId(p._id); setModal(true); };
+  const openAdd = () => {
+    setForm(EMPTY);
+    setEditId(null);
+    setCouponMode('none');
+    setCustomCoupon(EMPTY_CUSTOM_COUPON);
+    setModal(true);
+  };
+  const openEdit = (p) => {
+    setForm({ ...p, mrp: String(p.mrp || ''), price: String(p.price), originalPrice: String(p.originalPrice || ''), stock: String(p.stock) });
+    setEditId(p._id);
+    if (p.couponCode && availableCoupons.some(c => c.code === p.couponCode)) {
+      setCouponMode(p.couponCode);
+    } else if (p.couponCode) {
+      setCouponMode('custom');
+      setCustomCoupon({ ...EMPTY_CUSTOM_COUPON, code: p.couponCode });
+    } else {
+      setCouponMode('none');
+      setCustomCoupon(EMPTY_CUSTOM_COUPON);
+    }
+    setModal(true);
+  };
 useEffect(() => {
     loadProducts();
     loadAvailableCoupons();
@@ -127,39 +149,35 @@ useEffect(() => {
   //   setModal(false);
   // };
   const handleSave = async () => {
-
   try {
+    if (!form.name || !form.price) {
+      toast.error('Name and price are required');
+      return;
+    }
+
+    const resolvedCouponCode = await resolveProductCouponCode({
+      couponMode,
+      couponCode: form.couponCode,
+      customCoupon,
+      api,
+    });
+
+    const payload = { ...form, couponCode: resolvedCouponCode };
 
     if (editId) {
-
-      const res = await api.put(
-        `/products/${editId}`,
-        form
-      );
-
-      toast.success("Product Updated");
-
+      await api.put(`/products/${editId}`, payload);
+      toast.success('Product Updated');
     } else {
-
-      const res = await api.post(
-        "/products",
-        form
-      );
-
-      toast.success("Product Added");
-
+      await api.post('/products', payload);
+      toast.success('Product Added');
     }
 
     loadProducts();
-
+    loadAvailableCoupons();
     setModal(false);
-
   } catch (err) {
-
-    toast.error(err.response?.data?.message || "Error");
-
+    toast.error(err.response?.data?.message || err.message || 'Error');
   }
-
 };
 
   // const deleteProduct = (id) => { setProducts(ps => ps.filter(p => p._id !== id)); toast.success('Product removed'); };
@@ -187,7 +205,7 @@ const deleteProduct = async (id) => {
 
 };
   return (
-    <AdminLayout>
+    <Layout>
       <div className="flex items-center justify-between mb-6">
         <div><h1 className="font-display text-2xl font-bold text-gray-900">Products</h1><p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p></div>
         <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
@@ -609,51 +627,15 @@ colors:f.colors.filter((_,i)=>i!==index)
                       ))}
                     </div>
                   </div>
-                  {/* ── Coupon Code ── */}
-                  <div className="col-span-2">
-                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Coupon Code (Optional)</label>
-                    <div className="flex gap-2 items-center">
-                      <select
-                        value={availableCoupons.some(c => c.code === form.couponCode) ? form.couponCode : '__custom__'}
-                        onChange={e => {
-                          if (e.target.value === '__none__') setForm(f => ({...f, couponCode: ''}));
-                          else if (e.target.value !== '__custom__') setForm(f => ({...f, couponCode: e.target.value}));
-                        }}
-                        className="input-field text-sm flex-1"
-                      >
-                        <option value="__none__">— No Coupon —</option>
-                        {availableCoupons.map(c => (
-                          <option key={c._id} value={c.code}>
-                            {c.code} · {c.type === 'percentage' ? `${c.value}% off` : `₹${c.value} off`}
-                          </option>
-                        ))}
-                        <option value="__custom__">✏️ Type custom code…</option>
-                      </select>
-                      {(form.couponCode && !availableCoupons.some(c => c.code === form.couponCode)) || !availableCoupons.some(c => c.code === form.couponCode) ? (
-                        <input
-                          value={form.couponCode}
-                          onChange={e => setForm(f => ({...f, couponCode: e.target.value.toUpperCase().replace(/\s/g, '')}))}
-                          placeholder="e.g. SAVE20"
-                          className="input-field text-sm font-bold tracking-widest flex-1"
-                        />
-                      ) : null}
-                      {form.couponCode && (
-                        <button
-                          type="button"
-                          onClick={() => setForm(f => ({...f, couponCode: ''}))}
-                          className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose text-rose hover:text-white flex items-center justify-center transition-all shrink-0"
-                          title="Clear coupon"
-                        >
-                          <X size={13}/>
-                        </button>
-                      )}
-                    </div>
-                    {form.couponCode && (
-                      <p className="mt-1.5 text-[10px] font-body text-primary font-semibold flex items-center gap-1">
-                        <Tag size={9}/> Coupon <span className="tracking-widest font-black">{form.couponCode}</span> will be attached to this product
-                      </p>
-                    )}
-                  </div>
+                  <ProductCouponSection
+                    couponMode={couponMode}
+                    setCouponMode={setCouponMode}
+                    couponCode={form.couponCode}
+                    setCouponCode={(code) => setForm((f) => ({ ...f, couponCode: code }))}
+                    customCoupon={customCoupon}
+                    setCustomCoupon={setCustomCoupon}
+                    availableCoupons={availableCoupons}
+                  />
                 </div>
               </div>
               <div className="flex gap-3 p-6 border-t border-gray-100">
@@ -664,6 +646,6 @@ colors:f.colors.filter((_,i)=>i!==index)
           </motion.div>
         )}
       </AnimatePresence>
-    </AdminLayout>
+    </Layout>
   );
 }

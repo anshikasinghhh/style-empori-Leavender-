@@ -2,9 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const { Wishlist, Review, Coupon, Category } = require('../models/index');
+const StoreSettings = require('../models/StoreSettings');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
+const { staffOnly } = require('../middleware/staff');
 module.exports.wishlistRouter = (() => {
   const r = express.Router();
   r.get('/', protect, async (req, res) => {
@@ -65,7 +67,7 @@ module.exports.reviewRouter = (() => {
 
 module.exports.couponRouter = (() => {
   const r = express.Router();
-  r.post('/validate', protect, async (req, res) => {
+  r.post('/validate', async (req, res) => {
     try {
       const { code, orderValue } = req.body;
       const coupon = await require('mongoose').model('Coupon').findOne({ code: code.toUpperCase(), isActive: true });
@@ -77,8 +79,8 @@ module.exports.couponRouter = (() => {
       res.json({ success: true, coupon, discount: Math.round(discount) });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
-  // Available coupons — accessible by both admin and employee (no adminOnly guard)
-  r.get('/available', protect, async (req, res) => {
+  // Available coupons — visible to customers during checkout and also used by staff/admin
+  r.get('/available', async (req, res) => {
     try {
       const now = new Date();
       const coupons = await require('mongoose').model('Coupon').find({
@@ -92,13 +94,21 @@ module.exports.couponRouter = (() => {
       res.json({ success: true, coupons });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
+  r.get('/settings', async (req, res) => {
+    try {
+      const settings = await StoreSettings.findOneAndUpdate({ key: 'global' }, { $setOnInsert: { key: 'global' } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+      res.json({ success: true, settings });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
   r.get('/', protect, adminOnly, async (req, res) => {
     try {
       const coupons = await require('mongoose').model('Coupon').find();
       res.json({ success: true, coupons });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
-  r.post('/', protect, adminOnly, async (req, res) => {
+  r.post('/', protect, staffOnly, async (req, res) => {
     try {
       const coupon = await require('mongoose').model('Coupon').create(req.body);
       res.status(201).json({ success: true, coupon });

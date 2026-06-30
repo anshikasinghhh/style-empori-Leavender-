@@ -38,6 +38,7 @@ const userSchema = new mongoose.Schema({
     isDefault: { type: Boolean, default: false }
   }],
   isActive: { type: Boolean, default: true },
+  canManageCoupons: { type: Boolean, default: false },
   lastLogin: { type: Date },
   loyaltyCoupons: [{
     code: String,

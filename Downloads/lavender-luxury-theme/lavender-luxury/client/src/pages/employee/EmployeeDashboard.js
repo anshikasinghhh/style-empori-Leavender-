@@ -213,7 +213,7 @@ export default function EmployeeDashboard() {
               <p className="font-display text-3xl font-bold text-gray-900 mb-0.5">{requests.length}</p>
               <p className="font-body text-xs text-gray-500">Inventory Requests</p>
             </div>
-            <Link to="/employee/inventory" className="text-[11px] font-bold text-blue-600 hover:underline inline-flex items-center gap-1">Update inventory <ArrowUpRight size={12}/></Link>
+            <Link to="/employee/stock-requests" className="text-[11px] font-bold text-blue-600 hover:underline inline-flex items-center gap-1">Update inventory <ArrowUpRight size={12}/></Link>
           </div>
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function EmployeeDashboard() {
                     </div>
                   </div>
                   {t.type === 'Inventory' && t.product ? (
-                    <Link to={`/employee/inventory?productId=${t.product._id}`} className="btn-ghost py-1.5 px-3 text-[11px] font-bold shrink-0">
+                    <Link to={`/employee/stock-requests?productId=${t.product._id}`} className="btn-ghost py-1.5 px-3 text-[11px] font-bold shrink-0">
                       Update Stock
                     </Link>
                   ) : (
@@ -271,7 +271,7 @@ export default function EmployeeDashboard() {
         <div className="bg-white rounded-2xl p-6 shadow-card border border-gray-50 flex flex-col">
           <div className="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
             <h3 className="font-display font-bold text-gray-900 text-base">Inventory Requests</h3>
-            <Link to="/employee/inventory" className="text-[11px] font-bold text-primary hover:underline">New Request</Link>
+            <Link to="/employee/stock-requests" className="text-[11px] font-bold text-primary hover:underline">New Request</Link>
           </div>
           <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px]">
             {requests.slice(0, 4).length > 0 ? (
