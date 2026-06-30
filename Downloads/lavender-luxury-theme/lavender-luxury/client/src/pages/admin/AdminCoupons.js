@@ -20,9 +20,36 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
+  const [couponsEnabled, setCouponsEnabled] = useState(true);
+
   useEffect(() => {
-  loadCoupons();
-}, []);
+    loadCoupons();
+    fetchGlobalCouponSettings();
+  }, []);
+
+  const fetchGlobalCouponSettings = async () => {
+    try {
+      const res = await api.get('/loyalty-settings');
+      if (res.data.success && res.data.settings) {
+        setCouponsEnabled(res.data.settings.enabled ?? true);
+      }
+    } catch (err) {
+      console.error("Failed to load global coupon settings:", err);
+    }
+  };
+
+  const handleToggleGlobalCoupons = async () => {
+    try {
+      const nextState = !couponsEnabled;
+      const res = await api.put('/loyalty-settings', { enabled: nextState });
+      if (res.data.success) {
+        setCouponsEnabled(nextState);
+        toast.success(`Coupons globally ${nextState ? 'enabled' : 'disabled'}`);
+      }
+    } catch (err) {
+      toast.error('Failed to update global coupon status');
+    }
+  };
 
  const handleSave = async () => {
   try {
@@ -139,6 +166,39 @@ const toggle = async (id) => {
           <p className="font-body text-gray-500 text-sm mt-0.5">{activeCoupons.length} active · {totalUsed} total uses</p>
         </div>
         <button onClick={() => { setForm(EMPTY); setModal(true); }} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Create Coupon</button>
+      </div>
+
+      {/* Global Toggle Banner */}
+      <div className={`p-4 rounded-2xl mb-6 flex items-center justify-between border shadow-sm transition-all duration-300 ${
+        couponsEnabled 
+          ? 'bg-emerald-50/70 border-emerald-100 text-emerald-800' 
+          : 'bg-rose-50/70 border-rose-100 text-rose-800'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-xl shrink-0 ${couponsEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+            <Tag size={20} />
+          </div>
+          <div>
+            <h3 className="font-display font-bold text-sm">
+              Global Coupon Status: {couponsEnabled ? 'Active' : 'Disabled'}
+            </h3>
+            <p className="font-body text-xs opacity-80 mt-0.5">
+              {couponsEnabled 
+                ? 'Customers can view and apply active coupons during checkout.' 
+                : 'All coupons are deactivated. Customers cannot apply any coupons.'}
+            </p>
+          </div>
+        </div>
+        <button 
+          onClick={handleToggleGlobalCoupons}
+          className={`px-4 py-2 rounded-xl font-display font-bold text-xs shadow-sm transition-all duration-300 ${
+            couponsEnabled 
+              ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
+              : 'bg-rose-600 text-white hover:bg-rose-700'
+          }`}
+        >
+          {couponsEnabled ? 'Disable Coupons' : 'Enable Coupons'}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
