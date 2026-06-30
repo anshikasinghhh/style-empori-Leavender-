@@ -37,7 +37,8 @@ router.put('/', protect, async (req, res) => {
       discountValue,
       minOrderValue,
       maxDiscount,
-      expiryDays
+      expiryDays,
+      cancellationFee
     } = req.body;
 
     const settings = await LoyaltyCouponSettings.findOneAndUpdate(
@@ -50,6 +51,7 @@ router.put('/', protect, async (req, res) => {
         ...(minOrderValue !== undefined && { minOrderValue: Number(minOrderValue) }),
         ...(maxDiscount !== undefined && { maxDiscount: Number(maxDiscount) }),
         ...(expiryDays && { expiryDays: Number(expiryDays) }),
+        ...(cancellationFee !== undefined && { cancellationFee: Number(cancellationFee) }),
         lastUpdatedBy: req.user._id
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }

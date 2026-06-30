@@ -10,6 +10,7 @@ const loyaltyCouponSettingsSchema = new mongoose.Schema({
   minOrderValue: { type: Number, default: 1000 },
   maxDiscount: { type: Number, default: 1500 }, // max cap for percentage type
   expiryDays: { type: Number, default: 90 }, // days from earning date
+  cancellationFee: { type: Number, default: 100 },
   lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

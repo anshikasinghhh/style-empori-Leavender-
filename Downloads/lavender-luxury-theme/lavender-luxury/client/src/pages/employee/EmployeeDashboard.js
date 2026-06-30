@@ -110,6 +110,8 @@ export default function EmployeeDashboard() {
   const hasPunchedIn = !!attendance;
   const hasPunchedOut = !!(attendance && attendance.punchOut);
 
+  const overdueTasks = tasks.filter(t => t.status !== 'Completed' && new Date(t.dueDate) < new Date());
+
   return (
     <EmployeeLayout>
       {/* Welcome Card */}
@@ -129,6 +131,42 @@ export default function EmployeeDashboard() {
           <Award size={180} className="text-gold-light" />
         </div>
       </motion.div>
+
+      {/* Overdue Tasks Warning Banner */}
+      {overdueTasks.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-rose-50 border border-rose-200 rounded-2xl p-5 mb-6 flex items-start gap-4 shadow-sm"
+        >
+          <div className="p-2 bg-rose-100 text-rose-600 rounded-xl shrink-0">
+            <ShieldAlert size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-display text-base font-bold text-rose-800 mb-1">
+              Warning: You have {overdueTasks.length} incomplete task{overdueTasks.length > 1 ? 's' : ''} past the due date!
+            </h3>
+            <p className="font-body text-xs text-rose-700/80 mb-3">
+              Please complete or update the status of these tasks as soon as possible. Overdue tasks affect your performance metrics.
+            </p>
+            <div className="space-y-2">
+              {overdueTasks.map(t => (
+                <div key={t._id} className="flex items-center justify-between p-2.5 bg-white/70 hover:bg-white rounded-lg border border-rose-100/60 transition-all">
+                  <div className="min-w-0">
+                    <p className="font-body font-bold text-gray-800 text-xs truncate">{t.title}</p>
+                    <p className="font-body text-[10px] text-rose-600 font-semibold mt-0.5">
+                      Due: {new Date(t.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <Link to="/employee/tasks" className="btn-ghost py-1 px-2.5 text-[10px] font-bold text-rose-700 hover:bg-rose-100 shrink-0">
+                    Update Task
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Attendance and stats */}
       <div className="grid lg:grid-cols-3 gap-6 mb-6">

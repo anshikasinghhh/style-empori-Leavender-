@@ -59,7 +59,9 @@ const orderSchema = new mongoose.Schema({
   shiprocketOrderId: String,
   shiprocketShipmentId: String,
   shiprocketSyncStatus: { type: String, enum: ['synced', 'failed', null], default: null },
-  shiprocketSyncError: String
+  shiprocketSyncError: String,
+  cancellationFee: { type: Number, default: 0 },
+  refundAmount: { type: Number }
 }, { timestamps: true });
 
 orderSchema.pre('save', function(next) {
