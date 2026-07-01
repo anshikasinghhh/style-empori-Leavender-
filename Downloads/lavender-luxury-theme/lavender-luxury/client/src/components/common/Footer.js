@@ -4,11 +4,11 @@ import { Instagram, Facebook, Twitter, Youtube, Mail, Phone, MapPin, Heart } fro
 import { CATEGORIES } from '../../utils/data';
 import logo from '../../assets/logo.jpeg';
 
-export default function Footer() {
+export default function Footer({ className = '' }) {
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-br from-plum via-primary to-primary-light text-white mt-20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.12),transparent_45%)]" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
+    <footer className={`relative z-20 overflow-hidden bg-gradient-to-br from-plum via-primary to-primary-light text-white ${className}`}>
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.12),transparent_45%)]" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           <div>
             <div className="flex items-center gap-2.5 mb-4">
@@ -17,7 +17,7 @@ export default function Footer() {
               </div>
               <div><p className="font-display font-bold text-white">Lavender <span className="text-gold">✦</span></p><p className="font-accent text-gold/60 text-xs italic tracking-widest">The Style Emporio</p></div>
             </div>
-            <p className="font-body text-white/60 text-sm leading-relaxed mb-5">Celebrating India's rich textile heritage through premium ethnic fashion. Crafted with love, delivered with care.</p>
+            <p className="font-body text-white/60 text-sm leading-relaxed mb-5">Celebrating rich textile heritage through premium ethnic fashion. Crafted with love, delivered with care worldwide.</p>
             <div className="flex gap-2.5">
               {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
                 <button key={i} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><Icon size={16}/></button>
@@ -27,8 +27,15 @@ export default function Footer() {
           <div>
             <h4 className="font-display font-semibold text-base mb-4">Quick Links</h4>
             <ul className="space-y-2.5">
-              {['About Us','Careers','Press & Media','Sustainability','Gift Cards','Our Artisans'].map(item => (
-                <li key={item}><Link to="#" className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item}</Link></li>
+              {[
+                { label: 'About Us', to: '/#about' },
+                { label: 'Careers', to: '/careers' },
+                { label: 'Press & Media', to: '/press-media' },
+                { label: 'Sustainability', to: '/products' },
+                { label: 'Gift Cards', to: '/products' },
+                { label: 'Our Artisans', to: '/products' },
+              ].map(item => (
+                <li key={item.label}><Link to={item.to} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.label}</Link></li>
               ))}
             </ul>
           </div>
@@ -57,7 +64,11 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="font-body text-white/40 text-xs">© 2025 Lavender. All rights reserved.</p>
           <div className="flex items-center gap-1 font-body text-white/40 text-xs">Made with <Heart size={11} className="text-rose fill-rose mx-1"/> for ethnic fashion lovers</div>
-          <div className="flex gap-4">{['Privacy Policy','Terms of Service','Returns Policy'].map(item => <Link key={item} to="#" className="font-body text-white/40 hover:text-white text-xs transition-colors">{item}</Link>)}</div>
+          <div className="flex gap-4">{[
+            { label: 'Privacy Policy', to: '/press-media' },
+            { label: 'Terms of Service', to: '/press-media' },
+            { label: 'Returns Policy', to: '/products' },
+          ].map(item => <Link key={item.label} to={item.to} className="font-body text-white/40 hover:text-white text-xs transition-colors">{item.label}</Link>)}</div>
         </div>
       </div>
     </footer>

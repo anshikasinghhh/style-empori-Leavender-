@@ -160,7 +160,7 @@ function Testimonials() {
 /* ─── Brand Story ────────────────────────────────────────────── */
 function BrandStory() {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+    <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
       <div className="relative bg-gradient-to-br from-champagne-light via-champagne-light to-rose-soft rounded-3xl p-10 md:p-16 overflow-hidden">
         <div className="relative grid md:grid-cols-2 gap-12 items-center">
           <div>
@@ -168,9 +168,9 @@ function BrandStory() {
             <h2 className="font-display text-4xl md:text-5xl font-black text-gray-900 mb-5 leading-tight">Fashion with Purpose,<br/>Style with Confidence</h2>
             <p className="font-body text-gray-600 leading-relaxed mb-4">Founded on 4 January 2023, Lavender is a fashion brand dedicated to offering stylish, comfortable, and premium-quality clothing at affordable prices.</p>
             <p className="font-body text-gray-600 leading-relaxed mb-4">We believe fashion is a reflection of confidence and individuality, which is why every collection is thoughtfully curated to blend modern trends with exceptional craftsmanship.</p>
-            <p className="font-body text-gray-600 leading-relaxed mb-8">Serving customers across India, we offer a growing range of women's wear, kids' wear, and infant essentials, with plans to expand into new lifestyle collections and international markets. As a legally registered business, we are committed to quality, transparency, sustainability, and delivering an outstanding shopping experience. At Lavender, our mission is to create timeless fashion that inspires confidence and builds lasting relationships with our customers.</p>
+            <p className="font-body text-gray-600 leading-relaxed mb-8">Serving customers internationally, we offer a growing range of women's wear, kids' wear, and infant essentials, with plans to expand into new lifestyle collections and global markets. As a legally registered business, we are committed to quality, transparency, sustainability, and delivering an outstanding shopping experience. At Lavender, our mission is to create timeless fashion that inspires confidence and builds lasting relationships with our customers.</p>
             <div className="grid grid-cols-3 gap-4 mb-8">
-              {[['2023','Founded'],['India','Serving Customers'],['100%','Committed to Quality']].map(([n,l]) => (
+              {[['2023','Founded'],['Global','Serving Customers'],['100%','Committed to Quality']].map(([n,l]) => (
                 <div key={l} className="text-center bg-white/60 rounded-xl p-3 shadow-sm">
                   <p className="font-display text-2xl font-bold text-primary">{n}</p>
                   <p className="font-body text-xs text-gray-500 mt-0.5">{l}</p>

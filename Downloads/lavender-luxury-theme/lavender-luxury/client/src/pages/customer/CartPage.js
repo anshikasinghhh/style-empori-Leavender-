@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Sparkles, Star, AlertTriangle, Flame, Clock } from 'lucide-react';
@@ -7,6 +7,7 @@ import { updateCartItem, removeFromCart, addToCart } from '../../slices/cartSlic
 import { EmptyState } from '../../components/common/LoadingSpinner';
 import { PRODUCTS, formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
+import api from '../../utils/api';
 
 // Stock urgency helper
 const getStockUrgency = (product) => {
@@ -23,6 +24,18 @@ export default function CartPage() {
   const { items } = useSelector(s => s.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [allProducts, setAllProducts] = useState([]);
+
+  // Fetch all products from backend for recommendations
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get('/products', { params: { limit: 100 } });
+        if (res.data.success) setAllProducts(res.data.products || []);
+      } catch (err) { console.error('Failed to fetch products for recommendations', err); }
+    };
+    fetchProducts();
+  }, []);
 
   // Use demo products if backend not connected
   const enriched = items.map(item => ({
@@ -40,34 +53,51 @@ export default function CartPage() {
     .filter(item => item.urgency && item.urgency.level !== 'popular');
   const hasUrgency = urgencyItems.length > 0;
 
-  // "You Might Also Like" — only genuinely related products
+  // "You Might Also Like" — uses backend + local data for relevant products
   const recommendations = useMemo(() => {
+    if (enriched.length === 0) return [];
+
     const cartIds = new Set(enriched.map(i => String(i.product?._id)));
 
-    // Find local PRODUCTS data for cart items (local data has tags, occasions, etc.)
+    // Merge local PRODUCTS (has tags, occasions) with backend products
+    const productPool = allProducts.length > 0 ? allProducts : PRODUCTS;
+
+    // Enrich backend products with local data (tags, occasions)
+    const enrichedPool = productPool.map(p => {
+      const local = PRODUCTS.find(lp => String(lp._id) === String(p._id));
+      return local ? { ...p, tags: p.tags?.length ? p.tags : local.tags, occasion: p.occasion?.length ? p.occasion : local.occasion } : p;
+    });
+
+    // Related category groups
+    const RELATED_GROUPS = [
+      ['saree', 'shawl', 'churidar-set', 'churidar sets'],
+      ['kurti', 'churidar-set', 'churidar sets'],
+      ['bag', 'bags'],
+      ['kidswear'],
+      ['croptop', 'bodycon', 'casual', 'casuals', 'coord-set', 'coord-sets', 'pant', 'pants'],
+      ['night-gown'],
+    ];
+
+    const norm = (s) => (s || '').toLowerCase().replace(/s$/, '').replace(/\s+/g, '-').trim();
+
+    // Get cart categories, tags, occasions
+    const cartCatSlugs = enriched.map(i => {
+      const cat = i.product?.category;
+      const slug = typeof cat === 'object' ? cat.slug : cat;
+      const name = typeof cat === 'object' ? cat.name : cat;
+      return norm(slug || name);
+    }).filter(Boolean);
+
+    // Also look up local PRODUCTS for cart items to get richer data
     const cartLocalProducts = enriched
       .map(i => PRODUCTS.find(p => String(p._id) === String(i.product?._id)))
       .filter(Boolean);
-
-    // If we can't find local matches, use enriched products as source
     const cartSource = cartLocalProducts.length > 0 ? cartLocalProducts : enriched.map(i => i.product).filter(Boolean);
 
-    // Related category groups — products within a group are considered related
-    const RELATED_GROUPS = [
-      ['saree', 'shawl', 'churidar-set'],    // ethnic drape/wear
-      ['kurti', 'churidar-set'],              // daily ethnic wear
-      ['bag'],                                // accessories
-      ['kidswear'],                             // kids
-      ['croptop', 'bodycon', 'casual', 'coord-set', 'pant'], // western wear
-      ['night-gown'],                           // lounge
-    ];
-
-    const norm = (s) => (s || '').toLowerCase().replace(/s$/, '').trim();
-    const cartCatSlugs = cartSource.map(p => norm(p.category?.slug || p.category?.name)).filter(Boolean);
     const cartTags = cartSource.flatMap(p => (p.tags || []).map(t => t.toLowerCase()));
     const cartOccasions = cartSource.flatMap(p => (p.occasion || []).map(o => o.toLowerCase()));
 
-    // Find all categories related to what's in cart
+    // Find related categories
     const relatedCats = new Set(cartCatSlugs);
     cartCatSlugs.forEach(cat => {
       RELATED_GROUPS.forEach(group => {
@@ -77,45 +107,46 @@ export default function CartPage() {
       });
     });
 
-    const results = PRODUCTS
+    const results = enrichedPool
       .filter(p => !cartIds.has(String(p._id)))
       .map(p => {
-        const pCat = norm(p.category?.slug || p.category?.name);
+        const cat = p.category;
+        const pCat = norm(typeof cat === 'object' ? cat.slug || cat.name : cat);
         const pTags = (p.tags || []).map(t => t.toLowerCase());
         const pOccasions = (p.occasion || []).map(o => o.toLowerCase());
 
         let score = 0;
-        // Same category — strongest signal
+        // Same category
         if (cartCatSlugs.some(c => c === pCat || pCat.includes(c) || c.includes(pCat))) score += 5;
         // Related category
-        else if (relatedCats.has(pCat)) score += 2;
-        // Tag overlap (e.g. both have 'wedding', 'silk')
+        else if ([...relatedCats].some(rc => pCat === rc || pCat.includes(rc) || rc.includes(pCat))) score += 2;
+        // Tag overlap
         const tagMatches = pTags.filter(t => cartTags.includes(t)).length;
         score += tagMatches * 2;
-        // Occasion overlap (e.g. both 'Wedding', 'Festival')
+        // Occasion overlap
         const occasionMatches = pOccasions.filter(o => cartOccasions.includes(o)).length;
         score += occasionMatches;
 
         return { ...p, score };
       })
-      // Only show products with meaningful relevance (same cat OR related cat + tags)
       .filter(p => p.score >= 3)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+      .slice(0, 8);
 
-    // Fallback: if no scored results, show products from same category as cart items
+    // Fallback: same category products if no scored results
     if (results.length === 0) {
-      return PRODUCTS
+      return enrichedPool
         .filter(p => !cartIds.has(String(p._id)))
         .filter(p => {
-          const pCat = norm(p.category?.slug || p.category?.name);
+          const cat = p.category;
+          const pCat = norm(typeof cat === 'object' ? cat.slug || cat.name : cat);
           return cartCatSlugs.some(c => c === pCat || pCat.includes(c) || c.includes(pCat));
         })
-        .slice(0, 6);
+        .slice(0, 8);
     }
 
     return results;
-  }, [enriched]);
+  }, [enriched, allProducts]);
 
   const handleAddToCart = (product) => {
     const defaultSize = product.sizes?.[0]?.size || 'Free Size';
