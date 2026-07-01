@@ -2,15 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Twitter, Youtube, Mail, Phone, MapPin, Heart } from 'lucide-react';
 import { CATEGORIES } from '../../utils/data';
+import logo from '../../assets/logo.jpeg';
 
 export default function Footer() {
   return (
-    <footer className="bg-dark-brand text-white mt-20">
+    <footer className="relative overflow-hidden bg-gradient-to-br from-plum via-primary to-primary-light text-white mt-20">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.12),transparent_45%)]" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl bg-white/15 border border-gold/30 flex items-center justify-center"><span className="text-gold font-display font-bold text-sm">L</span></div>
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gold/30 bg-white/15 shadow-[0_0_20px_rgba(255,215,0,0.25)] backdrop-blur-xl">
+                <img src={logo} alt="Lavender Logo" className="h-full w-full object-cover" />
+              </div>
               <div><p className="font-display font-bold text-white">Lavender <span className="text-gold">✦</span></p><p className="font-accent text-gold/60 text-xs italic tracking-widest">The Style Emporio</p></div>
             </div>
             <p className="font-body text-white/60 text-sm leading-relaxed mb-5">Celebrating India's rich textile heritage through premium ethnic fashion. Crafted with love, delivered with care.</p>

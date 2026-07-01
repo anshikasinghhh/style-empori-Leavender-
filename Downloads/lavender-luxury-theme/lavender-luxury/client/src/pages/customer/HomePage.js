@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from "../../utils/api";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ArrowRight, Zap, Star, Truck, Shield, RefreshCw, Gift, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Zap, Star, Truck, Shield, RefreshCw, Gift } from 'lucide-react';
 import { ProductCard, SkeletonCard, SectionHeader } from '../../components/common/LoadingSpinner';
 import { CATEGORIES, PRODUCTS, TESTIMONIALS, HERO_BANNERS, TRUST_BADGES, formatPrice } from '../../utils/data';
-
+// import aboutStory from "../../images/about-story.png";
 /* ─── Hero Carousel ──────────────────────────────────────────── */
 function HeroCarousel() {
   const [cur, setCur] = useState(0);
@@ -38,15 +38,11 @@ const fetchProducts = async () => {
           <div className={`absolute inset-0 bg-gradient-to-r ${b.gradient}`}/>
           <div className="absolute inset-0 flex items-center px-8 md:px-16 lg:px-24">
             <motion.div initial={{ x:-40, opacity:0 }} animate={{ x:0, opacity:1 }} transition={{ delay:0.25, duration:0.6 }} className="max-w-xl">
-              <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/25 rounded-full px-4 py-1.5 mb-4">
-                <Sparkles size={13} className="text-gold-shine"/>
+              <div className="mb-4">
                 <span className="font-accent text-white/90 text-sm italic">{b.subtitle}</span>
               </div>
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">{b.title}</h1>
-              <p className="font-body text-white/80 text-base md:text-lg leading-relaxed mb-8 max-w-md">{b.description}</p>
-              <Link to={b.link || '/products'} className="inline-flex items-center gap-2.5 bg-white text-primary px-8 py-4 rounded-full font-body font-bold hover:bg-primary hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105">
-                {b.cta} <ArrowRight size={18}/>
-              </Link>
+              <p className="font-body text-white/80 text-base md:text-lg leading-relaxed max-w-md">{b.description}</p>
             </motion.div>
           </div>
         </motion.div>
@@ -95,26 +91,28 @@ function FlashSaleTimer() {
   const pad = n => String(n).padStart(2,'0');
   const Block = ({v,l}) => (
     <div className="text-center">
-      <div className="w-14 h-14 md:w-16 md:h-16 bg-white/15 backdrop-blur-sm border border-white/25 rounded-xl flex items-center justify-center shadow-lg">
-        <span className="font-display text-2xl md:text-3xl font-bold text-white">{pad(v)}</span>
+      <div className="w-14 h-14 md:w-16 md:h-16 bg-white/10 backdrop-blur-md border border-gold-shine/30 rounded-xl flex items-center justify-center shadow-[0_8px_30px_rgba(45,8,69,0.35)]">
+        <span className="font-display text-2xl md:text-3xl font-bold text-gold-shine">{pad(v)}</span>
       </div>
-      <p className="font-body text-white/70 text-[10px] mt-1 uppercase tracking-widest">{l}</p>
+      <p className="font-body text-white/80 text-[10px] mt-1 uppercase tracking-widest">{l}</p>
     </div>
   );
   const flashProduct = { name: "Special Collection" };
   return (
     <section className="mx-3 sm:mx-6 my-12">
-      <div className="relative bg-dark-brand rounded-3xl overflow-hidden shadow-premium">
-        <div className="absolute inset-0 opacity-10">
-          {[...Array(4)].map((_,i) => <div key={i} className="absolute rounded-full border border-white/30" style={{width:`${(i+1)*200}px`,height:`${(i+1)*200}px`,top:'50%',left:'30%',transform:'translate(-50%,-50%)'}}/>)}
+      <div className="relative overflow-hidden rounded-3xl shadow-premium">
+        <div className="absolute inset-0 bg-gradient-to-br from-plum via-primary to-primary-light" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.14),transparent_45%)]" />
+        <div className="absolute inset-0 opacity-15">
+          {[...Array(4)].map((_,i) => <div key={i} className="absolute rounded-full border border-gold-shine/20" style={{width:`${(i+1)*200}px`,height:`${(i+1)*200}px`,top:'50%',left:'30%',transform:'translate(-50%,-50%)'}}/>)}
         </div>
         <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 p-8 md:p-12">
           <div className="text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-rose/20 border border-rose/30 rounded-full px-4 py-1.5 mb-4">
-              <Zap size={14} className="text-rose-light fill-rose-light"/><span className="font-body text-rose-light text-sm font-semibold">Limited Time Only</span>
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-gold-shine/25 rounded-full px-4 py-1.5 mb-4 backdrop-blur-sm">
+              <Zap size={14} className="text-gold-shine fill-gold-shine"/><span className="font-body text-white/90 text-sm font-semibold">Limited Time Only</span>
             </div>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">Flash Sale</h2>
-            <p className="font-body text-white/70 mb-1">Up to 48% off on selected styles</p>
+            <p className="font-body text-white/80 mb-1">Up to 48% off on selected styles</p>
             {flashProduct && <p className="font-accent text-gold-shine text-lg italic">"{flashProduct.name}" & more →</p>}
           </div>
           <div className="flex items-center gap-3 md:gap-4">
@@ -122,7 +120,7 @@ function FlashSaleTimer() {
             <Block v={t.m} l="Mins"/>  <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
             <Block v={t.s} l="Secs"/>
           </div>
-          <Link to="/products?isFlashSale=true" className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full font-body font-bold hover:bg-gold-shine hover:text-gray-900 transition-all hover:scale-105 shadow-lg whitespace-nowrap">
+          <Link to="/products?isFlashSale=true" className="btn-gold whitespace-nowrap text-base">
             Shop Flash Sale <ArrowRight size={18}/>
           </Link>
         </div>
@@ -164,16 +162,15 @@ function BrandStory() {
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
       <div className="relative bg-gradient-to-br from-champagne-light via-champagne-light to-rose-soft rounded-3xl p-10 md:p-16 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-primary/5"/>
-        <div className="absolute -bottom-10 -left-10 w-60 h-60 rounded-full bg-rose/5"/>
         <div className="relative grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <p className="section-tag mb-3">Our Story</p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-5 leading-tight">Weaving Tradition<br/>with Modern Grace</h2>
-            <p className="font-body text-gray-600 leading-relaxed mb-4">Founded in 2018, Lavender was born from a passion for India's extraordinary textile heritage. We partner directly with master artisans across Varanasi, Lucknow, Jaipur, Surat and Kashmir.</p>
-            <p className="font-body text-gray-600 leading-relaxed mb-8">Every piece is a work of art — from handwoven Kanjivaram silks to intricate chikankari embroidery, we preserve age-old craftsmanship in contemporary silhouettes that the modern woman can proudly wear.</p>
+            <p className="section-tag mb-3 text-sm font-semibold uppercase tracking-[0.2em]">About Us</p>
+            <h2 className="font-display text-4xl md:text-5xl font-black text-gray-900 mb-5 leading-tight">Fashion with Purpose,<br/>Style with Confidence</h2>
+            <p className="font-body text-gray-600 leading-relaxed mb-4">Founded on 4 January 2023, Lavender is a fashion brand dedicated to offering stylish, comfortable, and premium-quality clothing at affordable prices.</p>
+            <p className="font-body text-gray-600 leading-relaxed mb-4">We believe fashion is a reflection of confidence and individuality, which is why every collection is thoughtfully curated to blend modern trends with exceptional craftsmanship.</p>
+            <p className="font-body text-gray-600 leading-relaxed mb-8">Serving customers across India, we offer a growing range of women's wear, kids' wear, and infant essentials, with plans to expand into new lifestyle collections and international markets. As a legally registered business, we are committed to quality, transparency, sustainability, and delivering an outstanding shopping experience. At Lavender, our mission is to create timeless fashion that inspires confidence and builds lasting relationships with our customers.</p>
             <div className="grid grid-cols-3 gap-4 mb-8">
-              {[['500+','Artisan Partners'],['50,000+','Happy Customers'],['2000+','Products Curated']].map(([n,l]) => (
+              {[['2023','Founded'],['India','Serving Customers'],['100%','Committed to Quality']].map(([n,l]) => (
                 <div key={l} className="text-center bg-white/60 rounded-xl p-3 shadow-sm">
                   <p className="font-display text-2xl font-bold text-primary">{n}</p>
                   <p className="font-body text-xs text-gray-500 mt-0.5">{l}</p>
@@ -182,10 +179,12 @@ function BrandStory() {
             </div>
             <Link to="/products" className="btn-primary gap-2">Explore Collection <ArrowRight size={16}/></Link>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80" alt="Artisan weaving" className="rounded-2xl w-full h-48 object-cover shadow-card row-span-2 mt-6"/>
-            <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400&q=80" alt="Jewelry craft" className="rounded-2xl w-full h-32 object-cover shadow-card"/>
-            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Fabric detail" className="rounded-2xl w-full h-32 object-cover shadow-card"/>
+          <div className="grid grid-cols-[0.9fr_1fr] gap-3 items-center">
+            <img src="/images/about-story.png" alt="Artisan weaving" className="rounded-2xl w-full h-[220px] md:h-[260px] object-cover shadow-card my-3"/>
+            <div className="flex flex-col gap-3">
+              <img src="/images/photo2.png" alt="Jewelry craft" className="rounded-2xl w-full h-48 object-cover shadow-card"/>
+              <img src="/images/photo3.png" alt="Fabric detail" className="rounded-2xl w-full h-48 object-cover shadow-card"/>
+            </div>
           </div>
         </div>
       </div>
