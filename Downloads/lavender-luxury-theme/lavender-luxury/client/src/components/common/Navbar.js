@@ -6,7 +6,7 @@ import { ShoppingBag, Heart, Search, Menu, X, LogOut, Settings, Package, User, C
 import { logout } from '../../slices/authSlice';
 import { CATEGORIES, PRODUCTS } from '../../utils/data';
 import toast from 'react-hot-toast';
-
+import logo from "../../assets/logo.jpeg";
 const NAV_LINKS = [
   { label:'Home', path:'/' },
   { label:'Women', path:'/products', sub: CATEGORIES.filter(c => c.slug !== 'kidswear' && c.slug !== 'bags').map(c => ({
@@ -57,22 +57,26 @@ export default function Navbar() {
     <>
       <motion.nav initial={{ y:-80 }} animate={{ y:0 }} transition={{ duration:0.5, ease:'easeOut' }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gold-pale' : 'bg-white/80 backdrop-blur-md'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="max-w-7xl mx-auto px-1.5 sm:px-3 lg:px-4">
+          <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 lg:h-20">
 
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center shadow-card group-hover:shadow-gold transition-shadow border border-gold/30">
-                <span className="text-gold-light font-display font-bold text-sm">L</span>
-              </div>
+            {/* Logo — leftmost */}
+            <Link to="/" className="flex items-center gap-2 group shrink-0 -ml-2 sm:-ml-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden shadow-[0_0_30px_rgba(255,215,0,0.6)] group-hover:shadow-[0_0_40px_rgba(255,215,0,0.75)] transition-shadow border border-gold/30 bg-white backdrop-blur-xl ring-2 ring-yellow-300/50">
+  <img
+    src={logo}
+    alt="Lavender Logo"
+    className="w-full h-full object-cover"
+  />
+</div>
               <div className="leading-none">
                 <p className="font-display font-bold text-lg text-plum tracking-tight">Lavender <span className="text-gold">✦</span></p>
                 <p className="font-accent text-xs text-gold italic tracking-widest">The Style Emporio</p>
               </div>
             </Link>
 
-            {/* Desktop nav */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* Desktop nav — centered */}
+            <div className="hidden lg:flex items-center justify-center gap-1">
               {NAV_LINKS.map(link => (
                 <div key={link.label} className="relative" onMouseEnter={() => setDropdown(link.label)} onMouseLeave={() => setDropdown(null)}>
                   <Link to={link.path} className={`flex items-center gap-1 px-3.5 py-2 rounded-full text-sm font-body font-medium transition-all duration-200 ${link.highlight ? 'text-rose font-semibold hover:bg-rose-soft' : location.pathname === link.path ? 'text-primary bg-champagne-light/80' : 'text-gray-700 hover:text-primary hover:bg-champagne-light/80'}`}>
@@ -87,8 +91,8 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-1.5">
+            {/* Actions — rightmost */}
+            <div className="flex items-center justify-end gap-1.5">
               <button onClick={() => setSearchOpen(true)} className="p-2.5 rounded-full text-gray-600 hover:text-primary hover:bg-champagne-light/80 transition-all"><Search size={19} /></button>
 
               {token ? (

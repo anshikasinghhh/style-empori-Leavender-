@@ -1,16 +1,16 @@
 export const CATEGORIES = [
   { _id:'c1',  name:'Saree',          slug:'saree',          icon:'🥻', image:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
-  { _id:'c2',  name:'Kurti',          slug:'kurti',          icon:'👘', image:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=400&q=80', color:'#EDD6FF', accent:'#4A1068' },
+  { _id:'c2',  name:'Kurti',          slug:'kurti',          icon:'🪡', image:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=400&q=80', color:'#EDD6FF', accent:'#4A1068' },
   { _id:'c3',  name:'Crop Top',       slug:'croptop',        icon:'👚', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#FDF2F8', accent:'#BE185D' },
   { _id:'c4',  name:'Pants',          slug:'pants',          icon:'👖', image:'https://images.unsplash.com/photo-1594633312681-425a7b956cc2?w=400&q=80', color:'#EFF6FF', accent:'#2563EB' },
-  { _id:'c5',  name:'Shawl',          slug:'shawl',          icon:'🧣', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', color:'#FFF7ED', accent:'#EA580C' },
-  { _id:'c6',  name:'Kidswear',       slug:'kidswear',       icon:'🎀', image:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400&q=80', color:'#ECFDF5', accent:'#059669' },
-  { _id:'c7',  name:'Night Gown',     slug:'night-gown',     icon:'🌙', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#F5F3FF', accent:'#7C3AED' },
-  { _id:'c8',  name:'Co-ord Sets',    slug:'coord-sets',     icon:'✨', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#FBF0D5', accent:'#C9963C' },
-  { _id:'c9',  name:'Bags',           slug:'bags',           icon:'👜', image:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400&q=80', color:'#FEF3C7', accent:'#B45309' },
+  { _id:'c5',  name:'Shawl',          slug:'shawl',          icon:'🧶', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', color:'#FFF7ED', accent:'#EA580C' },
+  { _id:'c6',  name:'Kidswear',       slug:'kidswear',       icon:'🧸', image:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400&q=80', color:'#ECFDF5', accent:'#059669' },
+  { _id:'c7',  name:'Night Gown',     slug:'night-gown',     icon:'👗', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#F5F3FF', accent:'#7C3AED' },
+  { _id:'c8',  name:'Co-ord Sets',    slug:'coord-sets',     icon:'🎽', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#FBF0D5', accent:'#C9963C' },
+  { _id:'c9',  name:'Bags',           slug:'bags',           icon:'👛', image:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400&q=80', color:'#FEF3C7', accent:'#B45309' },
   { _id:'c10', name:'Bodycon',        slug:'bodycon',        icon:'💃', image:'https://images.unsplash.com/photo-1595777459346-9a9521c3696e?w=400&q=80', color:'#FCE7F3', accent:'#DB2777' },
-  { _id:'c11', name:'Casuals',        slug:'casuals',        icon:'🌸', image:'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400&q=80', color:'#F0FDF4', accent:'#16A34A' },
-  { _id:'c12', name:'Churidar Sets',  slug:'churidar-sets',  icon:'🪷', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
+  { _id:'c11', name:'Casuals',        slug:'casuals',        icon:'👕', image:'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400&q=80', color:'#F0FDF4', accent:'#16A34A' },
+  { _id:'c12', name:'Churidar Sets',  slug:'churidar-sets',  icon:'🪢', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
 ];
 
 export const PRODUCTS = [
@@ -201,9 +201,9 @@ export const PRODUCTS = [
 ];
 
 export const HERO_BANNERS = [
-  { id:1, title:'Bridal Collection 2025', subtitle:'Dream Bigger. Shine Brighter.', description:'Curated bridal sets handcrafted by India\'s finest artisans — sarees, lehengas, and jewelry that tell a story.', cta:'Explore Bridal', link:'/products?occasion=Bridal', image:'https://fabriclore.com/cdn/shop/articles/Women_s_Dresses_Based_on_Regional_and_Ethnic_Styles_883f7690-0515-4460-88be-877b6ddd9417.jpg?v=1744360865&width=1400', gradient:'from-plum/85 via-plum-light/50 to-transparent' },
-  { id:2, title:'Festival Specials', subtitle:'Celebrate in Colour & Grace', description:'From Navratri chaniya cholis to Diwali silk sarees — your perfect festive look, curated with love.', cta:'Shop Festive', link:'/products?isFestival=true', image:'https://img.freepik.com/premium-photo/cute-girl-landscape-waving-her-dupatta-wearing-traditional-dress-fashion-photoshoot_658768-440.jpg?w=2000', gradient:'from-rose-950/85 via-rose-900/50 to-transparent' },
-  { id:3, title:'New Arrivals', subtitle:'Fresh Off the Loom', description:'Handpicked ethnic styles just arrived — discover artisan craftsmanship for the modern woman.', cta:'See New Arrivals', link:'/products?isNewArrival=true', image:'https://www.hatkay.com/cdn/shop/articles/Style-Tips-to-Follow-When-You-Are-Wearing-Traditional-Indian-Clothes.jpg?v=1662208510', gradient:'from-indigo-950/85 via-indigo-900/50 to-transparent' },
+  { id:1, image:'/images/photo2forbanner.png', gradient:'from-transparent via-violet-900/15 to-plum/65' },
+  { id:2,  image:'/images/banner2.png', gradient:'bg-gradient-to-r from-transparent via-rose-600/20 to-rose-600/45' },
+  { id:3,  image:'/images/banner3.png', gradient:'from-transparent via-indigo-600/30 to-indigo-650/35' },
 ];
 
 export const TESTIMONIALS = [
