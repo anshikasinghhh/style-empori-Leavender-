@@ -16,14 +16,21 @@ const getProductCategory = (value) => {
   if (!value) return '';
   return typeof value === 'object' ? value.name || value.slug || '' : String(value);
 };
+// Build slug -> name mapping from CATEGORIES
 const CATEGORY_SLUG_TO_NAME = Object.fromEntries(CATEGORIES.map(c => [c.slug, normalizeCategory(c.name)]));
+const CATEGORY_NAME_TO_SLUG = Object.fromEntries(CATEGORIES.map(c => [normalizeCategory(c.name), c.slug]));
 const categoryMatches = (productCategory, categoryParam) => {
   if (!productCategory || !categoryParam) return false;
   const productCat = normalizeCategory(productCategory);
   const param = normalizeCategory(categoryParam);
+  // Direct match
   if (productCat === param) return true;
+  // Match slug to display name
   if (CATEGORY_SLUG_TO_NAME[param] && productCat === CATEGORY_SLUG_TO_NAME[param]) return true;
-  if (param && productCat.startsWith(param + ' ')) return true;
+  // Match display name to slug
+  if (CATEGORY_NAME_TO_SLUG[productCat] && CATEGORY_NAME_TO_SLUG[productCat] === param) return true;
+  // Starts-with match (e.g. "co-ord set" matches "co-ord sets")
+  if (param && (productCat.startsWith(param) || param.startsWith(productCat))) return true;
   return false;
 };
 const SORT_OPTIONS = [
@@ -98,9 +105,8 @@ export default function ProductsPage() {
     const loadProducts = async () => {
       setLoading(true);
       try {
+        // Always fetch ALL products — category filtering is done client-side for reliability
         const params = { limit: 100 };
-        const category = searchParams.get('category');
-        if (category) params.category = category;
         if (searchParams.get('isFeatured')) params.isFeatured = 'true';
         if (searchParams.get('isNewArrival')) params.isNewArrival = 'true';
         if (searchParams.get('isBestSeller')) params.isBestSeller = 'true';

@@ -23,6 +23,8 @@ import ProfilePage from './pages/customer/ProfilePage';
 import LoginPage from './pages/customer/LoginPage';
 import RegisterPage from './pages/customer/RegisterPage';
 import PaymentSuccessPage from './pages/customer/PaymentSuccessPage';
+import PressMediaPage from './pages/customer/PressMedia';
+import CareersPage from './pages/customer/CareersPage';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -63,13 +65,17 @@ const EmployeeRoute = ({ children }) => {
   if (user?.role !== 'employee') return <Navigate to="/" replace />;
   return children;
 };
-const CustomerLayout = ({ children }) => (
+const CustomerLayout = ({ children }) => {
+  const location = useLocation();
+  const footerClass = ['/press-media', '/careers'].includes(location.pathname) ? 'pt-28' : '';
+  return (
   <div className="min-h-screen flex flex-col" style={{ background:'#FDF8F0' }}>
     <Navbar />
     <main className="flex-1">{children}</main>
-    <Footer />
+    <Footer className={footerClass} />
   </div>
-);
+  );
+};
 
 export default function App() {
   const dispatch = useDispatch();
@@ -100,6 +106,8 @@ export default function App() {
         <Route path="/products/:id" element={<CustomerLayout><ProductDetailPage /></CustomerLayout>} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/press-media" element={<CustomerLayout><PressMediaPage /></CustomerLayout>} />
+        <Route path="/careers" element={<CustomerLayout><CareersPage /></CustomerLayout>} />
         {/* Protected */}
         <Route path="/cart" element={<ProtectedRoute><CustomerLayout><CartPage /></CustomerLayout></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><CustomerLayout><WishlistPage /></CustomerLayout></ProtectedRoute>} />
