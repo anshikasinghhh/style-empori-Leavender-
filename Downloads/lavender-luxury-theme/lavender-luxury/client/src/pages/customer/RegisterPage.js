@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, X, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Sparkles } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser, googleLoginUser, clearError } from '../../slices/authSlice';
 import toast from 'react-hot-toast';
@@ -14,14 +14,7 @@ export default function RegisterPage() {
   const { loading, error, token } = useSelector(s => s.auth);
   const dispatch = useDispatch(); const navigate = useNavigate();
 
-  // Mock Google Modal states
-  const [showMockGoogle, setShowMockGoogle] = useState(false);
-  const [customMockEmail, setCustomMockEmail] = useState('');
-  const [customMockName, setCustomMockName] = useState('');
-  const [isCustomMode, setIsCustomMode] = useState(false);
-
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-  const isRealGoogleConfigured = googleClientId && googleClientId !== 'your-google-client-id.apps.googleusercontent.com';
 
   useEffect(() => {
     if (token) navigate('/');
@@ -35,12 +28,10 @@ export default function RegisterPage() {
   }, [error, dispatch]);
 
   useEffect(() => {
-    if (!isRealGoogleConfigured) return;
-
     const initGoogle = () => {
       if (window.google) {
         window.google.accounts.id.initialize({
-          client_id: googleClientId,
+          client_id: googleClientId || 'your-google-client-id.apps.googleusercontent.com',
           callback: (response) => {
             dispatch(googleLoginUser(response.credential));
           }
@@ -50,7 +41,7 @@ export default function RegisterPage() {
           window.google.accounts.id.renderButton(btnElem, {
             theme: "outline",
             size: "large",
-            width: btnElem.offsetWidth || 350
+            width: 350
           });
         }
       }
@@ -64,27 +55,7 @@ export default function RegisterPage() {
         script.addEventListener('load', initGoogle);
       }
     }
-  }, [isRealGoogleConfigured, googleClientId, dispatch]);
-
-  const handleMockLogin = (email, name) => {
-    const mockPayload = {
-      email,
-      name,
-      picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`
-    };
-    const base64 = btoa(unescape(encodeURIComponent(JSON.stringify(mockPayload))));
-    dispatch(googleLoginUser(`mock-google-token-${base64}`));
-    setShowMockGoogle(false);
-  };
-
-  const handleCustomMockSubmit = (e) => {
-    e.preventDefault();
-    if (!customMockEmail || !customMockName) {
-      toast.error('Please enter name and email');
-      return;
-    }
-    handleMockLogin(customMockEmail, customMockName);
-  };
+  }, [googleClientId, dispatch]);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -153,157 +124,16 @@ export default function RegisterPage() {
                   <span className="relative bg-white/95 px-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Or continue with</span>
                 </div>
 
-                {isRealGoogleConfigured ? (
-                  <div className="flex justify-center">
-                    <div id="realGoogleSignUpButton" className="w-full"></div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowMockGoogle(true)}
-                    className="flex w-full items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-3 font-body text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-55 active:bg-gray-100"
-                  >
-                    <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                    </svg>
-                    Google
-                  </button>
-                )}
+                <div className="flex justify-center">
+                  <div id="realGoogleSignUpButton" className="w-full"></div>
+                </div>
               </form>
               <p className="mt-6 text-center font-body text-sm text-gray-500">Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link></p>
             </div>
           </motion.div>
         </div>
       </div>
-
-      {/* Interactive Mock Google Selector Modal */}
-      <AnimatePresence>
-        {showMockGoogle && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowMockGoogle(false)}
-              className="absolute inset-0 bg-black/55 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-gray-100"
-            >
-              <button
-                onClick={() => setShowMockGoogle(false)}
-                className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-              >
-                <X size={18} />
-              </button>
-
-              <div className="mb-5 text-center">
-                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 border border-gray-100">
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                </div>
-                <h3 className="font-display text-lg font-bold text-gray-900">Sign up with Google</h3>
-                <p className="font-body text-xs text-gray-500 mt-1">Choose a Google account to continue to Vastra Elegance</p>
-              </div>
-
-              {!isCustomMode ? (
-                <div className="space-y-2.5">
-                  <button
-                    onClick={() => handleMockLogin('anshikasingh@gmail.com', 'Anshika Singh')}
-                    className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-left transition hover:bg-gray-100"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-bold text-sm">AS</div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-800">Anshika Singh</p>
-                      <p className="text-[10px] text-gray-500">anshikasingh@gmail.com</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleMockLogin('lakshitraina@gmail.com', 'Lakshit Raina')}
-                    className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-left transition hover:bg-gray-100"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-sm">LR</div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-800">Lakshit Raina</p>
-                      <p className="text-[10px] text-gray-500">lakshitraina@gmail.com</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleMockLogin('guestgoogle@gmail.com', 'Guest Explorer')}
-                    className="flex w-full items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 p-3 text-left transition hover:bg-gray-100"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-sm">GE</div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-800">Guest Explorer</p>
-                      <p className="text-[10px] text-gray-500">guestgoogle@gmail.com</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setIsCustomMode(true)}
-                    className="flex w-full items-center justify-center gap-1.5 py-2.5 font-body text-xs font-semibold text-primary hover:underline"
-                  >
-                    <User size={13} />
-                    Use another email account
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleCustomMockSubmit} className="space-y-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Rahul Sharma"
-                      value={customMockName}
-                      onChange={e => setCustomMockName(e.target.value)}
-                      className="input-field py-2 text-xs"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      placeholder="rahul@gmail.com"
-                      value={customMockEmail}
-                      onChange={e => setCustomMockEmail(e.target.value)}
-                      className="input-field py-2 text-xs"
-                      required
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomMode(false)}
-                      className="flex-1 rounded-xl border border-gray-250 py-2.5 text-xs font-semibold text-gray-650 hover:bg-gray-50"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 rounded-xl bg-primary py-2.5 text-xs font-semibold text-white hover:bg-primary-dark"
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </form>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
+
