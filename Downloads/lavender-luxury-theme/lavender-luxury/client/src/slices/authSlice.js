@@ -30,6 +30,16 @@ export const fetchMe = createAsyncThunk('auth/me', async (_, { rejectWithValue }
   }
 });
 
+export const googleLoginUser = createAsyncThunk('auth/googleLogin', async (idToken, { rejectWithValue }) => {
+  try {
+    const { data } = await api.post('/auth/google', { idToken });
+    localStorage.setItem('ve_token', data.token);
+    return data;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Google Login failed');
+  }
+});
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: { user: null, token: localStorage.getItem('ve_token'), loading: false, error: null, initialized: false },
@@ -49,6 +59,9 @@ const authSlice = createSlice({
       .addCase(registerUser.pending, (s) => { s.loading = true; s.error = null; })
       .addCase(registerUser.fulfilled, (s, a) => { s.loading = false; s.user = a.payload.user; s.token = a.payload.token; })
       .addCase(registerUser.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
+      .addCase(googleLoginUser.pending, (s) => { s.loading = true; s.error = null; })
+      .addCase(googleLoginUser.fulfilled, (s, a) => { s.loading = false; s.user = a.payload.user; s.token = a.payload.token; })
+      .addCase(googleLoginUser.rejected, (s, a) => { s.loading = false; s.error = a.payload; })
       .addCase(fetchMe.fulfilled, (s, a) => { s.user = a.payload.user; s.initialized = true; })
       .addCase(fetchMe.rejected, (s) => { s.token = null; s.initialized = true; localStorage.removeItem('ve_token'); });
   }
