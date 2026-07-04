@@ -46,7 +46,7 @@ const FEATURES = [
 
 export default function WhyWork() {
   return (
-    <section className="py-16 md:py-20 bg-champagne-light/60">
+    <section className="py-16 md:py-20 bg-[#f7efff]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div

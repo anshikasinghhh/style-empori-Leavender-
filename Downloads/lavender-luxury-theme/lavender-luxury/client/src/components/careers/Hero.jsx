@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles, Star } from 'lucide-react';
+import bgcarrer from '../../assets/bgcarrer.png';
 
 export default function Hero() {
   const scrollToOpportunities = () => {
@@ -15,13 +16,14 @@ export default function Hero() {
     <div className="relative min-h-[80vh] flex items-center overflow-hidden mt-16 lg:mt-20">
       {/* Background */}
       <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2d183d]/80 via-[#4f2b63]/45 to-transparent" />
         <img
-          src="/images/banner2.png"
-          alt="Lavender Fashion"
-          className="w-full h-full object-cover"
+          src={bgcarrer}
+          alt="Lavender Careers"
+          className="w-full h-full object-cover scale-[1.02] blur-[1px] opacity-80"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-plum/92 via-primary/75 to-primary-light/40" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,217,138,0.12),transparent_50%)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2d183d]/80 via-[#4f2b63]/45 to-[#7b5c97]/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(245,217,138,0.14),transparent_55%)]" />
       </div>
 
       {/* Decorative floating elements */}
@@ -43,10 +45,10 @@ export default function Hero() {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm"
+            className="inline-flex items-center gap-2 bg-white/90 border border-primary/20 rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm"
           >
-            <Sparkles size={13} className="text-gold-shine" />
-            <span className="font-accent text-white/90 text-sm italic tracking-wide">
+            <Sparkles size={13} className="text-primary" />
+            <span className="font-accent text-primary text-sm italic tracking-wide">
               Careers at Lavender
             </span>
           </motion.div>

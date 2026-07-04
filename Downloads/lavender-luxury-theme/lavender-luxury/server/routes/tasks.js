@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/auth');
 const Task = require('../models/Task');
+const User = require('../models/User');
+const { createNotification, notifyAdmins } = require('../services/notificationService');
 
 // @POST /api/employee/tasks - Create task (Admin only)
 router.post('/', protect, authorize('admin'), async (req, res) => {
@@ -21,6 +23,19 @@ router.post('/', protect, authorize('admin'), async (req, res) => {
       dueDate,
       type,
       product: type === 'Inventory' ? product : undefined
+    });
+
+    // Notify assigned employee about new task
+    const assignedEmployee = await User.findById(assignedTo).select('name');
+    const io = req.app.get('io');
+    await createNotification(io, {
+      recipient: assignedTo,
+      recipientRole: 'employee',
+      type: 'task_assigned',
+      title: 'New Task Assigned',
+      message: `You have been assigned a new task: "${title}"${priority ? ` (Priority: ${priority})` : ''}`,
+      link: '/employee/tasks',
+      relatedId: task._id
     });
 
     res.status(201).json({ success: true, task });
@@ -82,6 +97,19 @@ router.put('/:id/status', protect, authorize('employee', 'admin'), async (req, r
     if (remarks !== undefined) task.remarks = remarks;
 
     await task.save();
+
+    // If task is completed, notify admins
+    if (status === 'Completed') {
+      const employee = await User.findById(task.assignedTo).select('name');
+      const io = req.app.get('io');
+      await notifyAdmins(io, {
+        type: 'task_completed',
+        title: 'Task Completed',
+        message: `${employee?.name || 'An employee'} has completed the task: "${task.title}"`,
+        link: '/admin/tasks',
+        relatedId: task._id
+      });
+    }
 
     res.json({ success: true, message: 'Task status updated.', task });
   } catch (err) {

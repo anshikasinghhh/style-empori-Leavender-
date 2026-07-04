@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import closetpress from '../../assets/closetpress.png';
+import bgpress from '../../assets/bgpress.png';
 import {
   ArrowRight, Mail, FileImage, BookOpen, Camera, Image, Users, UserCircle,
   FileText, Download, Newspaper, Tv, Mic, Star, Sparkles, Heart, Globe,
@@ -38,50 +40,53 @@ function SectionTitle({ tag, title, subtitle, center = true }) {
 /* ─── 1. Hero ────────────────────────────────────────────────── */
 function Hero() {
   return (
-    <div className="relative min-h-[70vh] flex items-center overflow-hidden mt-16 lg:mt-20">
-      <div className="absolute inset-0">
-        <img src="/images/photo2forbanner.png" alt="Lavender Fashion"
-          className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-plum/90 via-primary/70 to-transparent" />
-      </div>
-      <div className="relative z-10 w-full px-2 sm:px-4 lg:px-6 py-28 flex justify-start">
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-          className="max-w-2xl w-full text-left ml-0 sm:ml-0 md:ml-0 lg:ml-0">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-6 backdrop-blur-sm">
-            <Sparkles size={13} className="text-gold-shine" />
-            <span className="font-accent text-white/90 text-sm italic">Press & Media Center</span>
+    <section
+      className="relative overflow-hidden pt-24 pb-16 md:pt-28 md:pb-20 mt-16 lg:mt-20"
+      style={{ backgroundImage: `url(${bgpress})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-[#efe4ff]/90 via-[#f5ebff]/80 to-white/80" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+          className="max-w-2xl mx-auto"
+        >
+          <div className="inline-flex items-center gap-2 bg-primary/8 border border-primary/15 rounded-full px-4 py-1.5 mb-6">
+            <Sparkles size={13} className="text-primary" />
+            <span className="font-accent text-primary text-sm italic tracking-wide">Press & Media Center</span>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
+          <h1 className="font-display text-4xl md:text-5xl lg:text-5xl font-bold text-gray-950 leading-snug mb-5">
             Welcome to the<br />Lavender Press Center
           </h1>
-          <p className="font-body text-white/80 text-base md:text-lg leading-relaxed mb-8 max-w-lg">
+          <p className="font-body text-gray-700 text-base md:text-lg leading-relaxed mb-8 max-w-lg mx-auto">
             Lavender is an emerging fashion brand founded on 4 January 2023, dedicated to offering stylish, comfortable,
             and premium-quality clothing at affordable prices. We're redefining modern fashion with purpose and confidence.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3 justify-center">
             <a href="mailto:media@yourlavenderdomain.com"
-              className="inline-flex items-center gap-2 bg-white text-primary px-7 py-3.5 rounded-full font-body font-bold hover:bg-gold-shine hover:text-gray-900 transition-all hover:scale-105 shadow-lg">
+              className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-full font-body font-bold hover:bg-primary-dark transition-all hover:scale-105 shadow-lg">
               Contact Media Team <ArrowRight size={17} />
             </a>
             <Link to="/products"
-              className="inline-flex items-center gap-2 border-2 border-white/40 text-white px-7 py-3.5 rounded-full font-body font-semibold hover:bg-white/10 transition-all backdrop-blur-sm">
+              className="inline-flex items-center gap-2 border-2 border-primary/30 text-primary px-7 py-3.5 rounded-full font-body font-semibold hover:bg-primary/5 transition-all">
               Explore Collection <ExternalLink size={15} />
             </Link>
           </div>
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 }
 
 /* ─── 2. About Lavender ─────────────────────────────────────── */
 function About() {
   return (
-    <Section>
+    <Section className="bg-primary-50/50">
       <div className="grid md:grid-cols-2 gap-12 items-center">
         <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
           className="relative">
-          <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85" alt="Lavender Fashion"
+          <img src={closetpress} alt="Lavender Fashion"
             className="rounded-3xl w-full h-[420px] object-cover shadow-premium" />
           <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl p-5 shadow-card border border-gold-pale/60">
             <p className="font-display text-3xl font-bold text-primary">2023</p>
@@ -122,7 +127,7 @@ function About() {
 /* ─── 3. Media Inquiries ────────────────────────────────────── */
 function MediaInquiries() {
   return (
-    <Section className="bg-champagne-light/60">
+    <Section className="bg-primary-50/40">
       <SectionTitle tag="Media Inquiries" title="Let's Work Together"
         subtitle="We welcome inquiries from journalists, editors, influencers, photographers, and media organizations." />
       <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -166,7 +171,7 @@ const BRAND_ASSETS = [
 
 function BrandAssets() {
   return (
-    <Section>
+    <Section className="bg-primary-50/30">
       <SectionTitle tag="Resources" title="Brand Assets"
         subtitle="Everything you need to feature Lavender in your publication or content." />
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -202,7 +207,7 @@ const COLLABS = [
 
 function Collaborations() {
   return (
-    <Section className="bg-champagne-light/60">
+    <Section className="bg-primary-50/50">
       <SectionTitle tag="Partnerships" title="Collaboration Opportunities"
         subtitle="We love working with creative minds across the fashion and media industry." />
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -237,7 +242,7 @@ const AWARDS = [
 
 function Awards() {
   return (
-    <Section className="bg-[#fdf7ed] border-y border-gold-pale/70">
+    <Section className="bg-primary-50/30">
       <SectionTitle tag="Recognition" title="Awards & Recognition"
         subtitle="This section will feature our future achievements, milestones, and industry recognition." />
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -270,7 +275,7 @@ const NEWS = [
 
 function LatestNews() {
   return (
-    <Section>
+    <Section className="bg-primary-50/50">
       <SectionTitle tag="Stay Updated" title="Latest News"
         subtitle="Press releases, product launches, and company updates." />
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
@@ -313,7 +318,7 @@ const RESOURCES = [
 
 function PressResources() {
   return (
-    <Section className="bg-champagne-light/60">
+    <Section className="bg-primary-50/40">
       <SectionTitle tag="Press Kit" title="Press Resources"
         subtitle="Quick access to essential materials for journalists and content creators." />
       <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}

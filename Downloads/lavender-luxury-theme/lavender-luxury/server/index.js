@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -10,6 +13,49 @@ const User = require('./models/User');
 const chatRoutes = require("./routes/chatRoutes");
 
 const app = express();
+const server = http.createServer(app);
+
+// Socket.io setup
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
+// Track connected users
+const userSocketMap = {};
+
+io.on('connection', (socket) => {
+  console.log('Socket connected:', socket.id);
+
+  // Authenticate socket connection
+  socket.on('authenticate', (token) => {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded.id;
+      userSocketMap[userId] = socket.id;
+      socket.join(`user:${userId}`);
+      console.log(`User ${userId} authenticated on socket ${socket.id}`);
+    } catch (err) {
+      console.error('Socket auth failed:', err.message);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    // Remove from map
+    for (const [userId, socketId] of Object.entries(userSocketMap)) {
+      if (socketId === socket.id) {
+        delete userSocketMap[userId];
+        break;
+      }
+    }
+    console.log('Socket disconnected:', socket.id);
+  });
+});
 // Middleware
 app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:3000',
@@ -39,6 +85,9 @@ app.use('/api/employee/tasks', require('./routes/tasks'));
 app.use('/api/employee/inventory-requests', require('./routes/inventoryRequests'));
 app.use('/api/employee/admin', require('./routes/employeeAdmin'));
 app.use('/api/loyalty-settings', require('./routes/loyaltySettings'));
+app.use('/api/giftcards', require('./routes/giftcards'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/flash-sales', require('./routes/flashSales'));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Vastra Elegance API is running' });
@@ -97,16 +146,19 @@ const startServer = async () => {
   try {
     await connectToDatabase();
     await seedDefaultUsers();
+    // Seed default gift card tiers if none exist
+    const GiftCardTier = require('./models/GiftCardTier');
+    await GiftCardTier.seedDefaults();
   } catch (err) {
     console.error('❌ MongoDB startup failed:', err.message);
     console.warn('⚠️ The server is starting up, but database operations will fail until MongoDB is reachable.');
   }
 
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
   });
 };
 
 startServer();
 
-module.exports = app;
+module.exports = { app, server, io };

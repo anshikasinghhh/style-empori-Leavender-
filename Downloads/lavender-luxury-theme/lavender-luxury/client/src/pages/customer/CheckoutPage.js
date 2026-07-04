@@ -5,6 +5,7 @@ import { CreditCard, Truck, CheckCircle, MapPin, Shield, ChevronRight, Heart, Gi
 import { useSelector, useDispatch } from 'react-redux';
 import { PRODUCTS, formatPrice } from '../../utils/data';
 import { clearCart } from '../../slices/cartSlice';
+import axios from 'axios';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -26,8 +27,13 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponMessage, setCouponMessage] = useState('');
   const [handlingCharge, setHandlingCharge] = useState(0);
+  const [giftCardCode, setGiftCardCode] = useState('');
+  const [giftCardDiscount, setGiftCardDiscount] = useState(0);
+  const [giftCardLoading, setGiftCardLoading] = useState(false);
+  const [giftCardMessage, setGiftCardMessage] = useState('');
+  const [giftCardBalance, setGiftCardBalance] = useState(0);
   const { items } = useSelector(s => s.cart);
-  const { user } = useSelector(s => s.auth);
+  const { user, token } = useSelector(s => s.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -46,7 +52,7 @@ export default function CheckoutPage() {
       : donationPreset
         ? donationPreset
         : 0;
-  const total = Math.max(0, subtotal - couponDiscount + shipping + handlingCharge + tax + giftWrapCost + donationAmount);
+  const total = Math.max(0, subtotal - couponDiscount - giftCardDiscount + shipping + handlingCharge + tax + giftWrapCost + donationAmount);
 
   useEffect(() => {
     const loadAvailableCoupons = async () => {
@@ -213,7 +219,14 @@ export default function CheckoutPage() {
           throw new Error('Failed to load Razorpay SDK. Please check your internet connection.');
         }
 
-        const { data: rzpOrderRes } = await api.post('/payments/razorpay/create-order', { orderId });
+        // Use raw axios to avoid 401 interceptor redirect during payment
+        const baseURL = process.env.REACT_APP_API_URL || '/api';
+        const { data: rzpOrderRes } = await axios.post(`${baseURL}/payments/razorpay/create-order`, { orderId }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
         if (!rzpOrderRes.success) {
           throw new Error(rzpOrderRes.message || 'Failed to generate payment session');
@@ -243,7 +256,14 @@ export default function CheckoutPage() {
                 orderId
               };
 
-              const { data: verifyRes } = await api.post('/payments/razorpay/verify', verifyData);
+              // Use raw axios to avoid 401 interceptor redirect during payment
+              const baseURL = process.env.REACT_APP_API_URL || '/api';
+              const { data: verifyRes } = await axios.post(`${baseURL}/payments/razorpay/verify`, verifyData, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
               if (verifyRes.success) {
                 dispatch(clearCart());
                 toast.success('Payment successful & order confirmed! 🛍️', { id: verifyToastId });
@@ -252,7 +272,13 @@ export default function CheckoutPage() {
                 throw new Error(verifyRes.message || 'Signature verification failed');
               }
             } catch (err) {
-              toast.error(err.message || 'Payment verification failed', { id: verifyToastId });
+              console.error('Payment verification error:', err);
+              if (err.response?.status === 401) {
+                toast.error('Session expired. Please login again.', { id: verifyToastId });
+                navigate('/login?redirect=/checkout');
+              } else {
+                toast.error(err.response?.data?.message || err.message || 'Payment verification failed', { id: verifyToastId });
+              }
               setLoading(false);
             }
           },
@@ -272,11 +298,23 @@ export default function CheckoutPage() {
               toast.dismiss(toastId);
               toast.error('Payment cancelled');
               setLoading(false);
+            },
+            onerror: function (err) {
+              console.error('Razorpay error:', err);
+              toast.dismiss(toastId);
+              toast.error(err?.reason || 'Payment failed. Please try again.');
+              setLoading(false);
             }
           }
         };
 
         const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          console.error('Payment failed:', response.error);
+          toast.dismiss(toastId);
+          toast.error(response.error?.description || 'Payment failed');
+          setLoading(false);
+        });
         toast.dismiss(toastId);
         rzp.open();
       }
@@ -425,6 +463,9 @@ export default function CheckoutPage() {
             {couponDiscount > 0 && (
               <div className="flex justify-between text-emerald-600"><span>Coupon Discount</span><span className="font-semibold">-{formatPrice(couponDiscount)}</span></div>
             )}
+            {giftCardDiscount > 0 && (
+              <div className="flex justify-between text-emerald-600"><span>Gift Card</span><span className="font-semibold">-{formatPrice(giftCardDiscount)}</span></div>
+            )}
             <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-semibold">{formatPrice(tax)}</span></div>
             {giftWrapCost > 0 && (
               <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-semibold">{formatPrice(giftWrapCost)}</span></div>
@@ -489,7 +530,52 @@ export default function CheckoutPage() {
 
             <div>
               <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
-                <Heart size={15} className="text-rose" /> Donate
+                <Gift size={15} className="text-primary" /> Gift Card
+              </p>
+              <p className="font-body text-xs text-gray-500 mb-3">Have a gift card? Enter the code here</p>
+              <div className="flex gap-2">
+                <input value={giftCardCode} onChange={e => setGiftCardCode(e.target.value.toUpperCase())}
+                  placeholder="LAV-XXXX-XXXX" maxLength={12}
+                  className="flex-1 input-field text-sm font-mono tracking-wider" />
+                <button onClick={async () => {
+                  const code = giftCardCode.trim();
+                  if (!code) { toast.error('Enter a gift card code'); return; }
+                  setGiftCardLoading(true);
+                  try {
+                    const { data } = await api.post('/giftcards/verify', { code });
+                    if (data.success) {
+                      const applyAmount = Math.min(data.giftCard.remainingBalance, total);
+                      const redeemRes = await api.post('/giftcards/redeem', { code, amount: applyAmount });
+                      if (redeemRes.data.success) {
+                        setGiftCardDiscount(redeemRes.data.redeemed);
+                        setGiftCardBalance(redeemRes.data.remainingBalance);
+                        setGiftCardMessage(`Gift card applied! ₹${redeemRes.data.redeemed} deducted`);
+                        toast.success('Gift card applied!');
+                      }
+                    }
+                  } catch (err) {
+                    setGiftCardMessage(err.response?.data?.message || 'Invalid gift card');
+                    toast.error(err.response?.data?.message || 'Invalid gift card code');
+                  } finally {
+                    setGiftCardLoading(false);
+                  }
+                }} disabled={giftCardLoading}
+                  className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-body font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50">
+                  {giftCardLoading ? '...' : 'Apply'}
+                </button>
+              </div>
+              {giftCardMessage && (
+                <p className={`font-body text-xs mt-2 ${giftCardDiscount > 0 ? 'text-emerald-600' : 'text-rose'}`}>{giftCardMessage}</p>
+              )}
+              {giftCardDiscount > 0 && (
+                <button type="button" onClick={() => { setGiftCardCode(''); setGiftCardDiscount(0); setGiftCardMessage(''); setGiftCardBalance(0); }}
+                  className="text-xs font-semibold text-primary mt-2">Remove gift card</button>
+              )}
+            </div>
+
+            <div>
+              <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                <Heart size={15} className="text-rose" /> Donate for Poor Children
               </p>
               <p className="font-body text-xs text-gray-500 mb-3">Support a cause with your order (optional)</p>
               <div className="flex flex-wrap gap-2 mb-3">

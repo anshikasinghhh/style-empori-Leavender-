@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Heart, Search, Menu, X, LogOut, Settings, Package, User, ChevronDown, Sparkles, AlertTriangle, Flame } from 'lucide-react';
 import { logout } from '../../slices/authSlice';
 import { CATEGORIES, PRODUCTS } from '../../utils/data';
+import NotificationBell from './NotificationBell';
+import { disconnectSocket } from '../../utils/socket';
 import toast from 'react-hot-toast';
 import logo from "../../assets/logo.jpeg";
 const NAV_LINKS = [
@@ -50,7 +52,7 @@ export default function Navbar() {
   // Don't show urgency banner on cart page (it has its own detailed alerts)
   const showUrgencyBanner = cartUrgency && location.pathname !== '/cart' && location.pathname !== '/checkout';
 
-  const handleLogout = () => { dispatch(logout()); toast.success('Logged out successfully'); navigate('/'); };
+  const handleLogout = () => { dispatch(logout()); disconnectSocket(); toast.success('Logged out successfully'); navigate('/'); };
   const handleSearch = (e) => { e.preventDefault(); if (searchQuery.trim()) { navigate(`/products?search=${encodeURIComponent(searchQuery)}`); setSearchOpen(false); setSearchQuery(''); } };
 
   return (
@@ -97,6 +99,7 @@ export default function Navbar() {
 
               {token ? (
                 <>
+                  <NotificationBell />
                   <Link to="/wishlist" className="relative p-2.5 rounded-full text-gray-600 hover:text-rose hover:bg-rose-soft transition-all">
                     <Heart size={19} />
                     {wishlist?.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose text-white text-[10px] font-bold rounded-full flex items-center justify-center">{wishlist.length}</span>}

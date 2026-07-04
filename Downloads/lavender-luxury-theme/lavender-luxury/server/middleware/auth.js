@@ -54,6 +54,16 @@ exports.generateToken = (id) => {
   );
 };
 
+exports.adminOrEmployee = (req, res, next) => {
+  if (!req.user || !['admin', 'employee'].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin or employee access required'
+    });
+  }
+  next();
+};
+
 exports.authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {

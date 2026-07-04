@@ -4,7 +4,6 @@ import About from '../../components/careers/About';
 import WhyWork from '../../components/careers/WhyWork';
 import CareerGrid from '../../components/careers/CareerGrid';
 import WhoWeAreLookingFor from '../../components/careers/WhoWeAreLookingFor';
-import Growth from '../../components/careers/Growth';
 import HiringProcess from '../../components/careers/HiringProcess';
 import ApplySection from '../../components/careers/ApplySection';
 import FAQ from '../../components/careers/FAQ';
@@ -19,7 +18,6 @@ export default function CareersPage() {
       <CareerGrid />
       <WhoWeAreLookingFor />
       <HiringProcess />
-      <Growth />
       <ApplySection />
       <FAQ />
       <CTA />

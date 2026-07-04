@@ -5,9 +5,9 @@ const Product = require('../models/Product');
 const StoreSettings = require('../models/StoreSettings');
 const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
 const { createShiprocketOrder } = require('../services/shiprocketService');
-// const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
+const { notifyAdmins, notifyEmployees, createNotification } = require('../services/notificationService');
 // ===== ORDER ROUTES =====
 // @POST /api/orders
 router.post('/', protect, async (req, res) => {
@@ -30,11 +30,58 @@ router.post('/', protect, async (req, res) => {
       estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     });
 
-    // Update product stock
+    // Update product stock and check for low stock
+    const io = req.app.get('io');
+    const lowStockProducts = [];
+
     for (const item of items) {
       if (item.product) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: -item.quantity, sold: item.quantity }
+        const updated = await Product.findByIdAndUpdate(
+          item.product,
+          { $inc: { stock: -item.quantity, sold: item.quantity } },
+          { new: true }
+        );
+        // Check if stock is low
+        if (updated && updated.stock <= 5 && updated.stock > 0) {
+          lowStockProducts.push({ name: updated.name, stock: updated.stock });
+        }
+        if (updated && updated.stock <= 0) {
+          lowStockProducts.push({ name: updated.name, stock: 0 });
+        }
+      }
+    }
+
+    // Notify admins about new order
+    const customerName = req.user.name || 'A customer';
+    await notifyAdmins(io, {
+      type: 'order_placed',
+      title: 'New Order Received',
+      message: `${customerName} placed a new order (#${order.orderNumber}) totaling ₹${order.total}`,
+      link: '/admin/orders',
+      relatedId: order._id
+    });
+
+    // Notify admins and employees about low stock
+    if (lowStockProducts.length > 0) {
+      for (const prod of lowStockProducts) {
+        const isOutOfStock = prod.stock <= 0;
+        const notifType = isOutOfStock ? 'out_of_stock' : 'low_stock';
+        const notifTitle = isOutOfStock ? 'Product Out of Stock' : 'Low Stock Alert';
+        const notifMsg = isOutOfStock
+          ? `"${prod.name}" is now out of stock!`
+          : `"${prod.name}" is running low — only ${prod.stock} left in stock!`;
+
+        await notifyAdmins(io, {
+          type: notifType,
+          title: notifTitle,
+          message: notifMsg,
+          link: '/admin/inventory'
+        });
+        await notifyEmployees(io, {
+          type: notifType,
+          title: notifTitle,
+          message: notifMsg,
+          link: '/employee/inventory'
         });
       }
     }
@@ -114,6 +161,28 @@ router.put('/:id/status', protect, adminOnly, async (req, res) => {
     if (status === 'confirmed' && !order.shiprocketOrderId) {
       createShiprocketOrder(order._id).catch(err => console.error("Shiprocket async error:", err));
     }
+
+    // Notify customer about order status update
+    const statusLabels = {
+      confirmed: 'confirmed',
+      processing: 'being processed',
+      shipped: 'shipped',
+      out_for_delivery: 'out for delivery',
+      delivered: 'delivered',
+      cancelled: 'cancelled',
+      returned: 'returned'
+    };
+    const io = req.app.get('io');
+    const label = statusLabels[status] || status;
+    await createNotification(io, {
+      recipient: order.user,
+      recipientRole: 'customer',
+      type: 'order_status',
+      title: 'Order Status Updated',
+      message: `Your order #${order.orderNumber} has been ${label}.`,
+      link: '/orders',
+      relatedId: order._id
+    });
 
     res.json({ success: true, order });
   } catch (err) {
