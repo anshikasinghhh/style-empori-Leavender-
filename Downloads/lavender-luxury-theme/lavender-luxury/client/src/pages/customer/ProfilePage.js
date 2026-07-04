@@ -49,7 +49,7 @@ export default function ProfilePage() {
         {STATS.map(s => (
           <Link key={s.label} to={s.link} className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all text-center group">
             <div className="w-10 h-10 rounded-xl bg-champagne-light/80 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary group-hover:text-white transition-all"><s.icon size={18} className="text-primary group-hover:text-white"/></div>
-            <p className="font-display text-xl font-bold text-gray-900">{s.value}</p>
+            <p className="font-body text-xl font-bold text-gray-900">{s.value}</p>
             <p className="font-body text-xs text-gray-500">{s.label}</p>
           </Link>
         ))}

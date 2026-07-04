@@ -79,17 +79,32 @@ function TrustBanner() {
 
 /* ─── Flash Sale Timer ───────────────────────────────────────── */
 function FlashSaleTimer() {
-  const [t, setT] = useState({ h:7, m:23, s:45 });
+  const [sale, setSale] = useState(null);
+  const [t, setT] = useState({ h: 0, m: 0, s: 0 });
+
   useEffect(() => {
-    const id = setInterval(() => setT(prev => {
-      let {h,m,s} = prev; s--;
-      if (s < 0) { s=59; m--; } if (m < 0) { m=59; h--; } if (h < 0) return prev;
-      return {h,m,s};
-    }), 1000);
-    return () => clearInterval(id);
+    api.get('/flash-sales/active').then(res => {
+      if (res.data) setSale(res.data);
+    }).catch(() => {});
   }, []);
-  const pad = n => String(n).padStart(2,'0');
-  const Block = ({v,l}) => (
+
+  useEffect(() => {
+    if (!sale?.endDate) return;
+    const update = () => {
+      const diff = new Date(sale.endDate) - new Date();
+      if (diff <= 0) { setT({ h: 0, m: 0, s: 0 }); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setT({ h, m, s });
+    };
+    update();
+    const id = setInterval(update, 1000);
+    return () => clearInterval(id);
+  }, [sale]);
+
+  const pad = n => String(n).padStart(2, '0');
+  const Block = ({ v, l }) => (
     <div className="text-center">
       <div className="w-14 h-14 md:w-16 md:h-16 bg-white/10 backdrop-blur-md border border-gold-shine/30 rounded-xl flex items-center justify-center shadow-[0_8px_30px_rgba(45,8,69,0.35)]">
         <span className="font-display text-2xl md:text-3xl font-bold text-gold-shine">{pad(v)}</span>
@@ -97,31 +112,30 @@ function FlashSaleTimer() {
       <p className="font-body text-white/80 text-[10px] mt-1 uppercase tracking-widest">{l}</p>
     </div>
   );
-  const flashProduct = { name: "Special Collection" };
   return (
     <section className="mx-3 sm:mx-6 my-12">
       <div className="relative overflow-hidden rounded-3xl shadow-premium">
         <div className="absolute inset-0 bg-gradient-to-br from-plum via-primary to-primary-light" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.14),transparent_45%)]" />
         <div className="absolute inset-0 opacity-15">
-          {[...Array(4)].map((_,i) => <div key={i} className="absolute rounded-full border border-gold-shine/20" style={{width:`${(i+1)*200}px`,height:`${(i+1)*200}px`,top:'50%',left:'30%',transform:'translate(-50%,-50%)'}}/>)}
+          {[...Array(4)].map((_, i) => <div key={i} className="absolute rounded-full border border-gold-shine/20" style={{ width: `${(i + 1) * 200}px`, height: `${(i + 1) * 200}px`, top: '50%', left: '30%', transform: 'translate(-50%,-50%)' }} />)}
         </div>
         <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 p-8 md:p-12">
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-gold-shine/25 rounded-full px-4 py-1.5 mb-4 backdrop-blur-sm">
-              <Zap size={14} className="text-gold-shine fill-gold-shine"/><span className="font-body text-white/90 text-sm font-semibold">Limited Time Only</span>
+              <Zap size={14} className="text-gold-shine fill-gold-shine" /><span className="font-body text-white/90 text-sm font-semibold">Limited Time Only</span>
             </div>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">Flash Sale</h2>
-            <p className="font-body text-white/80 mb-1">Up to 48% off on selected styles</p>
-            {flashProduct && <p className="font-accent text-gold-shine text-lg italic">"{flashProduct.name}" & more →</p>}
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-white mb-2">{sale?.name || 'Flash Sale'}</h2>
+            <p className="font-body text-white/80 mb-1">{sale?.bannerText || (sale?.discountPercent ? `Up to ${sale.discountPercent}% off on selected styles` : 'Up to 48% off on selected styles')}</p>
+            {sale?.products?.length > 0 && <p className="font-accent text-gold-shine text-lg italic">"{sale.products[0].name}" & more →</p>}
           </div>
           <div className="flex items-center gap-3 md:gap-4">
-            <Block v={t.h} l="Hours"/> <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
-            <Block v={t.m} l="Mins"/>  <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
-            <Block v={t.s} l="Secs"/>
+            <Block v={t.h} l="Hours" /> <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
+            <Block v={t.m} l="Mins" />  <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
+            <Block v={t.s} l="Secs" />
           </div>
           <Link to="/products?isFlashSale=true" className="btn-gold whitespace-nowrap text-base">
-            Shop Flash Sale <ArrowRight size={18}/>
+            Shop Flash Sale <ArrowRight size={18} />
           </Link>
         </div>
       </div>

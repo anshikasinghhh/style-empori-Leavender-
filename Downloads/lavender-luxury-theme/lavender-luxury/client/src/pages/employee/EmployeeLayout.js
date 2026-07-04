@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, Calendar, Archive, User, LogOut, Menu, X, Bell, ChevronRight, Sparkles, Package, Boxes, Tag } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, Calendar, Archive, User, LogOut, Menu, X, Bell, ChevronRight, Sparkles, Package, Boxes, Tag, Zap } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, fetchMe } from '../../slices/authSlice';
+import NotificationBell from '../../components/common/NotificationBell';
+import { disconnectSocket } from '../../utils/socket';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,12 +28,14 @@ export default function EmployeeLayout({ children }) {
     { icon: Package, label: 'Products', path: '/employee/products' },
     { icon: Boxes, label: 'Inventory', path: '/employee/inventory' },
     { icon: Archive, label: 'Stock Requests', path: '/employee/stock-requests' },
+    { icon: Zap, label: 'Flash Sales', path: '/employee/flash-sales' },
     ...(user?.canManageCoupons ? [{ icon: Tag, label: 'Coupons', path: '/employee/coupons' }] : []),
     { icon: User, label: 'Profile', path: '/employee/profile' }
   ];
 
   const handleLogout = () => {
     dispatch(logout());
+    disconnectSocket();
     toast.success('Logged out successfully');
     navigate('/');
   };
@@ -127,10 +131,7 @@ export default function EmployeeLayout({ children }) {
           </div>
           <div className="flex items-center gap-2">
             <Link to="/" className="btn-ghost text-xs py-1.5 px-3 gap-1"><Sparkles size={12} /> View Store</Link>
-            <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
-              <Bell size={19} className="text-gray-600" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose rounded-full" />
-            </button>
+            <NotificationBell />
             <div className="w-8 h-8 rounded-xl bg-brand-gradient flex items-center justify-center text-white text-xs font-bold shadow-sm">{user?.name?.[0]?.toUpperCase()}</div>
           </div>
         </header>

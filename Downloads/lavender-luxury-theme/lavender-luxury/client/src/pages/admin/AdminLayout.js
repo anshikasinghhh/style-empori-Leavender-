@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList, Gift, Zap } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../slices/authSlice';
+import NotificationBell from '../../components/common/NotificationBell';
+import { disconnectSocket } from '../../utils/socket';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,8 +18,10 @@ const NAV = [
   { icon:Users,           label:'Employees',  path:'/admin/employees',  badge:null },
   { icon:ClipboardList,   label:'Tasks',      path:'/admin/tasks',      badge:null },
   { icon:Calendar,        label:'Attendance', path:'/admin/attendance', badge:null },
-  { icon:Archive,         label:'Stock Requests', path:'/admin/inventory-requests', badge:null },
-  { icon:Settings,        label:'Settings',   path:'/admin/settings',   badge:null },
+  { icon: Archive,         label:'Stock Requests', path:'/admin/inventory-requests', badge:null },
+  { icon: Gift,             label:'Gift Cards',    path:'/admin/gift-cards',        badge:null },
+  { icon: Zap,              label:'Flash Sales',   path:'/admin/flash-sales',       badge:null },
+  { icon: Settings,        label:'Settings',   path:'/admin/settings',   badge:null },
 ];
 
 export default function AdminLayout({ children }) {
@@ -26,7 +30,7 @@ export default function AdminLayout({ children }) {
   const location = useLocation(); const dispatch = useDispatch(); const navigate = useNavigate();
   const { user } = useSelector(s => s.auth);
 
-  const handleLogout = () => { dispatch(logout()); toast.success('Logged out successfully'); navigate('/'); };
+  const handleLogout = () => { dispatch(logout()); disconnectSocket(); toast.success('Logged out successfully'); navigate('/'); };
 
   const Sidebar = ({ mobile }) => (
     <aside className={`${mobile ? 'w-64' : collapsed ? 'w-16' : 'w-64'} bg-dark-brand text-white flex flex-col transition-all duration-300 ${mobile ? '' : 'fixed top-0 left-0 bottom-0 z-40'}`}>
@@ -123,10 +127,7 @@ export default function AdminLayout({ children }) {
           </div>
           <div className="flex items-center gap-2">
             <Link to="/" className="btn-ghost text-xs py-1.5 px-3 gap-1"><Sparkles size={12}/> View Store</Link>
-            <button className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
-              <Bell size={19} className="text-gray-600"/>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose rounded-full"/>
-            </button>
+            <NotificationBell />
             <div className="w-8 h-8 rounded-xl bg-brand-gradient flex items-center justify-center text-white text-xs font-bold shadow-sm">{user?.name?.[0]}</div>
           </div>
         </header>

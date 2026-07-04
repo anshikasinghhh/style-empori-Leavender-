@@ -25,6 +25,9 @@ import RegisterPage from './pages/customer/RegisterPage';
 import PaymentSuccessPage from './pages/customer/PaymentSuccessPage';
 import PressMediaPage from './pages/customer/PressMedia';
 import CareersPage from './pages/customer/CareersPage';
+import SustainabilityPage from './pages/customer/SustainabilityPage';
+import CraftsmanshipPage from './pages/customer/CraftsmanshipPage';
+import GiftCardsPage from './pages/customer/GiftCardsPage';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -38,6 +41,8 @@ import AdminEmployees from './pages/admin/AdminEmployees';
 import AdminTasks from './pages/admin/AdminTasks';
 import AdminAttendance from './pages/admin/AdminAttendance';
 import AdminInventoryRequests from './pages/admin/AdminInventoryRequests';
+import AdminGiftCards from './pages/admin/AdminGiftCards';
+import AdminFlashSales from './pages/admin/AdminFlashSales';
 
 // Employee pages
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
@@ -48,6 +53,7 @@ import EmployeeInventoryStock from './pages/employee/EmployeeInventoryStock';
 import EmployeeProducts from './pages/employee/EmployeeProducts';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
 import EmployeeCoupons from './pages/employee/EmployeeCoupons';
+import EmployeeFlashSales from './pages/employee/EmployeeFlashSales';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useSelector(s => s.auth);
@@ -67,7 +73,7 @@ const EmployeeRoute = ({ children }) => {
 };
 const CustomerLayout = ({ children }) => {
   const location = useLocation();
-  const footerClass = ['/press-media', '/careers'].includes(location.pathname) ? 'pt-28' : '';
+  const footerClass = ['/press-media', '/careers', '/gift-cards'].includes(location.pathname) ? 'pt-28' : '';
   return (
   <div className="min-h-screen flex flex-col" style={{ background:'#FDF8F0' }}>
     <Navbar />
@@ -108,6 +114,9 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/press-media" element={<CustomerLayout><PressMediaPage /></CustomerLayout>} />
         <Route path="/careers" element={<CustomerLayout><CareersPage /></CustomerLayout>} />
+        <Route path="/sustainability" element={<CustomerLayout><SustainabilityPage /></CustomerLayout>} />
+        <Route path="/craftsmanship" element={<CustomerLayout><CraftsmanshipPage /></CustomerLayout>} />
+        <Route path="/gift-cards" element={<CustomerLayout><GiftCardsPage /></CustomerLayout>} />
         {/* Protected */}
         <Route path="/cart" element={<ProtectedRoute><CustomerLayout><CartPage /></CustomerLayout></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><CustomerLayout><WishlistPage /></CustomerLayout></ProtectedRoute>} />
@@ -128,6 +137,8 @@ export default function App() {
         <Route path="/admin/tasks" element={<AdminRoute><AdminTasks /></AdminRoute>} />
         <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance /></AdminRoute>} />
         <Route path="/admin/inventory-requests" element={<AdminRoute><AdminInventoryRequests /></AdminRoute>} />
+        <Route path="/admin/gift-cards" element={<AdminRoute><AdminGiftCards /></AdminRoute>} />
+<Route path="/admin/flash-sales" element={<AdminRoute><AdminFlashSales /></AdminRoute>} />
         {/* Employee */}
         <Route path="/employee" element={<EmployeeRoute><EmployeeDashboard /></EmployeeRoute>} />
         <Route path="/employee/tasks" element={<EmployeeRoute><EmployeeTasks /></EmployeeRoute>} />
@@ -137,6 +148,7 @@ export default function App() {
         <Route path="/employee/stock-requests" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
         <Route path="/employee/profile" element={<EmployeeRoute><EmployeeProfile /></EmployeeRoute>} />
         <Route path="/employee/coupons" element={<EmployeeRoute><EmployeeCoupons /></EmployeeRoute>} />
+<Route path="/employee/flash-sales" element={<EmployeeRoute><EmployeeFlashSales /></EmployeeRoute>} />
         {/* 404 */}
         <Route path="*" element={<CustomerLayout><div className="flex items-center justify-center min-h-[60vh]"><div className="text-center"><p className="font-display text-6xl font-bold text-primary-100 mb-4">404</p><h2 className="font-display text-2xl font-bold text-gray-800 mb-3">Page Not Found</h2><p className="font-body text-gray-500 mb-6">The page you're looking for doesn't exist.</p><a href="/" className="btn-primary inline-flex">Go Home</a></div></div></CustomerLayout>} />
       </Routes>

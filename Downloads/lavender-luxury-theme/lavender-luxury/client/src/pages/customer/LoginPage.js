@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, ArrowLeft, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, clearError } from '../../slices/authSlice';
 import toast from 'react-hot-toast';
@@ -13,7 +13,9 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const { loading, error, token } = useSelector(s => s.auth);
   const dispatch = useDispatch(); const navigate = useNavigate();
-  useEffect(() => { if (token) navigate('/'); }, [token, navigate]);
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || '/';
+  useEffect(() => { if (token) navigate(redirectTo); }, [token, navigate, redirectTo]);
   useEffect(() => { if (error) { toast.error(error); dispatch(clearError()); } }, [error, dispatch]);
 
   return (
@@ -73,11 +75,6 @@ export default function LoginPage() {
                 <button type="submit" disabled={loading} className="w-full btn-primary py-3.5 text-base">
                   {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : 'Sign In'}
                 </button>
-                <div className="rounded-xl border border-primary-100 bg-champagne-light/80 p-4 space-y-2">
-                  <p className="flex items-center gap-1 font-body text-xs font-bold text-primary-dark"><Sparkles size={12}/> Demo Accounts</p>
-                  <button type="button" onClick={() => setForm({ email:'admin@lavender.com', password:'admin123' })} className="w-full py-1 text-left text-xs font-body text-gray-700 transition-colors hover:text-primary">👑 Admin: admin@lavender.com / admin123</button>
-                  <button type="button" onClick={() => setForm({ email:'customer@lavender.com', password:'customer123' })} className="w-full py-1 text-left text-xs font-body text-gray-600 transition-colors hover:text-primary">🛍️ Customer: customer@lavender.com / customer123</button>
-                </div>
               </form>
               <p className="mt-6 text-center font-body text-sm text-gray-500">New here? <Link to="/register" className="font-semibold text-primary hover:underline">Create an account</Link></p>
             </div>

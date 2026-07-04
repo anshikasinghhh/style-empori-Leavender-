@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Quote } from 'lucide-react';
+import career2 from '../../assets/career2.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -21,7 +22,7 @@ export default function About() {
             className="relative"
           >
             <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=700&q=85"
+              src={career2}
               alt="Lavender Team"
               className="rounded-3xl w-full h-[420px] object-cover shadow-premium"
             />

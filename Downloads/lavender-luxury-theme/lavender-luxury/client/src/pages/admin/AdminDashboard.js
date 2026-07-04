@@ -236,7 +236,7 @@ export default function AdminDashboard() {
                     <k.icon size={18} className="text-white" />
                   </div>
                 </div>
-                <p className="font-display text-2xl font-bold text-gray-900 mb-0.5">{k.value}</p>
+                <p className="font-body text-2xl font-bold text-gray-900 mb-0.5">{k.value}</p>
                 <p className="font-body text-xs text-gray-400">{k.title}</p>
                 <p className="font-body text-[11px] text-gray-300 mt-0.5">{k.sub}</p>
               </motion.div>

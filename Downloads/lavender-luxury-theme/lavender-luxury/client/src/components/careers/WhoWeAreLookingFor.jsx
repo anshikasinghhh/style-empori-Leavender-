@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
+import career3 from '../../assets/career3.png';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -23,7 +24,7 @@ const TRAITS = [
 
 export default function WhoWeAreLookingFor() {
   return (
-    <section className="py-16 md:py-20 bg-champagne-light/60">
+    <section className="py-16 md:py-20 bg-[#f7efff]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left: Image */}
@@ -35,7 +36,7 @@ export default function WhoWeAreLookingFor() {
             className="relative"
           >
             <img
-              src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=700&q=85"
+              src={career3}
               alt="Lavender Team"
               className="rounded-3xl w-full h-[480px] object-cover shadow-premium"
             />

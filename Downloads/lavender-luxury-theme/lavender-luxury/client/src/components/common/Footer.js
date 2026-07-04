@@ -1,10 +1,45 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Instagram, Facebook, Twitter, Youtube, Mail, Phone, MapPin, Heart } from 'lucide-react';
 import { CATEGORIES } from '../../utils/data';
 import logo from '../../assets/logo.jpeg';
 
 export default function Footer({ className = '' }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleFooterLinkClick = (e, to) => {
+    e.preventDefault();
+
+    const hashIndex = to.indexOf('#');
+    const path = hashIndex !== -1 ? to.substring(0, hashIndex) || '/' : to;
+    const hash = hashIndex !== -1 ? to.substring(hashIndex + 1) : '';
+    const targetHash = hash ? `#${hash}` : '';
+
+    const scrollToTarget = () => {
+      if (hash) {
+        setTimeout(() => {
+          const element = document.getElementById(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+          }
+        }, 80);
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+    };
+
+    if (location.pathname === path && location.hash === targetHash) {
+      scrollToTarget();
+      return;
+    }
+
+    navigate(path + targetHash);
+    setTimeout(scrollToTarget, 80);
+  };
+
   return (
     <footer className={`relative z-20 overflow-hidden bg-gradient-to-br from-plum via-primary to-primary-light text-white ${className}`}>
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.12),transparent_45%)]" />
@@ -19,7 +54,8 @@ export default function Footer({ className = '' }) {
             </div>
             <p className="font-body text-white/60 text-sm leading-relaxed mb-5">Celebrating rich textile heritage through premium ethnic fashion. Crafted with love, delivered with care worldwide.</p>
             <div className="flex gap-2.5">
-              {[Instagram, Facebook, Twitter, Youtube].map((Icon, i) => (
+              <a href="https://www.instagram.com/accounts/login/?next=%2Flav_ender_thestyle_emporio&source=omni_redirect" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><Instagram size={16}/></a>
+              {[Facebook, Twitter, Youtube].map((Icon, i) => (
                 <button key={i} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"><Icon size={16}/></button>
               ))}
             </div>
@@ -31,11 +67,11 @@ export default function Footer({ className = '' }) {
                 { label: 'About Us', to: '/#about' },
                 { label: 'Careers', to: '/careers' },
                 { label: 'Press & Media', to: '/press-media' },
-                { label: 'Sustainability', to: '/products' },
-                { label: 'Gift Cards', to: '/products' },
-                { label: 'Our Artisans', to: '/products' },
+                { label: 'Sustainability', to: '/sustainability' },
+                { label: 'Gift Cards', to: '/gift-cards' },
+                { label: 'Our Artisans & Craftsmanship', to: '/craftsmanship' },
               ].map(item => (
-                <li key={item.label}><Link to={item.to} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.label}</Link></li>
+                <li key={item.label}><Link to={item.to} onClick={(e) => handleFooterLinkClick(e, item.to)} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.label}</Link></li>
               ))}
             </ul>
           </div>
@@ -43,22 +79,17 @@ export default function Footer({ className = '' }) {
             <h4 className="font-display font-semibold text-base mb-4">Shop</h4>
             <ul className="space-y-2.5">
               {CATEGORIES.map(item => (
-                <li key={item.slug}><Link to={`/products?category=${item.slug}`} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.name}</Link></li>
+                <li key={item.slug}><Link to={`/products?category=${item.slug}`} onClick={(e) => handleFooterLinkClick(e, `/products?category=${item.slug}`)} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.name}</Link></li>
               ))}
             </ul>
           </div>
           <div>
             <h4 className="font-display font-semibold text-base mb-4">Contact</h4>
             <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-3 text-white/60 text-sm font-body"><MapPin size={15} className="mt-0.5 shrink-0 text-gold"/>Fashion District, Bandra, Mumbai 400050</li>
+              <li className="flex items-start gap-3 text-white/60 text-sm font-body"><MapPin size={15} className="mt-0.5 shrink-0 text-gold"/>Opposite, Technopark Phase III Main Rd, Mukkolackal, Kazhakkoottam, Thiruvananthapuram, Kerala 695582</li>
               <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Phone size={15} className="shrink-0 text-gold"/>+91 98765 43210</li>
-              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Mail size={15} className="shrink-0 text-gold"/>hello@lavender-styleemporio.in</li>
+              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Mail size={15} className="shrink-0 text-gold"/>lavendertsetrading@gmail.com</li>
             </ul>
-            <h4 className="font-display font-semibold text-sm mb-3">Newsletter</h4>
-            <div className="flex gap-2">
-              <input type="email" placeholder="Your email" className="flex-1 px-3 py-2.5 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/30 text-sm focus:outline-none focus:border-white/30 font-body"/>
-              <button className="px-4 py-2.5 bg-primary rounded-xl text-sm font-semibold hover:bg-primary-dark transition-colors font-body whitespace-nowrap">Go</button>
-            </div>
           </div>
         </div>
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -68,7 +99,7 @@ export default function Footer({ className = '' }) {
             { label: 'Privacy Policy', to: '/press-media' },
             { label: 'Terms of Service', to: '/press-media' },
             { label: 'Returns Policy', to: '/products' },
-          ].map(item => <Link key={item.label} to={item.to} className="font-body text-white/40 hover:text-white text-xs transition-colors">{item.label}</Link>)}</div>
+          ].map(item => <Link key={item.label} to={item.to} onClick={(e) => handleFooterLinkClick(e, item.to)} className="font-body text-white/40 hover:text-white text-xs transition-colors">{item.label}</Link>)}</div>
         </div>
       </div>
     </footer>

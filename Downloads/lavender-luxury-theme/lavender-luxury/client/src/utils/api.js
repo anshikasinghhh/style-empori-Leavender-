@@ -16,7 +16,11 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('ve_token');
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      const redirectUrl = currentPath !== '/login' && currentPath !== '/register'
+        ? `/login?redirect=${encodeURIComponent(currentPath)}`
+        : '/login';
+      window.location.href = redirectUrl;
     }
     return Promise.reject(err);
   }
