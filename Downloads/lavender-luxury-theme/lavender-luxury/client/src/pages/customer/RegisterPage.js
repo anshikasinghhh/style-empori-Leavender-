@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Sparkles } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, clearError } from '../../slices/authSlice';
+import { registerUser, googleLoginUser, clearError } from '../../slices/authSlice';
 import toast from 'react-hot-toast';
 import registerImage from '../../assets/ChatGPT Image Jun 30, 2026, 02_29_42 PM.png';
 import logoImage from '../../assets/logo.jpeg';
@@ -13,8 +13,49 @@ export default function RegisterPage() {
   const [showPass, setShowPass] = useState(false);
   const { loading, error, token } = useSelector(s => s.auth);
   const dispatch = useDispatch(); const navigate = useNavigate();
-  useEffect(() => { if (token) navigate('/'); }, [token, navigate]);
-  useEffect(() => { if (error) { toast.error(error); dispatch(clearError()); } }, [error, dispatch]);
+
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (token) navigate('/');
+  }, [token, navigate]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
+
+  useEffect(() => {
+    const initGoogle = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId || 'your-google-client-id.apps.googleusercontent.com',
+          callback: (response) => {
+            dispatch(googleLoginUser(response.credential));
+          }
+        });
+        const btnElem = document.getElementById("realGoogleSignUpButton");
+        if (btnElem) {
+          window.google.accounts.id.renderButton(btnElem, {
+            theme: "outline",
+            size: "large",
+            width: 350
+          });
+        }
+      }
+    };
+
+    if (window.google) {
+      initGoogle();
+    } else {
+      const script = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
+      if (script) {
+        script.addEventListener('load', initGoogle);
+      }
+    }
+  }, [googleClientId, dispatch]);
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -29,16 +70,16 @@ export default function RegisterPage() {
 
       <div className="relative z-10 flex min-h-screen">
         <div className="hidden lg:flex w-1/2 items-center justify-center">
-  <div className="w-full max-w-xl text-white text-center translate-x-52">
-           <div className="mb-8 mt-4 flex justify-center">
-  <div className="mb-1 rounded-full backdrop-blur-xl shadow-[0_0_40px_rgba(255,215,0,0.35)]">
-    <img
-      src={logoImage}
-      alt="Logo"
-      className="h-24 w-24 rounded-full"
-    />
-  </div>
-</div> 
+          <div className="w-full max-w-xl text-white text-center translate-x-52">
+            <div className="mb-8 mt-4 flex justify-center">
+              <div className="mb-1 rounded-full backdrop-blur-xl shadow-[0_0_40px_rgba(255,215,0,0.35)]">
+                <img
+                  src={logoImage}
+                  alt="Logo"
+                  className="h-24 w-24 rounded-full"
+                />
+              </div>
+            </div> 
 
             <h1 className="mb-1 font-display text-5xl font-bold drop-shadow-lg">Join Us Today</h1>
 
@@ -55,7 +96,7 @@ export default function RegisterPage() {
             </ul>
           </div>
         </div>
-<div className="flex flex-1 items-center justify-start pl-24 pr-6 py-6 lg:pl-28 lg:pr-10 lg:py-10">
+        <div className="flex flex-1 items-center justify-start pl-24 pr-6 py-6 lg:pl-28 lg:pr-10 lg:py-10">
           <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} className="w-full max-w-md">
             <Link to="/" className="mb-8 inline-flex items-center gap-2 text-gray-100 hover:text-primary font-body text-sm transition-colors"><ArrowLeft size={16}/> Back to Home</Link>
             <div className="rounded-3xl border border-gold-pale/60 bg-white/95 p-8 shadow-premium backdrop-blur-sm">
@@ -77,6 +118,15 @@ export default function RegisterPage() {
                 <button type="submit" disabled={loading} className="w-full btn-primary py-3.5 text-base">
                   {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : 'Create Account'}
                 </button>
+
+                <div className="relative my-4 flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                  <span className="relative bg-white/95 px-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Or continue with</span>
+                </div>
+
+                <div className="flex justify-center">
+                  <div id="realGoogleSignUpButton" className="w-full"></div>
+                </div>
               </form>
               <p className="mt-6 text-center font-body text-sm text-gray-500">Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link></p>
             </div>
@@ -86,3 +136,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
