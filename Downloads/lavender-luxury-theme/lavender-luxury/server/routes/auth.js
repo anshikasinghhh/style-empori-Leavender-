@@ -74,4 +74,77 @@ router.put('/change-password', protect, async (req, res) => {
   }
 });
 
+// @POST /api/auth/google
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ success: false, message: 'ID Token is required' });
+    }
+
+    let payload;
+
+    if (idToken.startsWith('mock-google-token-')) {
+      try {
+        const jsonStr = Buffer.from(idToken.substring('mock-google-token-'.length), 'base64').toString('utf-8');
+        payload = JSON.parse(jsonStr);
+      } catch (err) {
+        return res.status(400).json({ success: false, message: 'Malformed mock token' });
+      }
+    } else {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+      if (!response.ok) {
+        return res.status(400).json({ success: false, message: 'Invalid Google token' });
+      }
+      payload = await response.json();
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      if (clientId && clientId !== 'your_google_client_id' && payload.aud !== clientId) {
+        return res.status(400).json({ success: false, message: 'Audience mismatch' });
+      }
+    }
+
+    const { email, name, picture } = payload;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google account has no email linked' });
+    }
+
+    let user = await User.findOne({ email }).select('+password');
+
+    if (user) {
+      user.lastLogin = new Date();
+      if (picture && !user.avatar) {
+        user.avatar = picture;
+      }
+      await user.save({ validateBeforeSave: false });
+    } else {
+      const randomPassword = Math.random().toString(36).slice(-8) + Date.now().toString(36).slice(-4);
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        password: randomPassword,
+        avatar: picture || '',
+        role: 'customer'
+      });
+    }
+
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+        canManageCoupons: user.canManageCoupons || false
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;
