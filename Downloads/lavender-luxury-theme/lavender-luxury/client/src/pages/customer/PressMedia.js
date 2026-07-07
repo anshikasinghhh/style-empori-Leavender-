@@ -9,6 +9,7 @@ import {
   Megaphone, Trophy, Award, TrendingUp, PartyPopper, Building2, Palette,
   Scissors, Video, Quote, BarChart3, Calendar, Send, ChevronRight, ExternalLink
 } from 'lucide-react';
+import { openMailComposer } from '../../utils/mailto';
 
 /* ─── Animation Variants ────────────────────────────────────── */
 const fadeUp = {
@@ -64,7 +65,8 @@ function Hero() {
             and premium-quality clothing at affordable prices. We're redefining modern fashion with purpose and confidence.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <a href="mailto:media@yourlavenderdomain.com"
+            <a href="mailto:hrlavender247@gmail.com"
+              onClick={(e) => openMailComposer(e, 'hrlavender247@gmail.com', 'Media Inquiry', 'Hi Lavender Media Team,\n\nI would like to inquire about...')}
               className="inline-flex items-center gap-2 bg-primary text-white px-7 py-3.5 rounded-full font-body font-bold hover:bg-primary-dark transition-all hover:scale-105 shadow-lg">
               Contact Media Team <ArrowRight size={17} />
             </a>
@@ -143,10 +145,11 @@ function MediaInquiries() {
           </p>
           <div className="inline-flex items-center gap-2 bg-champagne-light/80 border border-gold-pale rounded-full px-6 py-3 mb-6">
             <Mail size={16} className="text-primary" />
-            <span className="font-body font-semibold text-primary text-sm">media@yourlavenderdomain.com</span>
+            <span className="font-body font-semibold text-primary text-sm">hrlavender247@gmail.com</span>
           </div>
           <div>
-            <a href="mailto:media@yourlavenderdomain.com"
+            <a href="mailto:hrlavender247@gmail.com"
+              onClick={(e) => openMailComposer(e, 'hrlavender247@gmail.com', 'Media Inquiry', 'Hi Lavender Media Team,\n\nI would like to inquire about...')}
               className="btn-primary text-base px-8 py-4 gap-2">
               Send Email <Send size={16} />
             </a>
@@ -357,12 +360,13 @@ function FinalCTA() {
           Whether you're a journalist, blogger, influencer, or content creator — we'd love to collaborate.
           Reach out to our media team for press kits, interviews, and more.
         </p>
-        <a href="mailto:media@yourlavenderdomain.com"
+        <a href="mailto:hrlavender247@gmail.com"
+          onClick={(e) => openMailComposer(e, 'hrlavender247@gmail.com', 'Media Inquiry', 'Hi Lavender Media Team,\n\nI would like to inquire about...')}
           className="btn-primary px-6 py-2.5 text-xs">
           Contact Media Team <ArrowRight size={13} />
         </a>
         <p className="font-body text-gray-400 text-[10px] mt-2">
-          media@yourlavenderdomain.com
+          hrlavender247@gmail.com
         </p>
       </motion.div>
       </div>
