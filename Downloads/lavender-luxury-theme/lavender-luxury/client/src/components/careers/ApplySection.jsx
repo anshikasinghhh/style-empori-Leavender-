@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Mail, FileText, MessageSquare, Briefcase, FolderOpen, Send, Info } from 'lucide-react';
+import { openMailComposer } from '../../utils/mailto';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -63,13 +64,14 @@ export default function ApplySection() {
               <div className="inline-flex items-center gap-2 bg-champagne-light border border-gold-pale rounded-full px-5 py-2.5 mb-5">
                 <Mail size={15} className="text-primary" />
                 <span className="font-body font-semibold text-primary text-sm">
-                  careers@yourlavenderdomain.com
+                  hrlavender247@gmail.com
                 </span>
               </div>
 
               <div>
                 <a
-                  href="mailto:careers@yourlavenderdomain.com?subject=Application%20for%20Lavender&body=Hi%20Lavender%20Team%2C%0A%0AI%20would%20like%20to%20apply%20for%20the%20position%20of%20..."
+                  href="mailto:hrlavender247@gmail.com?subject=Application%20for%20Lavender&body=Hi%20Lavender%20Team%2C%0A%0AI%20would%20like%20to%20apply%20for%20the%20position%20of%20..."
+                  onClick={(e) => openMailComposer(e, 'hrlavender247@gmail.com', 'Application for Lavender', 'Hi Lavender Team,\n\nI would like to apply for the position of ...')}
                   className="inline-flex items-center gap-2 bg-white text-primary px-10 py-4 rounded-full font-body font-bold text-base hover:bg-gold-shine hover:text-gray-900 transition-all hover:scale-105 shadow-lg border border-gold-pale"
                 >
                   Apply via Email <Send size={16} />
