@@ -1,7 +1,7 @@
 {
-  "name": "vastra-elegance-server",
+  "name": "lavender-server",
   "version": "1.0.0",
-  "description": "Backend API for Vastra Elegance",
+  "description": "Backend API for Lavender",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
