@@ -31,11 +31,19 @@ export default function AdminTasks() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [tasksRes, empRes, prodRes] = await Promise.all([
-        api.get('/employee/tasks/admin/all'),
-        api.get('/employee/admin/employees'),
-        api.get('/products')
-      ]);
+      // Load each independently so one failure doesn't break others
+      const tasksRes = await api.get('/employee/tasks/admin/all').catch(err => {
+        console.error('Failed to load tasks:', err);
+        return { data: { tasks: [] } };
+      });
+      const empRes = await api.get('/employee/admin/employees').catch(err => {
+        console.error('Failed to load employees:', err);
+        return { data: { employees: [] } };
+      });
+      const prodRes = await api.get('/products').catch(err => {
+        console.error('Failed to load products:', err);
+        return { data: { products: [] } };
+      });
       setTasks(tasksRes.data.tasks || []);
       setEmployees(empRes.data.employees || []);
       setProducts(prodRes.data.products || []);
@@ -49,6 +57,17 @@ export default function AdminTasks() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const openAddModal = async () => {
+    setShowAddModal(true);
+    // Refresh employee list when opening modal to ensure latest employees are shown
+    try {
+      const empRes = await api.get('/employee/admin/employees');
+      setEmployees(empRes.data.employees || []);
+    } catch (err) {
+      console.error('Failed to refresh employee list:', err);
+    }
+  };
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
@@ -115,7 +134,7 @@ export default function AdminTasks() {
           <p className="font-body text-gray-500 text-sm mt-0.5">Assign, prioritize, and monitor the progress of operational staff tasks</p>
         </div>
         <button 
-          onClick={() => setShowAddModal(true)}
+          onClick={openAddModal}
           className="btn-primary py-2.5 px-5 text-sm gap-2"
         >
           <Plus size={16} /> Assign Task

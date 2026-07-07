@@ -99,7 +99,7 @@ export default function ProductDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm font-body text-gray-400 mb-8">
+      <nav className="hidden sm:flex items-center gap-2 text-sm font-body text-gray-400 mb-6 sm:mb-8">
         <Link to="/" className="hover:text-primary transition-colors">Home</Link><ChevronRight size={14}/>
         <Link to="/products" className="hover:text-primary transition-colors">Products</Link><ChevronRight size={14}/>
         <Link to={`/products?category=${product.category?.slug}`} className="hover:text-primary transition-colors">{product.category?.name}</Link><ChevronRight size={14}/>
@@ -126,7 +126,7 @@ export default function ProductDetailPage() {
           {product.badge && <span className="badge-primary text-xs">{product.badge}</span>}
           <div>
             <p className="font-body text-xs font-bold text-primary uppercase tracking-widest mb-1.5">{product.category?.name}</p>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">{product.name}</h1>
+            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">{product.name}</h1>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 bg-gold-pale border border-gold/20 rounded-full px-3 py-1">
                 <Star size={14} className="text-gold-light fill-gold-light"/><span className="font-body font-bold text-gold text-sm">{product.ratings}</span>
@@ -157,8 +157,8 @@ export default function ProductDetailPage() {
           )}
 
           {/* Price */}
-          <div className="flex items-baseline gap-3 py-2">
-            <span className="font-display text-4xl font-bold text-gray-900">{formatPrice(effectivePrice)}</span>
+          <div className="flex items-baseline gap-2 sm:gap-3 py-2 flex-wrap">
+            <span className="font-display text-3xl sm:text-4xl font-bold text-gray-900">{formatPrice(effectivePrice)}</span>
             {product.originalPrice && product.originalPrice > effectivePrice && <>
               <span className="font-body text-lg text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
               <span className="badge bg-rose text-white shadow-sm">{discount}% OFF</span>
@@ -202,22 +202,22 @@ export default function ProductDetailPage() {
           </div>
 
           {/* CTA */}
-          <div className="flex gap-3">
-            <button onClick={handleCart} className={`flex-1 py-4 rounded-full font-body font-bold text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-card hover:shadow-hover ${addedToCart ? 'bg-emerald-500 text-white' : 'bg-brand-gradient text-white hover:scale-[1.02]'}`}>
-              {addedToCart ? <><Check size={20}/> Added!</> : <><ShoppingBag size={20}/> Add to Cart</>}
+          <div className="flex gap-2 sm:gap-3">
+            <button onClick={handleCart} className={`flex-1 py-3 sm:py-4 rounded-full font-body font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-card hover:shadow-hover ${addedToCart ? 'bg-emerald-500 text-white' : 'bg-brand-gradient text-white hover:scale-[1.02]'}`}>
+              {addedToCart ? <><Check size={18}/> Added!</> : <><ShoppingBag size={18}/> Add to Cart</>}
             </button>
-            <button onClick={handleWishlist} className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${isWishlisted ? 'border-rose bg-rose-soft text-rose' : 'border-gray-200 hover:border-rose hover:text-rose text-gray-400'}`}>
-              <Heart size={20} className={isWishlisted ? 'fill-rose' : ''}/>
+            <button onClick={handleWishlist} className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${isWishlisted ? 'border-rose bg-rose-soft text-rose' : 'border-gray-200 hover:border-rose hover:text-rose text-gray-400'}`}>
+              <Heart size={18} className={isWishlisted ? 'fill-rose' : ''}/>
             </button>
-            <button className="w-14 h-14 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary text-gray-400 transition-all">
-              <Share2 size={20}/>
+            <button className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary text-gray-400 transition-all">
+              <Share2 size={18}/>
             </button>
           </div>
 
           {/* Benefits strip */}
-          <div className="grid grid-cols-3 gap-3 border-t border-gray-100 pt-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-5">
             {[{icon:Truck,text:'Free above ₹999'},{icon:RefreshCw,text:'7-Day Returns'},{icon:Shield,text:'100% Authentic'}].map((b,i) => (
-              <div key={i} className="flex flex-col items-center text-center gap-1.5 p-3 bg-champagne-light/80 rounded-xl">
+              <div key={i} className="flex items-center sm:flex-col sm:text-center gap-2 sm:gap-1.5 p-3 bg-champagne-light/80 rounded-xl">
                 <b.icon size={18} className="text-primary"/><span className="font-body text-[11px] text-gray-600 leading-tight">{b.text}</span>
               </div>
             ))}
@@ -236,10 +236,10 @@ export default function ProductDetailPage() {
 
       {/* Tabs */}
       <div className="mb-16">
-        <div className="flex border-b border-gray-100 mb-6 gap-1">
+        <div className="flex border-b border-gray-100 mb-6 gap-1 overflow-x-auto">
           {['description','reviews','care'].map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-6 py-3 font-body capitalize text-sm font-medium transition-all border-b-2 -mb-px ${tab===t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-primary'}`}>
+              className={`px-4 sm:px-6 py-3 font-body capitalize text-sm font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${tab===t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-primary'}`}>
               {t==='care' ? 'Care & Shipping' : t.charAt(0).toUpperCase()+t.slice(1)}
             </button>
           ))}

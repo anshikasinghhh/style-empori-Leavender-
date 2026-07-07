@@ -72,8 +72,8 @@ export default function Navbar() {
   />
 </div>
               <div className="leading-none">
-                <p className="font-display font-bold text-lg text-plum tracking-tight">Lavender <span className="text-gold">✦</span></p>
-                <p className="font-accent text-xs text-gold italic tracking-widest">The Style Emporio</p>
+                <p className="font-display font-bold text-base sm:text-lg text-plum tracking-tight">Lavender <span className="text-gold">✦</span></p>
+                <p className="font-accent text-[10px] sm:text-xs text-gold italic tracking-widest hidden sm:block">The Style Emporio</p>
               </div>
             </Link>
 

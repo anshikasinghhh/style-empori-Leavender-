@@ -91,6 +91,10 @@ router.post('/', protect, staffOnly, async (req, res) => {
     const product = await Product.create(req.body);
     res.status(201).json({ success: true, product });
   } catch (err) {
+    // handle duplicate productCode error
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.productCode) {
+      return res.status(400).json({ success: false, message: 'Product with same code exists, try a different code' });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -102,6 +106,9 @@ router.put('/:id', protect, staffOnly, async (req, res) => {
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     res.json({ success: true, product });
   } catch (err) {
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.productCode) {
+      return res.status(400).json({ success: false, message: 'Product with same code exists, try a different code' });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });

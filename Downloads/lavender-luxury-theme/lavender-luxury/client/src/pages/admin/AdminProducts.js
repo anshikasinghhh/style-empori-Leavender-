@@ -119,9 +119,21 @@ console.log("Filtered:", filtered);
     setModal(true);
   };
   const openEdit = (p) => {
-    setForm({ ...p, mrp: String(p.mrp || ''), price: String(p.price), originalPrice: String(p.originalPrice || ''), stock: String(p.stock) });
+    // Normalize product shape before editing to avoid runtime errors
+    setForm({
+      ...p,
+      mrp: String(p.mrp || ''),
+      price: String(p.price || ''),
+      originalPrice: String(p.originalPrice || ''),
+      stock: String(p.stock || ''),
+      category: typeof p.category === 'object' && p.category !== null ? (p.category.name || '') : (p.category || ''),
+      sizes: Array.isArray(p.sizes) ? p.sizes : [],
+      colors: Array.isArray(p.colors) ? p.colors : [],
+      images: Array.isArray(p.images) && p.images.length ? p.images : [{ url: '', alt: '' }],
+      couponCode: p.couponCode || ''
+    });
     setEditId(p._id);
-    if (p.couponCode && availableCoupons.some(c => c.code === p.couponCode)) {
+    if (p.couponCode && Array.isArray(availableCoupons) && availableCoupons.some(c => c.code === p.couponCode)) {
       setCouponMode(p.couponCode);
     } else if (p.couponCode) {
       setCouponMode('custom');
@@ -153,6 +165,15 @@ useEffect(() => {
     if (!form.name || !form.price) {
       toast.error('Name and price are required');
       return;
+    }
+    // Client-side duplicate productCode check (exclude current edit)
+    if (form.productCode) {
+      const codeToCheck = String(form.productCode).trim();
+      const duplicate = products.find(p => p.productCode && String(p.productCode).trim() === codeToCheck && p._id !== editId);
+      if (duplicate) {
+        toast.error('Product with same code exists, try a different code');
+        return;
+      }
     }
 
     const resolvedCouponCode = await resolveProductCouponCode({

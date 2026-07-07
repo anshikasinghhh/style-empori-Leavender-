@@ -74,7 +74,7 @@ function HeroSection() {
             <Sparkles size={13} className="text-primary" />
             <span className="font-accent text-primary text-sm italic tracking-wide">Gift Cards</span>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl lg:text-5xl font-bold text-gray-900 leading-snug mb-3">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-gray-900 leading-snug mb-3">
             Lavender Gift Cards
           </h1>
           <p className="font-display text-xl md:text-2xl text-primary/80 font-semibold mb-5">
@@ -431,7 +431,7 @@ function HowItWorksSection() {
    ═══════════════════════════════════════════════════════════ */
 function CorporateSection() {
   return (
-    <section className="py-6 md:py-8 bg-[#f7efff] -mb-20 relative z-30 mx-8 sm:mx-12 lg:mx-24 rounded-2xl shadow-sm border border-[#e7d4ff]/70">
+    <section className="py-6 md:py-8 bg-[#f7efff] -mb-20 relative z-30 mx-3 sm:mx-12 lg:mx-24 rounded-2xl shadow-sm border border-[#e7d4ff]/70">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 25 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
           className="text-center max-w-md mx-auto">
