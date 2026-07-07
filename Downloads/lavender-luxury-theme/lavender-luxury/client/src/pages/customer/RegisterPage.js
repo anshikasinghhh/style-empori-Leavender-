@@ -96,12 +96,12 @@ export default function RegisterPage() {
             </ul>
           </div>
         </div>
-        <div className="flex flex-1 items-center justify-start pl-24 pr-6 py-6 lg:pl-28 lg:pr-10 lg:py-10">
+        <div className="flex flex-1 items-center justify-center sm:justify-start px-4 sm:pl-12 sm:pr-6 py-6 lg:pl-28 lg:pr-10 lg:py-10">
           <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} className="w-full max-w-md">
-            <Link to="/" className="mb-8 inline-flex items-center gap-2 text-gray-100 hover:text-primary font-body text-sm transition-colors"><ArrowLeft size={16}/> Back to Home</Link>
-            <div className="rounded-3xl border border-gold-pale/60 bg-white/95 p-8 shadow-premium backdrop-blur-sm">
-              <div className="mb-8">
-                <h2 className="mb-1 font-display text-3xl font-bold text-gray-900">Create Account</h2>
+            <Link to="/" className="mb-6 sm:mb-8 inline-flex items-center gap-2 text-gray-100 hover:text-primary font-body text-sm transition-colors"><ArrowLeft size={16}/> Back to Home</Link>
+            <div className="rounded-3xl border border-gold-pale/60 bg-white/95 p-6 sm:p-8 shadow-premium backdrop-blur-sm">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="mb-1 font-display text-2xl sm:text-3xl font-bold text-gray-900">Create Account</h2>
                 <p className="font-body text-sm text-gray-500">Join thousands of ethnic fashion lovers</p>
               </div>
               <form onSubmit={e => { e.preventDefault(); if(form.password.length < 6){ toast.error('Password min 6 chars'); return; } dispatch(registerUser(form)); }} className="space-y-4">

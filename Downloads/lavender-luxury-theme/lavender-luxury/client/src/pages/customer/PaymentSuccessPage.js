@@ -33,9 +33,9 @@ export default function PaymentSuccessPage() {
           <div><p className="font-body font-semibold text-gray-800 text-sm">Your order is being prepared</p><p className="font-body text-xs text-gray-500">You'll receive tracking updates via SMS & email</p></div>
         </div>
 
-        <div className="flex gap-3">
-          <Link to="/orders" className="flex-1 btn-outline gap-2 py-3.5"><Package size={16}/> Track Order</Link>
-          <Link to="/" className="flex-1 btn-primary gap-2 py-3.5"><ShoppingBag size={16}/> Shop More</Link>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link to="/orders" className="flex-1 btn-outline gap-2 py-3.5 text-center"><Package size={16}/> Track Order</Link>
+          <Link to="/" className="flex-1 btn-primary gap-2 py-3.5 text-center"><ShoppingBag size={16}/> Shop More</Link>
         </div>
       </motion.div>
     </div>

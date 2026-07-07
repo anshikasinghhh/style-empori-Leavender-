@@ -26,17 +26,17 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-      <h1 className="font-display text-3xl font-bold text-gray-900 mb-8">My Account</h1>
+      <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">My Account</h1>
 
       {/* Header card */}
-      <div className="bg-white rounded-2xl p-6 shadow-card border border-gold-pale/60 mb-6 flex items-center gap-5 flex-wrap">
-        <div className="w-20 h-20 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-card shrink-0">
-          <span className="text-white text-3xl font-display font-bold">{user?.name?.[0]?.toUpperCase()}</span>
+      <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-card border border-gold-pale/60 mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-card shrink-0">
+          <span className="text-white text-2xl sm:text-3xl font-display font-bold">{user?.name?.[0]?.toUpperCase()}</span>
         </div>
-        <div className="flex-1">
-          <h2 className="font-display text-2xl font-bold text-gray-900">{user?.name}</h2>
+        <div className="flex-1 text-center sm:text-left">
+          <h2 className="font-display text-xl sm:text-2xl font-bold text-gray-900">{user?.name}</h2>
           <p className="font-body text-gray-500 text-sm">{user?.email}</p>
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center gap-2 mt-1.5 justify-center sm:justify-start">
             <span className="badge bg-primary-100 text-primary border border-primary-200 capitalize">{user?.role}</span>
             <span className="badge bg-emerald-100 text-emerald-700">Verified Member</span>
           </div>
@@ -45,21 +45,21 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
         {STATS.map(s => (
-          <Link key={s.label} to={s.link} className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all text-center group">
-            <div className="w-10 h-10 rounded-xl bg-champagne-light/80 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary group-hover:text-white transition-all"><s.icon size={18} className="text-primary group-hover:text-white"/></div>
-            <p className="font-body text-xl font-bold text-gray-900">{s.value}</p>
-            <p className="font-body text-xs text-gray-500">{s.label}</p>
+          <Link key={s.label} to={s.link} className="bg-white rounded-2xl p-3 sm:p-4 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all text-center group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-champagne-light/80 flex items-center justify-center mx-auto mb-2 group-hover:bg-primary group-hover:text-white transition-all"><s.icon size={16} className="text-primary group-hover:text-white sm:hidden"/><s.icon size={18} className="text-primary group-hover:text-white hidden sm:block"/></div>
+            <p className="font-body text-lg sm:text-xl font-bold text-gray-900">{s.value}</p>
+            <p className="font-body text-[10px] sm:text-xs text-gray-500">{s.label}</p>
           </Link>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-100 mb-6 gap-1">
+      <div className="flex border-b border-gray-100 mb-6 gap-1 overflow-x-auto">
         {['profile','security','addresses'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-3 font-body text-sm font-semibold transition-all border-b-2 -mb-px capitalize ${tab===t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-primary'}`}>
+            className={`px-4 sm:px-5 py-3 font-body text-sm font-semibold transition-all border-b-2 -mb-px capitalize whitespace-nowrap ${tab===t ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-primary'}`}>
             {t === 'addresses' ? 'Saved Addresses' : t.charAt(0).toUpperCase()+t.slice(1)}
           </button>
         ))}

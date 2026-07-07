@@ -332,7 +332,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-      <h1 className="font-display text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+      <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Checkout</h1>
 
       {/* Step indicator */}
       <div className="flex items-center mb-10">
@@ -356,9 +356,9 @@ export default function CheckoutPage() {
           {step === 0 && (
             <motion.div initial={{ opacity:0, x:-20 }} animate={{ opacity:1, x:0 }} className="bg-white rounded-2xl p-6 shadow-card border border-gold-pale/60">
               <h2 className="font-display text-xl font-bold text-gray-900 mb-5 flex items-center gap-2"><MapPin size={20} className="text-primary"/>Delivery Address</h2>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[{k:'name',l:'Full Name',col:2,p:'Your full name'},{k:'street',l:'Street / Area',col:2,p:'House no., Street, Area'},{k:'city',l:'City',col:1,p:'City'},{k:'state',l:'State',col:1,p:'State'},{k:'pincode',l:'PIN Code',col:1,p:'6-digit PIN'},{k:'phone',l:'Phone Number',col:1,p:'+91 XXXXX XXXXX'}].map(({k,l,col,p}) => (
-                  <div key={k} className={col===2?'col-span-2':''}>
+                  <div key={k} className={col===2?'sm:col-span-2':''}>
                     <label className="font-body text-xs font-semibold text-gray-600 mb-1.5 block uppercase tracking-wide">{l}</label>
                     <input value={addr[k]} onChange={e => setAddr(a => ({...a,[k]:e.target.value}))} placeholder={p} className="input-field text-sm"/>
                   </div>
@@ -374,11 +374,11 @@ export default function CheckoutPage() {
               <h2 className="font-display text-xl font-bold text-gray-900 mb-5 flex items-center gap-2"><CreditCard size={20} className="text-primary"/>Payment Method</h2>
               <div className="space-y-3 mb-6">
                 {PAY_OPTIONS.map(opt => (
-                  <label key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all ${payMethod===opt.id ? 'border-primary bg-champagne-light/80' : 'border-gray-100 hover:border-primary-200'}`}>
+                  <label key={opt.id} className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border-2 cursor-pointer transition-all ${payMethod===opt.id ? 'border-primary bg-champagne-light/80' : 'border-gray-100 hover:border-primary-200'}`}>
                     <input type="radio" name="pay" value={opt.id} checked={payMethod===opt.id} onChange={() => setPayMethod(opt.id)} className="text-primary w-4 h-4"/>
-                    <span className="text-2xl">{opt.icon}</span>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                    <span className="text-xl sm:text-2xl">{opt.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-body font-bold text-gray-900 text-sm">{opt.label}</p>
                         {opt.badge && <span className="badge bg-emerald-100 text-emerald-700 text-[10px]">{opt.badge}</span>}
                       </div>

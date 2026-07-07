@@ -10,8 +10,8 @@ export default function WishlistPage() {
   const wishlistProducts = products || [];
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl font-bold text-gray-900">My Wishlist</h1>
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900">My Wishlist</h1>
         {wishlistProducts.length > 0 && <span className="badge-primary">{wishlistProducts.length} saved items</span>}
       </div>
       {wishlistProducts.length === 0 ? (

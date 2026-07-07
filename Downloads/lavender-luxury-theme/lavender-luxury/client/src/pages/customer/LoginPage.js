@@ -99,12 +99,12 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="flex flex-1 items-center justify-center px-6 py-8 lg:px-10 lg:py-10">
+        <div className="flex flex-1 items-center justify-center px-4 sm:px-6 py-6 lg:px-10 lg:py-10">
           <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} className="w-full max-w-md">
-            <Link to="/" className="mb-8 inline-flex items-center gap-2 text-gray-100 hover:text-primary font-body text-sm transition-colors"><ArrowLeft size={16}/> Back to Home</Link>
-            <div className="rounded-3xl border border-gold-pale/60 bg-white/95 p-8 shadow-premium backdrop-blur-sm">
-              <div className="mb-8">
-                <h2 className="mb-1 font-display text-3xl font-bold text-gray-900">Welcome Back</h2>
+            <Link to="/" className="mb-6 sm:mb-8 inline-flex items-center gap-2 text-gray-100 hover:text-primary font-body text-sm transition-colors"><ArrowLeft size={16}/> Back to Home</Link>
+            <div className="rounded-3xl border border-gold-pale/60 bg-white/95 p-6 sm:p-8 shadow-premium backdrop-blur-sm">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="mb-1 font-display text-2xl sm:text-3xl font-bold text-gray-900">Welcome Back</h2>
                 <p className="font-body text-sm text-gray-500">Sign in to continue your style journey</p>
               </div>
               <form onSubmit={e => { e.preventDefault(); dispatch(loginUser(form)); }} className="space-y-4">
@@ -127,11 +127,7 @@ export default function LoginPage() {
                   <div id="realGoogleSignInButton" className="w-full"></div>
                 </div>
 
-                <div className="rounded-xl border border-primary-100 bg-champagne-light/80 p-4 space-y-2 mt-4">
-                  <p className="flex items-center gap-1 font-body text-xs font-bold text-primary-dark"><Sparkles size={12}/> Demo Accounts</p>
-                  <button type="button" onClick={() => setForm({ email:'admin@vastra.com', password:'admin123' })} className="w-full py-1 text-left text-xs font-body text-gray-700 transition-colors hover:text-primary">👑 Admin: admin@vastra.com / admin123</button>
-                  <button type="button" onClick={() => setForm({ email:'customer@vastra.com', password:'customer123' })} className="w-full py-1 text-left text-xs font-body text-gray-600 transition-colors hover:text-primary">🛍️ Customer: customer@vastra.com / customer123</button>
-                </div>
+                
               </form>
               <p className="mt-6 text-center font-body text-sm text-gray-500">New here? <Link to="/register" className="font-semibold text-primary hover:underline">Create an account</Link></p>
             </div>

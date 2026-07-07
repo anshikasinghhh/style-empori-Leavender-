@@ -111,9 +111,9 @@ export default function OrderDetailPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       <Link to="/orders" className="inline-flex items-center gap-2 text-gray-400 hover:text-primary font-body text-sm mb-8 transition-colors"><ArrowLeft size={16}/> Back to Orders</Link>
 
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
+      <div className="flex items-center justify-between mb-6 sm:mb-8 flex-wrap gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-gray-900">Order #{order.orderNumber}</h1>
+          <h1 className="font-display text-xl sm:text-2xl font-bold text-gray-900">Order #{order.orderNumber}</h1>
           <p className="font-body text-gray-500 text-sm mt-0.5">Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}</p>
         </div>
         <div className="flex items-center gap-3">

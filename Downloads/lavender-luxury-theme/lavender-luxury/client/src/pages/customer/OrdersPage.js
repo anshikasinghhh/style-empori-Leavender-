@@ -43,8 +43,8 @@ export default function OrdersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-display text-3xl font-bold text-gray-900">My Orders</h1>
+      <div className="flex items-center justify-between mb-5 sm:mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900">My Orders</h1>
         <span className="badge-primary">{orders.length} orders</span>
       </div>
 
@@ -69,22 +69,22 @@ export default function OrdersPage() {
         <div className="space-y-4">
           {filtered.map(order => (
             <Link key={order._id} to={`/orders/${order._id}`}
-              className="bg-white rounded-2xl p-5 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all group flex items-center gap-4 block">
-              <div className="w-16 h-18 rounded-xl overflow-hidden bg-champagne-light shrink-0">
+              className="bg-white rounded-2xl p-4 sm:p-5 shadow-card border border-gold-pale/60 hover:shadow-hover transition-all group flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 block">
+              <div className="w-14 h-16 sm:w-16 sm:h-18 rounded-xl overflow-hidden bg-champagne-light shrink-0 self-start sm:self-auto">
                 <img src={order.items[0]?.image || order.items[0]?.product?.images?.[0]?.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                <div className="flex items-center gap-2 sm:gap-2.5 mb-1 flex-wrap">
                   <p className="font-body font-bold text-gray-900 text-sm">#{order.orderNumber}</p>
-                  <span className={`badge text-[11px] ${STATUS_STYLES[order.orderStatus]||'bg-gray-100 text-gray-600'}`}>{STATUS_ICONS[order.orderStatus]} {order.orderStatus?.replace('_',' ')}</span>
+                  <span className={`badge text-[10px] sm:text-[11px] ${STATUS_STYLES[order.orderStatus]||'bg-gray-100 text-gray-600'}`}>{STATUS_ICONS[order.orderStatus]} {order.orderStatus?.replace('_',' ')}</span>
                   {order.paymentStatus === 'refunded' && <span className="badge bg-orange-100 text-orange-700 text-[10px]">Refunded</span>}
                 </div>
                 <p className="font-body text-gray-600 text-sm truncate">{order.items[0]?.name}</p>
                 <p className="font-body text-gray-400 text-xs mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}</p>
               </div>
-              <div className="text-right shrink-0">
+              <div className="flex items-center justify-between w-full sm:w-auto sm:text-right shrink-0">
                 <p className="font-display font-bold text-primary">{formatPrice(order.total)}</p>
-                <ChevronRight size={16} className="text-gray-300 ml-auto mt-1 group-hover:text-primary transition-colors"/>
+                <ChevronRight size={16} className="text-gray-300 sm:ml-auto group-hover:text-primary transition-colors hidden sm:block"/>
               </div>
             </Link>
           ))}

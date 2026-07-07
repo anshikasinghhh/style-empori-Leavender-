@@ -31,18 +31,18 @@ const fetchProducts = async () => {
 };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 mt-20 lg:mt-24 mb-8 h-[420px] md:h-[560px] lg:h-[600px] shadow-premium">
+    <div className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 mt-20 lg:mt-24 mb-8 h-[340px] sm:h-[420px] md:h-[560px] lg:h-[600px] shadow-premium">
       <AnimatePresence mode="wait">
         <motion.div key={b.id} initial={{ opacity:0, scale:1.04 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }} transition={{ duration:0.75 }} className="absolute inset-0">
           <img src={b.image} alt={b.title} className="w-full h-full object-cover object-top"/>
           <div className={`absolute inset-0 bg-gradient-to-r ${b.gradient}`}/>
-          <div className="absolute inset-0 flex items-center px-8 md:px-16 lg:px-24">
+          <div className="absolute inset-0 flex items-center px-4 sm:px-8 md:px-16 lg:px-24">
             <motion.div initial={{ x:-40, opacity:0 }} animate={{ x:0, opacity:1 }} transition={{ delay:0.25, duration:0.6 }} className="max-w-xl">
-              <div className="mb-4">
-                <span className="font-accent text-white/90 text-sm italic">{b.subtitle}</span>
+              <div className="mb-3 sm:mb-4">
+                <span className="font-accent text-white/90 text-xs sm:text-sm italic">{b.subtitle}</span>
               </div>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">{b.title}</h1>
-              <p className="font-body text-white/80 text-base md:text-lg leading-relaxed max-w-md">{b.description}</p>
+              <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-2 sm:mb-4">{b.title}</h1>
+              <p className="font-body text-white/80 text-sm sm:text-base md:text-lg leading-relaxed max-w-md">{b.description}</p>
             </motion.div>
           </div>
         </motion.div>
@@ -175,29 +175,29 @@ function Testimonials() {
 function BrandStory() {
   return (
     <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-      <div className="relative bg-gradient-to-br from-champagne-light via-champagne-light to-rose-soft rounded-3xl p-10 md:p-16 overflow-hidden">
-        <div className="relative grid md:grid-cols-2 gap-12 items-center">
+      <div className="relative bg-gradient-to-br from-champagne-light via-champagne-light to-rose-soft rounded-3xl p-6 sm:p-10 md:p-16 overflow-hidden">
+        <div className="relative grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div>
             <p className="section-tag mb-3 text-sm font-semibold uppercase tracking-[0.2em]">About Us</p>
-            <h2 className="font-display text-4xl md:text-5xl font-black text-gray-900 mb-5 leading-tight">Fashion with Purpose,<br/>Style with Confidence</h2>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 mb-5 leading-tight">Fashion with Purpose,<br className="hidden sm:block"/>Style with Confidence</h2>
             <p className="font-body text-gray-600 leading-relaxed mb-4">Founded on 4 January 2023, Lavender is a fashion brand dedicated to offering stylish, comfortable, and premium-quality clothing at affordable prices.</p>
             <p className="font-body text-gray-600 leading-relaxed mb-4">We believe fashion is a reflection of confidence and individuality, which is why every collection is thoughtfully curated to blend modern trends with exceptional craftsmanship.</p>
             <p className="font-body text-gray-600 leading-relaxed mb-8">Serving customers internationally, we offer a growing range of women's wear, kids' wear, and infant essentials, with plans to expand into new lifestyle collections and global markets. As a legally registered business, we are committed to quality, transparency, sustainability, and delivering an outstanding shopping experience. At Lavender, our mission is to create timeless fashion that inspires confidence and builds lasting relationships with our customers.</p>
-            <div className="grid grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
               {[['2023','Founded'],['Global','Serving Customers'],['100%','Committed to Quality']].map(([n,l]) => (
-                <div key={l} className="text-center bg-white/60 rounded-xl p-3 shadow-sm">
-                  <p className="font-display text-2xl font-bold text-primary">{n}</p>
-                  <p className="font-body text-xs text-gray-500 mt-0.5">{l}</p>
+                <div key={l} className="text-center bg-white/60 rounded-xl p-2 sm:p-3 shadow-sm">
+                  <p className="font-display text-xl sm:text-2xl font-bold text-primary">{n}</p>
+                  <p className="font-body text-[10px] sm:text-xs text-gray-500 mt-0.5">{l}</p>
                 </div>
               ))}
             </div>
             <Link to="/products" className="btn-primary gap-2">Explore Collection <ArrowRight size={16}/></Link>
           </div>
-          <div className="grid grid-cols-[0.9fr_1fr] gap-3 items-center">
-            <img src="/images/about-story.png" alt="Artisan weaving" className="rounded-2xl w-full h-[220px] md:h-[260px] object-cover shadow-card my-3"/>
-            <div className="flex flex-col gap-3">
-              <img src="/images/photo2.png" alt="Jewelry craft" className="rounded-2xl w-full h-48 object-cover shadow-card"/>
-              <img src="/images/photo3.png" alt="Fabric detail" className="rounded-2xl w-full h-48 object-cover shadow-card"/>
+          <div className="grid grid-cols-1 sm:grid-cols-[0.9fr_1fr] gap-3 items-center">
+            <img src="/images/about-story.png" alt="Artisan weaving" className="rounded-2xl w-full h-[200px] sm:h-[220px] md:h-[260px] object-cover shadow-card my-3"/>
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-3">
+              <img src="/images/photo2.png" alt="Jewelry craft" className="rounded-2xl w-full h-36 sm:h-48 object-cover shadow-card"/>
+              <img src="/images/photo3.png" alt="Fabric detail" className="rounded-2xl w-full h-36 sm:h-48 object-cover shadow-card"/>
             </div>
           </div>
         </div>
@@ -213,17 +213,17 @@ function Newsletter() {
   const handleSubmit = (e) => { e.preventDefault(); if(email) { setSent(true); } };
   return (
     <section className="max-w-2xl mx-auto px-4 py-16 text-center">
-      <div className="bg-white rounded-3xl p-10 md:p-14 shadow-card border border-gold-pale/60">
+      <div className="bg-white rounded-3xl p-6 sm:p-10 md:p-14 shadow-card border border-gold-pale/60">
         <div className="w-14 h-14 rounded-2xl bg-champagne-light/80 flex items-center justify-center mx-auto mb-5 shadow-card"><Gift size={26} className="text-primary"/></div>
         <p className="section-tag mb-2">Stay Connected</p>
-        <h2 className="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Get 10% Off Your First Order</h2>
+        <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">Get 10% Off Your First Order</h2>
         <p className="font-body text-gray-500 text-sm mb-7">Subscribe for exclusive offers, new arrivals and style inspiration.</p>
         {sent ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
             <p className="font-body font-semibold text-emerald-700">🎉 You're in! Check your inbox for your 10% discount code.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex gap-3 max-w-md mx-auto">
+          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email address" className="flex-1 input-field text-sm" required/>
             <button type="submit" className="btn-primary px-6 whitespace-nowrap">Subscribe</button>
           </form>
@@ -319,15 +319,15 @@ const festive = products.filter(p => p.isFestival);
       {/* Festival Banner */}
       {festive.length > 0 && (
         <section className="mx-3 sm:mx-6 my-12">
-          <div className="relative rounded-3xl overflow-hidden h-64 md:h-80 shadow-premium">
+          <div className="relative rounded-3xl overflow-hidden h-56 sm:h-64 md:h-80 shadow-premium">
             <img src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=1400&q=90" alt="Festival" className="w-full h-full object-cover object-center"/>
             <div className="absolute inset-0 bg-gradient-to-r from-plum/90 via-primary/60 to-transparent"/>
-            <div className="absolute inset-0 flex items-center px-10 md:px-20">
+            <div className="absolute inset-0 flex items-center px-6 sm:px-10 md:px-20">
               <div>
-                <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/30 rounded-full px-4 py-1.5 mb-3"><Sparkles size={13} className="text-gold-shine"/><span className="font-body text-gold-shine text-sm font-semibold">Festival Special</span></div>
-                <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-3">Navratri Collection</h2>
-                <p className="font-body text-white/80 mb-6 max-w-sm text-sm md:text-base">Chaniya cholis, mirror work & more — celebrate in style</p>
-                <Link to="/products?isFestival=true" className="btn-gold">Shop Festival Wear</Link>
+                <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/30 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 mb-2 sm:mb-3"><Sparkles size={11} className="text-gold-shine sm:hidden"/><Sparkles size={13} className="text-gold-shine hidden sm:block"/><span className="font-body text-gold-shine text-xs sm:text-sm font-semibold">Festival Special</span></div>
+                <h2 className="font-display text-xl sm:text-3xl md:text-5xl font-bold text-white mb-2 sm:mb-3">Navratri Collection</h2>
+                <p className="font-body text-white/80 mb-4 sm:mb-6 max-w-xs sm:max-w-sm text-xs sm:text-sm md:text-base">Chaniya cholis, mirror work & more — celebrate in style</p>
+                <Link to="/products?isFestival=true" className="btn-gold text-sm sm:text-base">Shop Festival Wear</Link>
               </div>
             </div>
           </div>

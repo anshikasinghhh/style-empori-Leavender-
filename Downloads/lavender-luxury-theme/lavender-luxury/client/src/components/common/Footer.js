@@ -87,15 +87,15 @@ export default function Footer({ className = '' }) {
             <h4 className="font-display font-semibold text-base mb-4">Contact</h4>
             <ul className="space-y-3 mb-6">
               <li className="flex items-start gap-3 text-white/60 text-sm font-body"><MapPin size={15} className="mt-0.5 shrink-0 text-gold"/>Opposite, Technopark Phase III Main Rd, Mukkolackal, Kazhakkoottam, Thiruvananthapuram, Kerala 695582</li>
-              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Phone size={15} className="shrink-0 text-gold"/>+91 98765 43210</li>
+              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Phone size={15} className="shrink-0 text-gold"/>+91 89214 18188</li>
               <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Mail size={15} className="shrink-0 text-gold"/>lavendertsetrading@gmail.com</li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
           <p className="font-body text-white/40 text-xs">© 2025 Lavender. All rights reserved.</p>
           <div className="flex items-center gap-1 font-body text-white/40 text-xs">Made with <Heart size={11} className="text-rose fill-rose mx-1"/> for ethnic fashion lovers</div>
-          <div className="flex gap-4">{[
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">{[
             { label: 'Privacy Policy', to: '/press-media' },
             { label: 'Terms of Service', to: '/press-media' },
             { label: 'Returns Policy', to: '/products' },

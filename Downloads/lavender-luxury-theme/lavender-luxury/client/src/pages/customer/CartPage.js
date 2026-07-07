@@ -164,8 +164,8 @@ export default function CartPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl font-bold text-gray-900">Shopping Cart</h1>
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900">Shopping Cart</h1>
         <span className="badge-primary">{enriched.length} item{enriched.length !== 1 ? 's' : ''}</span>
       </div>
 
@@ -177,40 +177,42 @@ export default function CartPage() {
               const urgency = getStockUrgency(item.product);
               return (
               <motion.div key={item._id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, x:-20, height:0 }}
-                className={`bg-white rounded-2xl p-4 shadow-card border flex gap-4 ${urgency && (urgency.level === 'critical' || urgency.level === 'out') ? 'border-rose-200' : urgency?.level === 'low' ? 'border-amber-200' : 'border-gold-pale/60'}`}>
-                <Link to={`/products/${item.product?._id}`} className="w-24 h-28 rounded-xl overflow-hidden bg-champagne-light shrink-0 block relative">
-                  <img src={item.product?.images?.[0]?.url || PRODUCTS[0].images[0].url} alt={item.product?.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"/>
-                  {urgency && urgency.level !== 'popular' && (
-                    <span className={`absolute bottom-1.5 left-1.5 right-1.5 text-center font-body text-[9px] font-bold px-1.5 py-0.5 rounded-full ${urgency.badge}`}>
-                      {urgency.label}
-                    </span>
-                  )}
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <p className="font-body text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">{item.product?.category?.name}</p>
-                  <Link to={`/products/${item.product?._id}`}><h3 className="font-display font-semibold text-gray-900 text-sm mb-1 line-clamp-2 hover:text-primary transition-colors">{item.product?.name}</h3></Link>
-                  {item.size && <p className="font-body text-xs text-gray-400 mb-2">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
-                  {urgency && (
-                    <div className={`flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg border ${urgency.bg}`}>
-                      <urgency.icon size={12} className={urgency.color} />
-                      <span className={`font-body text-[11px] font-semibold ${urgency.color}`}>{urgency.message}</span>
+                className={`bg-white rounded-2xl p-3 sm:p-4 shadow-card border flex flex-col sm:flex-row gap-3 sm:gap-4 ${urgency && (urgency.level === 'critical' || urgency.level === 'out') ? 'border-rose-200' : urgency?.level === 'low' ? 'border-amber-200' : 'border-gold-pale/60'}`}>
+                <div className="flex gap-3 sm:gap-4">
+                  <Link to={`/products/${item.product?._id}`} className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-champagne-light shrink-0 block relative">
+                    <img src={item.product?.images?.[0]?.url || PRODUCTS[0].images[0].url} alt={item.product?.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"/>
+                    {urgency && urgency.level !== 'popular' && (
+                      <span className={`absolute bottom-1.5 left-1.5 right-1.5 text-center font-body text-[9px] font-bold px-1.5 py-0.5 rounded-full ${urgency.badge}`}>
+                        {urgency.label}
+                      </span>
+                    )}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">{item.product?.category?.name}</p>
+                    <Link to={`/products/${item.product?._id}`}><h3 className="font-display font-semibold text-gray-900 text-sm mb-1 line-clamp-2 hover:text-primary transition-colors">{item.product?.name}</h3></Link>
+                    {item.size && <p className="font-body text-xs text-gray-400 mb-2">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
+                    {urgency && (
+                      <div className={`flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg border ${urgency.bg}`}>
+                        <urgency.icon size={12} className={urgency.color} />
+                        <span className={`font-body text-[11px] font-semibold ${urgency.color}`}>{urgency.message}</span>
+                      </div>
+                    )}
+                    <p className="font-display font-bold text-primary mb-3">{formatPrice(item.product?.price)}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center border border-gray-100 rounded-xl overflow-hidden">
+                        <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }))}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={13}/></button>
+                        <span className="w-8 text-center font-body font-bold text-gray-900 text-sm">{item.quantity}</span>
+                        <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }))}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={13}/></button>
+                      </div>
+                      <button onClick={() => { dispatch(removeFromCart(item._id)); toast.success('Removed from cart'); }}
+                        className="w-8 h-8 rounded-lg hover:bg-rose-soft flex items-center justify-center text-gray-300 hover:text-rose transition-all"><Trash2 size={14}/></button>
                     </div>
-                  )}
-                  <p className="font-display font-bold text-primary mb-3">{formatPrice(item.product?.price)}</p>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center border border-gray-100 rounded-xl overflow-hidden">
-                      <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }))}
-                        className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={13}/></button>
-                      <span className="w-8 text-center font-body font-bold text-gray-900 text-sm">{item.quantity}</span>
-                      <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }))}
-                        className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={13}/></button>
-                    </div>
-                    <button onClick={() => { dispatch(removeFromCart(item._id)); toast.success('Removed from cart'); }}
-                      className="w-8 h-8 rounded-lg hover:bg-rose-soft flex items-center justify-center text-gray-300 hover:text-rose transition-all"><Trash2 size={14}/></button>
                   </div>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="flex sm:block items-center justify-between sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0">
                   <p className="font-display font-bold text-gray-900">{formatPrice((item.product?.price || 0) * item.quantity)}</p>
                   {urgency && urgency.level === 'popular' && (
                     <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold font-body">
