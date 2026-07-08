@@ -16,12 +16,31 @@ const app = express();
 const server = http.createServer(app);
 
 // Socket.io setup
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://onlinelavender.com",
+  "https://www.onlinelavender.com",
+  process.env.CLIENT_URL
+].filter(Boolean);
+
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true
   }
 });
+// ------const io = new Server(server, {
+//   cors: {
+//     origin: process.env.CLIENT_URL || 'http://localhost:3000',
+//     credentials: true
+//   }
+// });
 
 // Make io accessible to routes
 app.set('io', io);
@@ -57,10 +76,10 @@ io.on('connection', (socket) => {
   });
 });
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// ------app.use(cors({
+//   origin: process.env.CLIENT_URL || 'http://localhost:3000',
+//   credentials: true
+// }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
