@@ -316,24 +316,6 @@ const festive = products.filter(p => p.isFestival);
         </div>
       </section>
 
-      {/* Festival Banner */}
-      {festive.length > 0 && (
-        <section className="mx-3 sm:mx-6 my-12">
-          <div className="relative rounded-3xl overflow-hidden h-56 sm:h-64 md:h-80 shadow-premium">
-            <img src="https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=1400&q=90" alt="Festival" className="w-full h-full object-cover object-center"/>
-            <div className="absolute inset-0 bg-gradient-to-r from-plum/90 via-primary/60 to-transparent"/>
-            <div className="absolute inset-0 flex items-center px-6 sm:px-10 md:px-20">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-gold/20 border border-gold/30 rounded-full px-3 sm:px-4 py-1 sm:py-1.5 mb-2 sm:mb-3"><Sparkles size={11} className="text-gold-shine sm:hidden"/><Sparkles size={13} className="text-gold-shine hidden sm:block"/><span className="font-body text-gold-shine text-xs sm:text-sm font-semibold">Festival Special</span></div>
-                <h2 className="font-display text-xl sm:text-3xl md:text-5xl font-bold text-white mb-2 sm:mb-3">Navratri Collection</h2>
-                <p className="font-body text-white/80 mb-4 sm:mb-6 max-w-xs sm:max-w-sm text-xs sm:text-sm md:text-base">Chaniya cholis, mirror work & more — celebrate in style</p>
-                <Link to="/products?isFestival=true" className="btn-gold text-sm sm:text-base">Shop Festival Wear</Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Best Sellers */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <SectionHeader title="Best Sellers" subtitle="Most loved picks"/>

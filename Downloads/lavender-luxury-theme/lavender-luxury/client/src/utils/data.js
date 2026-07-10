@@ -1,16 +1,29 @@
+import sareeLogo from '../assets/sarreelogo.png';
+import kurtiLogo from '../assets/kurtilogo.png';
+import shawlLogo from '../assets/shawllogo.png';
+import trouserLogo from '../assets/trouserlogo.png';
+import kidsLogo from '../assets/kidslogo.png';
+import topLogo from '../assets/toplogo.png';
+import nightLogo from '../assets/nightlogo.png';
+import bagLogo from '../assets/baglogo.png';
+import churidarLogo from '../assets/churidarlogo.png';
+import bodyconLogo from '../assets/bodycon.png';
+import casualLogo from '../assets/casuallogo.png';
+import cordLogo from '../assets/cord.png';
+
 export const CATEGORIES = [
-  { _id:'c1',  name:'Saree',          slug:'saree',          icon:'🥻', image:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
-  { _id:'c2',  name:'Kurti',          slug:'kurti',          icon:'🪡', image:'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=400&q=80', color:'#EDD6FF', accent:'#4A1068' },
-  { _id:'c3',  name:'Crop Top',       slug:'croptop',        icon:'👚', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#FDF2F8', accent:'#BE185D' },
-  { _id:'c4',  name:'Pants',          slug:'pants',          icon:'👖', image:'https://images.unsplash.com/photo-1594633312681-425a7b956cc2?w=400&q=80', color:'#EFF6FF', accent:'#2563EB' },
-  { _id:'c5',  name:'Shawl',          slug:'shawl',          icon:'🧶', image:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80', color:'#FFF7ED', accent:'#EA580C' },
-  { _id:'c6',  name:'Kidswear',       slug:'kidswear',       icon:'🧸', image:'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=400&q=80', color:'#ECFDF5', accent:'#059669' },
-  { _id:'c7',  name:'Night Gown',     slug:'night-gown',     icon:'👗', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#F5F3FF', accent:'#7C3AED' },
-  { _id:'c8',  name:'Co-ord Sets',    slug:'coord-sets',     icon:'🎽', image:'https://images.unsplash.com/photo-1551489186-cf8726f514f8?w=400&q=80', color:'#FBF0D5', accent:'#C9963C' },
-  { _id:'c9',  name:'Bags',           slug:'bags',           icon:'👛', image:'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400&q=80', color:'#FEF3C7', accent:'#B45309' },
-  { _id:'c10', name:'Bodycon',        slug:'bodycon',        icon:'💃', image:'https://images.unsplash.com/photo-1595777459346-9a9521c3696e?w=400&q=80', color:'#FCE7F3', accent:'#DB2777' },
-  { _id:'c11', name:'Casuals',        slug:'casuals',        icon:'👕', image:'https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=400&q=80', color:'#F0FDF4', accent:'#16A34A' },
-  { _id:'c12', name:'Churidar Sets',  slug:'churidar-sets',  icon:'🪢', image:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=400&q=80', color:'#F8F0FF', accent:'#4A1068' },
+  { _id:'c1',  name:'Saree',          slug:'saree',          icon:'🥻', image: sareeLogo, color:'#F8F0FF', accent:'#4A1068' },
+  { _id:'c2',  name:'Kurti',          slug:'kurti',          icon:'🪡', image: kurtiLogo, color:'#EDD6FF', accent:'#4A1068' },
+  { _id:'c3',  name:'Crop Top',       slug:'croptop',        icon:'👚', image: topLogo, color:'#FDF2F8', accent:'#BE185D' },
+  { _id:'c4',  name:'Pants',          slug:'pants',          icon:'👖', image: trouserLogo, color:'#EFF6FF', accent:'#2563EB' },
+  { _id:'c5',  name:'Shawl',          slug:'shawl',          icon:'🧶', image: shawlLogo, color:'#FFF7ED', accent:'#EA580C' },
+  { _id:'c6',  name:'Kidswear',       slug:'kidswear',       icon:'🧸', image: kidsLogo, color:'#ECFDF5', accent:'#059669' },
+  { _id:'c7',  name:'Night Gown',     slug:'night-gown',     icon:'👗', image: nightLogo, color:'#F5F3FF', accent:'#7C3AED' },
+  { _id:'c8',  name:'Co-ord Sets',    slug:'coord-sets',     icon:'🎽', image: cordLogo, color:'#FBF0D5', accent:'#C9963C' },
+  { _id:'c9',  name:'Bags',           slug:'bags',           icon:'👛', image: bagLogo, color:'#FEF3C7', accent:'#B45309' },
+  { _id:'c10', name:'Bodycon',        slug:'bodycon',        icon:'💃', image: bodyconLogo, color:'#FCE7F3', accent:'#DB2777' },
+  { _id:'c11', name:'Casuals',        slug:'casuals',        icon:'👕', image: casualLogo, color:'#F0FDF4', accent:'#16A34A' },
+  { _id:'c12', name:'Churidar Sets',  slug:'churidar-sets',  icon:'🪢', image: churidarLogo, color:'#F8F0FF', accent:'#4A1068' },
 ];
 
 export const PRODUCTS = [
@@ -208,11 +221,11 @@ export const HERO_BANNERS = [
 
 export const TESTIMONIALS = [
   { id:1, name:'Priya Sharma',    city:'New Delhi',  rating:5, review:'The Kanjivaram saree exceeded every expectation. Wore it to my sister\'s wedding and received compliments all evening! Packaging was exquisite too.', avatar:'PS', product:'Kanjivaram Silk Saree', verified:true },
-  { id:2, name:'Anjali Mehta',    city:'Mumbai',     rating:5, review:'My bridal lehenga was absolutely stunning. The Zardozi work is incredibly detailed and the fabric feels so luxurious. Lavender made my wedding day perfect!', avatar:'AM', product:'Bridal Lehenga', verified:true },
-  { id:3, name:'Kavya Nair',      city:'Bangalore',  rating:5, review:'The chikankari kurti set is so elegant and comfortable. Worn it to three events and always get asked where it\'s from. Will definitely order more!', avatar:'KN', product:'Chikankari Kurti Set', verified:true },
-  { id:4, name:'Ritu Agarwal',    city:'Jaipur',     rating:4, review:'Beautiful Navratri lehenga! The mirror work is gorgeous and colours are super vibrant. Fast delivery and arrived in beautiful packaging.', avatar:'RA', product:'Navratri Chaniya Choli', verified:true },
-  { id:5, name:'Sneha Iyer',      city:'Chennai',    rating:5, review:'The polki kundan set is absolutely bridal-worthy. Every piece is so well made — got so many DMs asking where I bought it after posting photos!', avatar:'SI', product:'Polki Kundan Set', verified:true },
-  { id:6, name:'Meera Kapoor',    city:'Hyderabad',  rating:5, review:'My daughter looked like a little queen in the kids lehenga! So soft on skin and absolutely gorgeous. Will order again every festival season!', avatar:'MK', product:'Kids Festive Lehenga', verified:true },
+  { id:2, name:'Kavya Nair',      city:'Bangalore',  rating:5, review:'The chikankari kurti set is so elegant and comfortable. Worn it to three events and always get asked where it\'s from. Will definitely order more!', avatar:'KN', product:'Chikankari Kurti Set', verified:true },
+  { id:3, name:'Sneha Iyer',      city:'Chennai',    rating:5, review:'The polki kundan set is absolutely stunning. Every piece is so well made — got so many compliments after posting photos of it!', avatar:'SI', product:'Polki Kundan Set', verified:true },
+  { id:4, name:'Ritu Agarwal',    city:'Jaipur',     rating:5, review:'The pashmina shawl is unbelievably soft and warm. It elevated my winter outfits and the weaving craftsmanship is truly premium.', avatar:'RA', product:'Pashmina Shawl', verified:true },
+  { id:5, name:'Anita Desai',     city:'Mumbai',     rating:5, review:'The linen palazzo pants set is my new wardrobe favourite. The fit is flattering, the fabric breathes, and it feels chic for both work and weekend.', avatar:'AD', product:'Linen Palazzo Pants Set', verified:true },
+  { id:6, name:'Maya Joshi',      city:'Pune',       rating:5, review:'The kids ethnic festive set was perfect for my little one. Soft, bright, and easy to wear — she loved the outfit and it lasted the whole celebration.', avatar:'MJ', product:'Kids Ethnic Festive Set', verified:true },
 ];
 
 export const TRUST_BADGES = [
