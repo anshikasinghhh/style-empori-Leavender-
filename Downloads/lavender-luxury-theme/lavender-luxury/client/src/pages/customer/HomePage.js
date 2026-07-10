@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from "../../utils/api";
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, ArrowRight, Zap, Star, Truck, Shield, RefreshCw, Gift } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowRight, Zap, Star, Truck, Shield, RefreshCw, Gift, Sparkles } from 'lucide-react';
 import { ProductCard, SkeletonCard, SectionHeader } from '../../components/common/LoadingSpinner';
 import { CATEGORIES, PRODUCTS, TESTIMONIALS, HERO_BANNERS, TRUST_BADGES, formatPrice } from '../../utils/data';
 // import aboutStory from "../../images/about-story.png";

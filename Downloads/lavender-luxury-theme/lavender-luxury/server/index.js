@@ -107,6 +107,7 @@ app.use('/api/loyalty-settings', require('./routes/loyaltySettings'));
 app.use('/api/giftcards', require('./routes/giftcards'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/flash-sales', require('./routes/flashSales'));
+app.use('/api/uploads', require('./routes/uploads'));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Vastra Elegance API is running' });

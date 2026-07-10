@@ -7,9 +7,13 @@ const { generateToken, protect } = require('../middleware/auth');
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone } = req.body;
-    const existing = await User.findOne({ email });
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!name || !normalizedEmail || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+    const existing = await User.findOne({ email: normalizedEmail });
     if (existing) return res.status(400).json({ success: false, message: 'Email already registered' });
-    const user = await User.create({ name, email, password, phone });
+    const user = await User.create({ name, email: normalizedEmail, password, phone });
     const token = generateToken(user._id);
     res.status(201).json({
       success: true,
@@ -25,7 +29,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email }).select('+password');
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
@@ -105,11 +113,12 @@ router.post('/google', async (req, res) => {
     }
 
     const { email, name, picture } = payload;
-    if (!email) {
+    const normalizedEmail = email?.trim().toLowerCase();
+    if (!normalizedEmail) {
       return res.status(400).json({ success: false, message: 'Google account has no email linked' });
     }
 
-    let user = await User.findOne({ email }).select('+password');
+    let user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (user) {
       user.lastLogin = new Date();
@@ -120,8 +129,8 @@ router.post('/google', async (req, res) => {
     } else {
       const randomPassword = Math.random().toString(36).slice(-8) + Date.now().toString(36).slice(-4);
       user = await User.create({
-        name: name || email.split('@')[0],
-        email,
+        name: name || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
         password: randomPassword,
         avatar: picture || '',
         role: 'customer'

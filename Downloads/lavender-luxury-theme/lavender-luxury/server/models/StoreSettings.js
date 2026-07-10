@@ -11,6 +11,7 @@ const storeSettingsSchema = new mongoose.Schema({
   tagline: { type: String, default: 'The Style Emporio' },
   metaDesc: { type: String, default: 'Premium ethnic & traditional fashion' },
   handlingCharge: { type: Number, default: 0 },
+  dashboardStartDate: { type: Date, default: Date.now },
   updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
 

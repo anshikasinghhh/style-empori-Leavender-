@@ -65,6 +65,12 @@ const AdminRoute = ({ children }) => {
   if (user?.role !== 'admin') return <Navigate to="/" replace />;
   return children;
 };
+const AdminOrEmployeeRoute = ({ children }) => {
+  const { token, user } = useSelector(s => s.auth);
+  if (!token) return <Navigate to="/login" replace />;
+  if (!['admin', 'employee'].includes(user?.role)) return <Navigate to="/" replace />;
+  return children;
+};
 const EmployeeRoute = ({ children }) => {
   const { token, user } = useSelector(s => s.auth);
   if (!token) return <Navigate to="/login" replace />;
@@ -137,7 +143,7 @@ export default function App() {
         <Route path="/admin/tasks" element={<AdminRoute><AdminTasks /></AdminRoute>} />
         <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance /></AdminRoute>} />
         <Route path="/admin/inventory-requests" element={<AdminRoute><AdminInventoryRequests /></AdminRoute>} />
-        <Route path="/admin/gift-cards" element={<AdminRoute><AdminGiftCards /></AdminRoute>} />
+        <Route path="/admin/gift-cards" element={<AdminOrEmployeeRoute><AdminGiftCards /></AdminOrEmployeeRoute>} />
 <Route path="/admin/flash-sales" element={<AdminRoute><AdminFlashSales /></AdminRoute>} />
         {/* Employee */}
         <Route path="/employee" element={<EmployeeRoute><EmployeeDashboard /></EmployeeRoute>} />

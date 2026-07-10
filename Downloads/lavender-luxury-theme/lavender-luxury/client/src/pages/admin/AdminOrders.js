@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
-import { Search, Package, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Search, Package, TrendingUp, Clock, CheckCircle2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
@@ -61,6 +61,17 @@ export default function AdminOrders() {
     )
   );
 
+  const deleteOrder = async (id) => {
+    if (!window.confirm('Delete this order? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/orders/${id}`);
+      setOrders(os => os.filter(o => o.id !== id));
+      toast.success('Order deleted');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete order');
+    }
+  };
+
   const updateStatus = async (id, status) => {
     try {
       await api.put(`/orders/${id}/status`, { status });
@@ -75,7 +86,7 @@ export default function AdminOrders() {
     { label: 'Total', value: orders.length, icon: Package, color: 'text-primary bg-champagne-light/80' },
     { label: 'Pending', value: orders.filter(o => o.status === 'placed').length, icon: Clock, color: 'text-amber-600 bg-amber-50' },
     { label: 'Shipped', value: orders.filter(o => o.status === 'shipped' || o.status === 'out_for_delivery').length, icon: TrendingUp, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Delivered', value: orders.filter(o => o.status === 'delivered').length, icon: CheckCircle, color: 'text-emerald-600 bg-emerald-50' }
+    { label: 'Delivered', value: orders.filter(o => o.status === 'delivered').length, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' }
   ];
 
   return (
@@ -116,7 +127,7 @@ export default function AdminOrders() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body min-w-[750px]">
-              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Amount', 'Payment', 'Status', 'Date'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
+              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Amount', 'Payment', 'Status', 'Date', 'Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(order => (
                   <tr key={order.id} className="hover:bg-champagne-light/80/20 transition-colors group">
@@ -137,6 +148,11 @@ export default function AdminOrders() {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{new Date(order.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
+                    <td className="px-4 py-3">
+                      <button onClick={() => deleteOrder(order.id)} className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose/90 text-rose transition-colors flex items-center justify-center" title="Delete order">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

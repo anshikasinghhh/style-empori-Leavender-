@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from './AdminLayout';
-import { Search, Users, ShoppingBag, TrendingUp, Mail, Phone, Ban, Eye } from 'lucide-react';
+import { Search, Users, ShoppingBag, TrendingUp, Mail, Phone, Ban, Eye, Trash2 } from 'lucide-react';
 // import { PRODUCTS } from '../../utils/data';
 import api from '../../utils/api';
 import { useEffect } from 'react';
@@ -39,10 +39,21 @@ const loadCustomers = async () => {
     (c.city || '').toLowerCase().includes(search.toLowerCase())
   );
   const totalRevenue = 0;
-const avgOrders = 0;
+  const avgOrders = 0;
   const toggleStatus = (id) => {
     setCustomers(cs => cs.map(c => c._id === id ? { ...c, isActive: !c.isActive } : c));
     toast.success('Customer status updated');
+  };
+
+  const deleteCustomer = async (id) => {
+    if (!window.confirm('Delete this customer? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/admin/customers/${id}`);
+      setCustomers(cs => cs.filter(c => c._id !== id));
+      toast.success('Customer deleted');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete customer');
+    }
   };
 
   return (
@@ -76,7 +87,7 @@ const avgOrders = 0;
         <div className="overflow-x-auto">
           <table className="w-full text-sm font-body min-w-[750px]">
             <thead className="bg-gray-50/80">
-              <tr>{['Customer','Contact','City','Orders','Total Spent','Tier','Joined','Status',''].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+              <tr>{['Customer','Contact','City','Orders','Total Spent','Tier','Joined','Status','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(c => (
@@ -97,8 +108,9 @@ const avgOrders = 0;
                   <td className="px-4 py-3"><span className={`badge text-[10px] ${TIER_COLORS[getTier(c.spent)]}`}>Bronze</span></td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{new Date(c.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</td>
                   <td className="px-4 py-3"><span className={`badge text-[10px] ${c.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>{c.isActive ? 'Active' : 'Inactive'}</span></td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 space-x-2">
                     <button onClick={() => toggleStatus(c._id)} className="w-7 h-7 rounded-lg hover:bg-rose-soft flex items-center justify-center text-gray-400 hover:text-rose transition-all" title="Toggle status"><Ban size={13}/></button>
+                    <button onClick={() => deleteCustomer(c._id)} className="w-7 h-7 rounded-lg hover:bg-rose-soft flex items-center justify-center text-gray-400 hover:text-rose transition-all" title="Delete customer"><Trash2 size={13}/></button>
                   </td>
                 </tr>
               ))}

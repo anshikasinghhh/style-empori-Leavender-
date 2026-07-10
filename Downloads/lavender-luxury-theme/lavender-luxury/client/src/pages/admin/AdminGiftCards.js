@@ -5,6 +5,7 @@ import {
   X, Package, CheckCircle, Clock, Ban, IndianRupee, RefreshCw, Plus, Edit3,
   Layers, GripVertical, ChevronDown
 } from 'lucide-react';
+import AdminLayout from './AdminLayout';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -203,8 +204,9 @@ export default function AdminGiftCards() {
   ];
 
   return (
-    <div>
-      {/* Tabs */}
+    <AdminLayout>
+      <div>
+        {/* Tabs */}
       <div className="flex gap-2 mb-6">
         <button onClick={() => setActiveTab('cards')}
           className={`px-5 py-2.5 rounded-xl text-sm font-body font-semibold transition-all ${activeTab === 'cards' ? 'bg-primary text-white shadow-sm' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'}`}>
@@ -569,5 +571,6 @@ export default function AdminGiftCards() {
         )}
       </AnimatePresence>
     </div>
+    </AdminLayout>
   );
 }

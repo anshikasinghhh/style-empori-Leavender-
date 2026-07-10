@@ -138,6 +138,18 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
+// @DELETE /api/orders/:id - Admin
+router.delete('/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Order deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @PUT /api/orders/:id/status - Admin
 router.put('/:id/status', protect, adminOnly, async (req, res) => {
   try {
