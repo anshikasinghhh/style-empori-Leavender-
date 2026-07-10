@@ -86,9 +86,25 @@ export default function Footer({ className = '' }) {
           <div>
             <h4 className="font-display font-semibold text-base mb-4">Contact</h4>
             <ul className="space-y-3 mb-6">
-              <li className="flex items-start gap-3 text-white/60 text-sm font-body"><MapPin size={15} className="mt-0.5 shrink-0 text-gold"/>Opposite, Technopark Phase III Main Rd, Mukkolackal, Kazhakkoottam, Thiruvananthapuram, Kerala 695582</li>
-              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Phone size={15} className="shrink-0 text-gold"/>+91 89214 18188</li>
-              <li className="flex items-center gap-3 text-white/60 text-sm font-body"><Mail size={15} className="shrink-0 text-gold"/>lavendertsetrading@gmail.com</li>
+              <li className="flex items-start gap-3 text-white/60 text-sm font-body">
+                <MapPin size={15} className="mt-0.5 shrink-0 text-gold"/>
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Opposite%2C%20Technopark%20Phase%20III%20Main%20Rd%2C%20Mukkolackal%2C%20Kazhakkoottam%2C%20Thiruvananthapuram%2C%20Kerala%20695582"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-body text-white/60 hover:text-white text-sm transition-colors"
+                >
+                  Opposite, Technopark Phase III Main Rd, Mukkolackal, Kazhakkoottam, Thiruvananthapuram, Kerala 695582
+                </a>
+              </li>
+              <li className="flex items-center gap-3 text-white/60 text-sm font-body">
+                <Phone size={15} className="shrink-0 text-gold"/>
+                <a href="tel:+918921418188" className="font-body text-white/60 hover:text-white text-sm transition-colors">+91 89214 18188</a>
+              </li>
+              <li className="flex items-center gap-3 text-white/60 text-sm font-body">
+                <Mail size={15} className="shrink-0 text-gold"/>
+                <a href="mailto:lavendertsetrading@gmail.com" className="font-body text-white/60 hover:text-white text-sm transition-colors">lavendertsetrading@gmail.com</a>
+              </li>
             </ul>
           </div>
         </div>
