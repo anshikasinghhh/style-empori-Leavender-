@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList, Gift, Zap } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -7,6 +7,7 @@ import NotificationBell from '../../components/common/NotificationBell';
 import { disconnectSocket } from '../../utils/socket';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '../../utils/api';
 
 const NAV = [
   { icon:LayoutDashboard, label:'Dashboard',  path:'/admin',            badge:null },
@@ -30,6 +31,35 @@ export default function AdminLayout({ children }) {
   const location = useLocation(); const dispatch = useDispatch(); const navigate = useNavigate();
   const { user } = useSelector(s => s.auth);
 
+  const [sidebarStats, setSidebarStats] = useState({
+    products: null,
+    orders: null,
+    customers: null,
+    inventory: null
+  });
+
+  useEffect(() => {
+    let active = true;
+    const fetchSidebarStats = async () => {
+      try {
+        const res = await api.get('/admin/sidebar-stats');
+        if (active && res.data && res.data.stats) {
+          setSidebarStats(res.data.stats);
+        }
+      } catch (err) {
+        console.error('Failed to fetch sidebar stats:', err);
+      }
+    };
+    fetchSidebarStats();
+
+    const interval = setInterval(fetchSidebarStats, 15000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [location.pathname]);
+
   const handleLogout = () => { dispatch(logout()); disconnectSocket(); toast.success('Logged out successfully'); navigate('/'); };
 
   const Sidebar = ({ mobile }) => (
@@ -51,6 +81,17 @@ export default function AdminLayout({ children }) {
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {NAV.map(({ icon:Icon, label, path, badge, badgeColor }) => {
           const active = location.pathname === path;
+          let displayBadge = badge;
+          if (label === 'Products') {
+            displayBadge = sidebarStats.products !== null ? String(sidebarStats.products) : '...';
+          } else if (label === 'Orders') {
+            displayBadge = sidebarStats.orders !== null ? String(sidebarStats.orders) : '...';
+          } else if (label === 'Customers') {
+            displayBadge = sidebarStats.customers !== null ? String(sidebarStats.customers) : '...';
+          } else if (label === 'Inventory') {
+            displayBadge = sidebarStats.inventory !== null ? String(sidebarStats.inventory) : '...';
+          }
+
           return (
             <Link key={path} to={path} onClick={() => setMobileSidebar(false)}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-body group relative ${active ? 'bg-white/20 text-white shadow-sm' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}>
@@ -58,10 +99,10 @@ export default function AdminLayout({ children }) {
               {(!collapsed || mobile) && (
                 <>
                   <span className="flex-1 font-medium">{label}</span>
-                  {badge && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor === 'rose' ? 'bg-rose/80 text-white' : badgeColor === 'amber' ? 'bg-amber-500/80 text-white' : 'bg-white/15 text-white/70'}`}>{badge}</span>}
+                  {displayBadge && <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor === 'rose' ? 'bg-rose/80 text-white' : badgeColor === 'amber' ? 'bg-amber-500/80 text-white' : 'bg-white/15 text-white/70'}`}>{displayBadge}</span>}
                 </>
               )}
-              {collapsed && !mobile && badge && <span className={`absolute right-1 top-1 w-2 h-2 rounded-full ${badgeColor === 'rose' ? 'bg-rose' : badgeColor === 'amber' ? 'bg-amber-400' : 'bg-white/40'}`}/>}
+              {collapsed && !mobile && displayBadge && <span className={`absolute right-1 top-1 w-2 h-2 rounded-full ${badgeColor === 'rose' ? 'bg-rose' : badgeColor === 'amber' ? 'bg-amber-400' : 'bg-white/40'}`}/>}
             </Link>
           );
         })}

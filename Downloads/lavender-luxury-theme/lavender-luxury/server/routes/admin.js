@@ -14,13 +14,25 @@ const StoreSettings = require('../models/StoreSettings');
 // @GET /api/admin/dashboard - Analytics overview
 router.get('/dashboard', protect, adminOnly, async (req, res) => {
   try {
-    const totalOrders = await Order.countDocuments();
-    const pendingOrders = await Order.countDocuments({ orderStatus: 'placed' });
-    const totalCustomers = await User.countDocuments({ role: 'customer' });
+    let settings = await StoreSettings.findOne({ key: 'global' });
+    if (!settings) {
+      settings = await StoreSettings.create({ key: 'global', dashboardStartDate: new Date() });
+    } else if (!settings.dashboardStartDate) {
+      settings.dashboardStartDate = new Date();
+      await settings.save();
+    }
+
+    const startDate = settings.dashboardStartDate || new Date();
+    const dateMatch = { createdAt: { $gte: startDate } };
+
+    const totalOrders = await Order.countDocuments({ ...dateMatch });
+    const pendingOrders = await Order.countDocuments({ ...dateMatch, orderStatus: 'placed' });
+    const totalCustomers = await User.countDocuments({ role: 'customer', createdAt: { $gte: startDate } });
     const totalProducts = await Product.countDocuments({ isActive: true });
     const lowStockProducts = await Product.countDocuments({ stock: { $lt: 10 }, isActive: true });
 
     const revenueMatch = {
+      ...dateMatch,
       orderStatus: { $nin: ['cancelled'] },
       paymentStatus: { $nin: ['failed', 'refunded'] }
     };
@@ -31,9 +43,9 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     ]);
     const totalRevenue = revenueAgg[0]?.total || 0;
 
-    // Monthly sales for last 12 months
+    // Monthly sales for dashboard period
     const monthlyData = await Order.aggregate([
-      { $match: { ...revenueMatch, createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } } },
+      { $match: revenueMatch },
       { $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
         revenue: { $sum: '$total' }, orders: { $sum: 1 }
@@ -43,6 +55,7 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
 
     // Top products
     const topProducts = await Order.aggregate([
+      { $match: revenueMatch },
       { $unwind: '$items' },
       { $group: { _id: '$items.product', name: { $first: '$items.name' }, totalSold: { $sum: '$items.quantity' }, revenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } },
       { $sort: { totalSold: -1 } },
@@ -65,15 +78,15 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
       { $limit: 8 }
     ]);
 
-    // Recent orders
-    const recentOrders = await Order.find()
+    // Recent orders since reset date
+    const recentOrders = await Order.find({ createdAt: { $gte: startDate } })
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
       .limit(10);
 
-    // Customer growth
+    // Customer growth since reset date
     const customerGrowth = await User.aggregate([
-      { $match: { role: 'customer', createdAt: { $gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } } },
+      { $match: { role: 'customer', createdAt: { $gte: startDate } } },
       { $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
         count: { $sum: 1 }
@@ -89,6 +102,28 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
       topProducts,
       recentOrders,
       customerGrowth
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @GET /api/admin/sidebar-stats - Dynamic sidebar counts
+router.get('/sidebar-stats', protect, adminOnly, async (req, res) => {
+  try {
+    const totalProducts = await Product.countDocuments({ isActive: true });
+    const totalOrders = await Order.countDocuments({});
+    const totalCustomers = await User.countDocuments({ role: 'customer' });
+    const lowStockProducts = await Product.countDocuments({ stock: { $lt: 10 }, isActive: true });
+
+    res.json({
+      success: true,
+      stats: {
+        products: totalProducts,
+        orders: totalOrders,
+        customers: totalCustomers,
+        inventory: lowStockProducts
+      }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -232,6 +267,18 @@ router.get('/customers', protect, adminOnly, async (req, res) => {
     const customers = await User.find(query).sort({ createdAt: -1 }).limit(Number(limit)).skip((Number(page) - 1) * Number(limit));
     const total = await User.countDocuments(query);
     res.json({ success: true, customers, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @DELETE /api/admin/customers/:id
+router.delete('/customers/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const customer = await User.findById(req.params.id);
+    if (!customer) return res.status(404).json({ success: false, message: 'Customer not found' });
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Customer deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

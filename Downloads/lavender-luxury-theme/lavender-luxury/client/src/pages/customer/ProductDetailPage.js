@@ -68,11 +68,13 @@ export default function ProductDetailPage() {
     if (p._id === product._id) return false;
     return productCategory(p.category) === productCategory(product.category);
   }).slice(0, 4);
-  const images = product.images?.length >= 3 ? product.images : [
-    ...product.images,
-    { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },
-    { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Pattern detail' },
-  ].slice(0,4);
+  // Use all provided images if available; otherwise fall back to a couple of placeholders
+  const images = (Array.isArray(product.images) && product.images.length > 0)
+    ? product.images
+    : [
+        { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },
+        { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Pattern detail' },
+      ];
 
   const handleCart = () => {
     if (!token) { toast.error('Please login to add to cart'); return; }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
-import { ClipboardList, Plus, Calendar, AlertCircle, Search, Filter, X, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, Plus, Calendar, AlertCircle, Search, Filter, X, CheckCircle2, Trash2 } from 'lucide-react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -118,6 +118,17 @@ export default function AdminTasks() {
     return matchSearch && matchEmp && matchPrio && matchStatus;
   });
 
+  const deleteTask = async (id) => {
+    if (!window.confirm('Delete this task? This action cannot be undone.')) return;
+    try {
+      await api.delete(`/employee/tasks/${id}`);
+      setTasks(ts => ts.filter(t => t._id !== id));
+      toast.success('Task deleted');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete task');
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       month: 'short',
@@ -196,7 +207,7 @@ export default function AdminTasks() {
             <table className="w-full text-sm font-body min-w-[850px]">
               <thead className="bg-gray-50/80">
                 <tr className="border-b border-gray-100">
-                  {['Task details', 'Assignee', 'Type', 'Priority', 'Due Date', 'Status', 'Remarks'].map(h => (
+                  {['Task details', 'Assignee', 'Type', 'Priority', 'Due Date', 'Status', 'Remarks', 'Actions'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                       {h}
                     </th>
@@ -248,6 +259,11 @@ export default function AdminTasks() {
                     </td>
                     <td className="px-4 py-4 max-w-[150px]">
                       <p className="text-xs text-gray-500 italic truncate" title={task.remarks}>{task.remarks || '--'}</p>
+                    </td>
+                    <td className="px-4 py-4">
+                      <button onClick={() => deleteTask(task._id)} className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose/90 text-rose transition-colors flex items-center justify-center" title="Delete task">
+                        <Trash2 size={16} />
+                      </button>
                     </td>
                   </tr>
                 ))}

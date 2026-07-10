@@ -37,6 +37,38 @@ const DashboardTooltip = ({ active, payload, label }) => {
 const formatCurrency = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`;
 const formatMonthLabel = ({ month, year }) => `${monthNames[month - 1] || 'Jan'} ${year}`;
 
+const getDashboardAlert = (stats) => {
+  if (stats.lowStockProducts > 0) {
+    return {
+      type: 'warning',
+      title: 'Low Stock Alert — Action Required',
+      message: `${stats.lowStockProducts} product${stats.lowStockProducts === 1 ? '' : 's'} are running critically low. Reorder inventory to avoid stockouts and lost sales.`
+    };
+  }
+
+  if (stats.pendingOrders > 0) {
+    return {
+      type: 'warning',
+      title: 'Pending Orders Need Attention',
+      message: `${stats.pendingOrders} order${stats.pendingOrders === 1 ? '' : 's'} are still pending. Process them to keep fulfillment smooth and customers happy.`
+    };
+  }
+
+  if (stats.totalOrders === 0 && stats.totalCustomers === 0) {
+    return {
+      type: 'warning',
+      title: 'No Activity Yet',
+      message: 'No orders or new customers have been recorded in the current dashboard period. Promote products and review campaigns to drive growth.'
+    };
+  }
+
+  return {
+    type: 'success',
+    title: 'Dashboard Status',
+    message: `Good news — ${stats.totalOrders} order${stats.totalOrders === 1 ? '' : 's'}, ${stats.totalCustomers} customer${stats.totalCustomers === 1 ? '' : 's'}, and ${stats.totalProducts} active product${stats.totalProducts === 1 ? '' : 's'} are being tracked for this period.`
+  };
+};
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('ecommerce');
   const [loading, setLoading] = useState(true);
@@ -134,6 +166,12 @@ export default function AdminDashboard() {
     }
   }, [activeTab]);
 
+  const dashboardAlert = getDashboardAlert(stats);
+
+  const alertStyles = dashboardAlert.type === 'warning'
+    ? 'bg-amber-50 border-amber-200 text-amber-900'
+    : 'bg-emerald-50 border-emerald-200 text-emerald-900';
+
   const kpis = [
     {
       title: 'Total Revenue',
@@ -195,6 +233,18 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="font-body text-gray-500 text-sm mt-0.5">Welcome back! Review operations and sales overview.</p>
+      </div>
+
+      <div className={`rounded-2xl border ${alertStyles} p-4 mb-6`}> 
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5">
+            <AlertTriangle size={18} className={dashboardAlert.type === 'warning' ? 'text-amber-600' : 'text-emerald-600'} />
+          </div>
+          <div>
+            <p className="font-body font-bold text-sm">{dashboardAlert.title}</p>
+            <p className="font-body text-xs mt-1">{dashboardAlert.message}</p>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -262,7 +312,7 @@ export default function AdminDashboard() {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
                   <XAxis dataKey="month" tick={{ fontSize: 11, fontFamily: 'DM Sans' }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fontFamily: 'DM Sans' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(v) => `₹${Number(v).toLocaleString('en-IN')}`} tick={{ fontSize: 11, fontFamily: 'DM Sans' }} axisLine={false} tickLine={false} />
                   <Tooltip content={<DashboardTooltip />} />
                   <Area type="monotone" dataKey="revenue" stroke="#4A1068" strokeWidth={2.5} fill="url(#rev)" dot={false} activeDot={{ r: 5, fill: '#4A1068', stroke: 'white', strokeWidth: 2 }} />
                 </AreaChart>
@@ -364,10 +414,8 @@ export default function AdminDashboard() {
               <AlertTriangle size={16} className="text-amber-600" />
             </div>
             <div>
-              <p className="font-body font-bold text-amber-800 text-sm">Low Stock Alert — Action Required</p>
-              <p className="font-body text-amber-700 text-xs mt-0.5">
-                {stats.lowStockProducts ? `${stats.lowStockProducts} products running critically low` : 'Stock levels are healthy across your catalog.'}
-              </p>
+              <p className="font-body font-bold text-amber-800 text-sm">{dashboardAlert.title}</p>
+              <p className="font-body text-amber-700 text-xs mt-0.5">{dashboardAlert.message}</p>
             </div>
           </div>
         </>

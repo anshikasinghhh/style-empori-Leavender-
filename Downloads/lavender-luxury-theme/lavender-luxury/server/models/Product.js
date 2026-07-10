@@ -69,6 +69,14 @@ productSchema.pre('save', function(next) {
   if (this.originalPrice && this.price) {
     this.discountPercent = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
   }
+  // Aggregate total stock from variants when present
+  if (Array.isArray(this.variants) && this.variants.length > 0) {
+    try {
+      this.stock = this.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    } catch (e) {
+      this.stock = this.stock || 0;
+    }
+  }
   next();
 });
 

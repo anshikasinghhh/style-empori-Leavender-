@@ -3,21 +3,23 @@ import api from '../utils/api';
 
 export const loginUser = createAsyncThunk('auth/login', async (credentials, { rejectWithValue }) => {
   try {
-    const { data } = await api.post('/auth/login', credentials);
+    const payload = { ...credentials, email: credentials.email?.trim().toLowerCase() };
+    const { data } = await api.post('/auth/login', payload);
     localStorage.setItem('ve_token', data.token);
     return data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || 'Login failed');
+    return rejectWithValue(err.response?.data?.message || err.message || 'Login failed');
   }
 });
 
 export const registerUser = createAsyncThunk('auth/register', async (userData, { rejectWithValue }) => {
   try {
-    const { data } = await api.post('/auth/register', userData);
+    const payload = { ...userData, email: userData.email?.trim().toLowerCase() };
+    const { data } = await api.post('/auth/register', payload);
     localStorage.setItem('ve_token', data.token);
     return data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || 'Registration failed');
+    return rejectWithValue(err.response?.data?.message || err.message || 'Registration failed');
   }
 });
 
@@ -26,7 +28,7 @@ export const fetchMe = createAsyncThunk('auth/me', async (_, { rejectWithValue }
     const { data } = await api.get('/auth/me');
     return data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message);
+    return rejectWithValue(err.response?.data?.message || err.message);
   }
 });
 
@@ -36,7 +38,7 @@ export const googleLoginUser = createAsyncThunk('auth/googleLogin', async (idTok
     localStorage.setItem('ve_token', data.token);
     return data;
   } catch (err) {
-    return rejectWithValue(err.response?.data?.message || 'Google Login failed');
+    return rejectWithValue(err.response?.data?.message || err.message || 'Google Login failed');
   }
 });
 

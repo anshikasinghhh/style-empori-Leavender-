@@ -287,8 +287,8 @@ router.get('/:code', async (req, res) => {
    ADMIN ROUTES
    ═══════════════════════════════════════════════════════════ */
 
-// GET /api/giftcards/admin/list — Admin: list all gift cards
-router.get('/admin/list', protect, authorize('admin'), async (req, res) => {
+// GET /api/giftcards/admin/list — Admin/Employee: list all gift cards
+router.get('/admin/list', protect, adminOrEmployee, async (req, res) => {
   try {
     const { status, search, page = 1, limit = 50 } = req.query;
     const query = {};
@@ -339,8 +339,8 @@ router.get('/admin/list', protect, authorize('admin'), async (req, res) => {
   }
 });
 
-// PUT /api/giftcards/admin/:id — Admin: update gift card status
-router.put('/admin/:id', protect, authorize('admin'), async (req, res) => {
+// PUT /api/giftcards/admin/:id — Admin/Employee: update gift card status
+router.put('/admin/:id', protect, adminOrEmployee, async (req, res) => {
   try {
     const { status } = req.body;
     const validStatuses = ['active', 'deactivated', 'expired'];
@@ -368,8 +368,8 @@ router.put('/admin/:id', protect, authorize('admin'), async (req, res) => {
   }
 });
 
-// DELETE /api/giftcards/admin/:id — Admin: delete gift card
-router.delete('/admin/:id', protect, authorize('admin'), async (req, res) => {
+// DELETE /api/giftcards/admin/:id — Admin/Employee: delete gift card
+router.delete('/admin/:id', protect, adminOrEmployee, async (req, res) => {
   try {
     const giftCard = await GiftCard.findById(req.params.id);
     if (!giftCard) {

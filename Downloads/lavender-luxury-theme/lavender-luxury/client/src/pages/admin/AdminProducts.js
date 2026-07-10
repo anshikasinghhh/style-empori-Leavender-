@@ -56,7 +56,7 @@ const SIZE_OPTIONS = [
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
+const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
@@ -86,10 +86,31 @@ export default function AdminProducts({ Layout = AdminLayout }) {
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [selectedColor, setSelectedColor] = useState("");
-const [customColor, setCustomColor] = useState("");
+  const [customColor, setCustomColor] = useState("");
 
-const [selectedSize, setSelectedSize] = useState("");
-const [customSize, setCustomSize] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [customSize, setCustomSize] = useState("");
+
+  // Variant builder state
+  const [variantSize, setVariantSize] = useState("");
+  const [variantColor, setVariantColor] = useState("");
+  const [variantStock, setVariantStock] = useState(0);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  
+  const uploadImages = async (files) => {
+    try {
+      toast.loading('Uploading image(s)...', { id: 'upload' });
+      const formData = new FormData();
+      files.forEach(f => formData.append('images', f));
+      const res = await api.post('/uploads', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const uploaded = (res.data.images || []).map(i => ({ url: i.url, alt: '' }));
+      setForm(f => ({ ...f, images: [...(f.images || []), ...uploaded] }));
+      toast.success('Upload complete', { id: 'upload' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Upload failed', { id: 'upload' });
+    }
+  };
 const [availableCoupons, setAvailableCoupons] = useState([]);
 const [couponMode, setCouponMode] = useState('none');
 const [customCoupon, setCustomCoupon] = useState(EMPTY_CUSTOM_COUPON);
@@ -130,6 +151,7 @@ console.log("Filtered:", filtered);
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       colors: Array.isArray(p.colors) ? p.colors : [],
       images: Array.isArray(p.images) && p.images.length ? p.images : [{ url: '', alt: '' }],
+      variants: Array.isArray(p.variants) ? p.variants : [],
       couponCode: p.couponCode || ''
     });
     setEditId(p._id);
@@ -612,29 +634,76 @@ colors:f.colors.filter((_,i)=>i!==index)
 </div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Material</label><input value={form.material} onChange={e => setForm(f=>({...f,material:e.target.value}))} className="input-field text-sm" placeholder="Pure Kanjivaram Silk"/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Description</label><textarea value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} className="input-field text-sm h-24 resize-none" placeholder="Product description..."/></div>
-                  <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Image *</label>
+                  <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Images *</label>
                     <div className="flex gap-3 items-start">
                       <input 
                         type="file" 
                         accept="image/*" 
+                        multiple
                         onChange={e => {
-                          const file = e.target.files[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setForm(f => ({...f, images:[{url:reader.result, alt:f.name}]}));
-                            };
-                            reader.readAsDataURL(file);
-                          }
+                          const files = Array.from(e.target.files || []);
+                          if (files.length === 0) return;
+                          uploadImages(files);
                         }} 
                         className="input-field text-sm flex-1" 
-                        placeholder="Select image file"
+                        placeholder="Select image files"
                       />
-                      {form.images?.[0]?.url && (
-                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-champagne-light shrink-0">
-                          <img src={form.images[0].url} alt="Preview" className="w-full h-full object-cover"/>
+                      <div className="ml-2 flex gap-2 items-center">
+                        <input value={imageUrl} onChange={e=>setImageUrl(e.target.value)} placeholder="Image URL" className="input-field text-sm" />
+                        <input value={imageAlt} onChange={e=>setImageAlt(e.target.value)} placeholder="Alt text" className="input-field text-sm w-40" />
+                        <button type="button" onClick={()=>{
+                          if(!imageUrl) { toast.error('Enter image URL'); return; }
+                          setForm(f=>({...f, images:[...(f.images||[]), { url: imageUrl, alt: imageAlt || f.name || '' }]}));
+                          setImageUrl(''); setImageAlt('');
+                        }} className="btn-outline">Add</button>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {form.images?.map((img, idx) => (
+                        <div key={idx} className="w-20 h-20 rounded-lg overflow-hidden bg-champagne-light relative">
+                          <img src={img.url || 'https://via.placeholder.com/200'} alt={img.alt || form.name} className="w-full h-full object-cover"/>
+                          <button type="button" onClick={() => setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))} className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs">✕</button>
                         </div>
-                      )}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Variants builder */}
+                  <div className="col-span-2 mt-4">
+                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Variants (Size / Color / Stock)</label>
+                    <div className="grid grid-cols-3 gap-2 items-end">
+                      <select value={variantSize} onChange={e=>setVariantSize(e.target.value)} className="input-field">
+                        <option value="">Select size</option>
+                        {[...new Set([...SIZE_OPTIONS, ...form.sizes.map(s=>s.size)])].map(s=> <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <select value={variantColor} onChange={e=>setVariantColor(e.target.value)} className="input-field">
+                        <option value="">Select color</option>
+                        {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <input type="number" value={variantStock} onChange={e=>setVariantStock(Number(e.target.value))} className="input-field" placeholder="Stock" />
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button type="button" onClick={()=>{
+                        if(!variantSize || !variantColor) { toast.error('Select size and color'); return; }
+                        // prevent duplicates
+                        if(form.variants.some(v=>v.size===variantSize && v.color?.name===variantColor)) { toast.error('Variant exists'); return; }
+                        setForm(f=>({...f, variants:[...f.variants, { size: variantSize, color:{ name: variantColor, hex: '' }, stock: Number(variantStock || 0) }]}));
+                        setVariantSize(''); setVariantColor(''); setVariantStock(0);
+                      }} className="btn-primary">Add Variant</button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {form.variants.map((v, i)=> (
+                        <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-3">
+                          <div className="text-xs"><strong>{v.size}</strong> / {v.color?.name} — <span className="font-mono">{v.stock}</span></div>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={()=>{
+                              setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
+                            }} className="text-rose">Remove</button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <div className="col-span-2">
