@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Order, Cart, Wishlist } = require('../models/index');
+const { Order, Cart, Wishlist, Coupon } = require('../models/index');
 const Product = require('../models/Product');
 const StoreSettings = require('../models/StoreSettings');
 const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
@@ -13,6 +13,9 @@ const { notifyAdmins, notifyEmployees, createNotification } = require('../servic
 router.post('/', protect, async (req, res) => {
   try {
     const { items, shippingAddress, paymentMethod, couponCode, couponDiscount, giftWrap, donationAmount } = req.body;
+    
+    console.log('Order creation - couponCode received:', couponCode);
+    
     let subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const shippingCost = subtotal > 999 ? 0 : 99;
     const settings = await StoreSettings.findOne({ key: 'global' });
@@ -88,6 +91,24 @@ router.post('/', protect, async (req, res) => {
 
     // Clear cart
     await Cart.findOneAndUpdate({ user: req.user._id }, { items: [] });
+
+    // Update coupon usage count if coupon was used
+    if (couponCode) {
+      try {
+        const coupon = await Coupon.findOneAndUpdate(
+          { code: couponCode.toUpperCase() },
+          { $inc: { usedCount: 1 } },
+          { new: true }
+        );
+        if (!coupon) {
+          console.warn(`Coupon not found for code: ${couponCode.toUpperCase()}`);
+        } else {
+          console.log(`Coupon usage updated: ${couponCode.toUpperCase()}, new usedCount: ${coupon.usedCount + 1}`);
+        }
+      } catch (couponErr) {
+        console.error('Error updating coupon usage:', couponErr.message);
+      }
+    }
 
     res.status(201).json({ success: true, order });
   } catch (err) {

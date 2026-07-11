@@ -276,37 +276,6 @@ const NEWS = [
   { tag: 'Announcement', title: 'Growing Our Global Presence', desc: 'Lavender is expanding internationally, bringing premium ethnic fashion to customers worldwide.', image: 'https://images.unsplash.com/photo-1564584217132-2271feaeb3c5?w=600&q=80' },
 ];
 
-function LatestNews() {
-  return (
-    <Section className="bg-primary-50/50">
-      <SectionTitle tag="Stay Updated" title="Latest News"
-        subtitle="Press releases, product launches, and company updates." />
-      <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }}
-        className="grid md:grid-cols-3 gap-6">
-        {NEWS.map((item, i) => (
-          <motion.article key={item.title} variants={fadeUp} custom={i}
-            className="group bg-white rounded-2xl overflow-hidden shadow-card border border-gold-pale/60 hover:shadow-hover hover:-translate-y-1 transition-all duration-300">
-            <div className="relative aspect-[16/10] overflow-hidden bg-champagne-light">
-              <img src={item.image} alt={item.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <span className="absolute top-3 left-3 bg-primary text-white font-body text-[10px] font-bold px-3 py-1 rounded-full">
-                {item.tag}
-              </span>
-            </div>
-            <div className="p-5">
-              <h4 className="font-display font-semibold text-gray-900 text-base mb-2 group-hover:text-primary transition-colors">{item.title}</h4>
-              <p className="font-body text-sm text-gray-500 leading-relaxed mb-4">{item.desc}</p>
-              <span className="inline-flex items-center gap-1 font-body text-xs font-semibold text-primary">
-                Read More <ArrowRight size={12} />
-              </span>
-            </div>
-          </motion.article>
-        ))}
-      </motion.div>
-    </Section>
-  );
-}
-
 /* ─── 8. Press Resources ────────────────────────────────────── */
 const RESOURCES = [
   { icon: Building2, title: 'Company Background', desc: 'History, mission, and vision' },
@@ -384,7 +353,6 @@ export default function PressMediaPage() {
       <BrandAssets />
       <Collaborations />
       <Awards />
-      <LatestNews />
       <PressResources />
       <FinalCTA />
     </div>

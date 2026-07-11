@@ -15,6 +15,11 @@ export const EMPTY_CUSTOM_COUPON = {
 export async function resolveProductCouponCode({ couponMode, couponCode, customCoupon, api }) {
   if (couponMode === 'none' || !couponCode) return '';
 
+  if (couponMode === 'existing') {
+    // For existing coupons, just return the code - no need to create
+    return couponCode;
+  }
+
   if (couponMode !== 'custom') {
     return couponCode;
   }
@@ -50,8 +55,9 @@ export default function ProductCouponSection({
   customCoupon,
   setCustomCoupon,
   availableCoupons,
+  selectedCoupon,
+  setSelectedCoupon,
 }) {
-  const [selectedCoupon, setSelectedCoupon] = useState('');
 
   const clearCoupon = () => {
     setCouponMode('none');
@@ -62,7 +68,7 @@ export default function ProductCouponSection({
 
   const addExistingCoupon = () => {
     if (!selectedCoupon) return;
-    setCouponMode(selectedCoupon);
+    setCouponMode('existing');
     setCouponCode(selectedCoupon);
     setCustomCoupon(EMPTY_CUSTOM_COUPON);
   };

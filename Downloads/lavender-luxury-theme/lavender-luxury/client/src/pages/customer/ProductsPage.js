@@ -41,27 +41,92 @@ const SORT_OPTIONS = [
   { value:'rating', label:'Top Rated' },
 ];
 
-function FilterSidebar({ filters, setFilters, onClose, mobile }) {
+const getSectionFilterOptions = (categoryParam) => {
+  const section = normalizeCategory(categoryParam);
+  if (section === 'kidswear') {
+    return [
+      { value:'top', label:'Top', icon:'👕' },
+      { value:'pant', label:'Pant', icon:'👖' },
+      { value:'shirt', label:'Shirt', icon:'👕' },
+      { value:'dress', label:'Dress', icon:'👗' },
+    ];
+  }
+
+  return []; // No style/filter options for women section
+};
+
+const HIGHLIGHT_OPTIONS = [
+  { value:'new-arrival', label:'New Arrivals' },
+  { value:'best-seller', label:'Best Sellers' },
+];
+
+const matchesSubCategory = (product, subCategory) => {
+  if (!subCategory) return true;
+
+  const haystack = [
+    product.category?.slug,
+    product.category?.name,
+    product.name,
+    ...(product.tags || [])
+  ].filter(Boolean).map(v => normalizeCategory(v)).join(' ');
+
+  if (subCategory === 'top') {
+    return /(croptop|top|blouse|kurta)/i.test(haystack);
+  }
+  if (subCategory === 'pant') {
+    return /(pant|pants|trouser|trousers|palazzo|churidar|salwar|bottom)/i.test(haystack);
+  }
+  if (subCategory === 'shirt') {
+    return /(shirt|kurti|kurta)/i.test(haystack);
+  }
+  if (subCategory === 'pants') {
+    return /(pants|trouser|trousers|palazzo|churidar|salwar|bottom)/i.test(haystack);
+  }
+  if (subCategory === 'dress') {
+    return /(dress|gown|bodycon|lehenga|anarkali|set)/i.test(haystack);
+  }
+
+  return true;
+};
+
+function FilterSidebar({ filters, setFilters, onClose, mobile, categoryParam }) {
+  const sectionOptions = getSectionFilterOptions(categoryParam);
+  const visibleCategories = CATEGORIES.filter(cat => !['bags', 'kidswear'].includes(cat.slug));
+  const section = normalizeCategory(categoryParam);
+  const isKidswear = section === 'kidswear';
   return (
     <div className={`space-y-5 ${!mobile && 'sticky top-28'}`}>
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-semibold text-gray-900 flex items-center gap-2"><SlidersHorizontal size={16} className="text-primary"/> Filters</h3>
+        <h3 className="font-display font-semibold text-gray-900">Filters</h3>
         {mobile && <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg"><X size={18}/></button>}
       </div>
       {/* Category */}
       <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
         <p className="font-body font-semibold text-gray-800 text-sm mb-3">Category</p>
         <div className="space-y-2">
-          {CATEGORIES.map(cat => (
+          {visibleCategories.map(cat => (
             <label key={cat._id} className="flex items-center gap-2.5 cursor-pointer group">
               <input type="checkbox" checked={filters.categories?.includes(cat.slug)||false}
                 onChange={e => setFilters(f => ({ ...f, categories: e.target.checked ? [...(f.categories||[]),cat.slug] : (f.categories||[]).filter(c=>c!==cat.slug) }))}
                 className="w-4 h-4 rounded border-gray-200 text-primary focus:ring-primary/20 cursor-pointer"/>
-              <span className="font-body text-sm text-gray-600 group-hover:text-primary transition-colors">{cat.icon} {cat.name}</span>
+              <span className="font-body text-sm text-gray-600 group-hover:text-primary transition-colors">{cat.name}</span>
             </label>
           ))}
         </div>
       </div>
+      {isKidswear && sectionOptions.length > 0 && (
+        <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
+          <p className="font-body font-semibold text-gray-800 text-sm mb-3">Filter</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {sectionOptions.map(option => (
+              <button key={option.value} onClick={() => setFilters(f => ({ ...f, subCategory: f.subCategory === option.value ? '' : option.value }))}
+                className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${filters.subCategory === option.value ? 'bg-primary text-white shadow-sm' : 'bg-champagne-light/80 text-gray-600 hover:bg-primary-100'}`}>
+                {option.icon} {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Price */}
       {/* <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
         <p className="font-body font-semibold text-gray-800 text-sm mb-3">Price Range</p>
@@ -77,6 +142,17 @@ function FilterSidebar({ filters, setFilters, onClose, mobile }) {
           {(filters.minPrice||filters.maxPrice) && <button onClick={() => setFilters(f => ({...f,minPrice:null,maxPrice:null}))} className="font-body text-xs text-primary hover:underline mt-1">Clear</button>}
         </div>
       </div> */}
+      <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
+        <p className="font-body font-semibold text-gray-800 text-sm mb-3">Highlights</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {HIGHLIGHT_OPTIONS.map(option => (
+            <button key={option.value} onClick={() => setFilters(f => ({ ...f, highlight: f.highlight === option.value ? '' : option.value }))}
+              className={`px-3 py-1.5 rounded-full text-xs font-body transition-all ${filters.highlight === option.value ? 'bg-primary text-white shadow-sm' : 'bg-champagne-light/80 text-gray-600 hover:bg-primary-100'}`}>
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* Occasion */}
       <div className="bg-white rounded-2xl p-4 shadow-card border border-gold-pale/60">
         <p className="font-body font-semibold text-gray-800 text-sm mb-3">Occasion</p>
@@ -133,6 +209,9 @@ export default function ProductsPage() {
     if (filters.categories?.length) {
       p = p.filter(x => filters.categories.some(cat => categoryMatches(getProductCategory(x.category), cat)));
     }
+    if (filters.subCategory) p = p.filter(x => matchesSubCategory(x, filters.subCategory));
+    if (filters.highlight === 'new-arrival') p = p.filter(x => x.isNewArrival);
+    if (filters.highlight === 'best-seller') p = p.filter(x => x.isBestSeller);
     if (filters.minPrice!=null) p = p.filter(x => x.price >= filters.minPrice);
     if (filters.maxPrice!=null && filters.maxPrice!==Infinity) p = p.filter(x => x.price <= filters.maxPrice);
     if (filters.occasions?.length) p = p.filter(x => x.occasion?.some(o => filters.occasions.includes(o)));
@@ -157,15 +236,15 @@ export default function ProductsPage() {
         <div className="fixed inset-0 z-50 bg-black/50 lg:hidden" onClick={() => setMobileFilter(false)}>
           <motion.div initial={{ x:'-100%' }} animate={{ x:0 }} transition={{ type:'spring', damping:22 }}
             className="absolute left-0 top-0 bottom-0 w-80 bg-ivory p-5 overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <FilterSidebar filters={filters} setFilters={setFilters} onClose={() => setMobileFilter(false)} mobile/>
+            <FilterSidebar filters={filters} setFilters={setFilters} onClose={() => setMobileFilter(false)} mobile categoryParam={searchParams.get('category')} />
           </motion.div>
         </div>
       )}
       <div className="flex gap-8">
-        <div className="hidden lg:block w-64 shrink-0"><FilterSidebar filters={filters} setFilters={setFilters}/></div>
+        <div className="hidden lg:block w-64 shrink-0"><FilterSidebar filters={filters} setFilters={setFilters} categoryParam={searchParams.get('category')} /></div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="relative flex-1"><Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"/>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="relative flex-1 max-w-xl"><Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"/>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="w-full pl-10 input-field text-sm py-2.5"/>
             </div>
             <div className="hidden lg:flex items-center gap-3">

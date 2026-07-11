@@ -20,8 +20,8 @@ const productSchema = new mongoose.Schema({
 },
   subcategory: { type: String },
   images: [{ url: String, alt: String }],
-  // sizes: [{ size: String, stock: Number }],
-  // colors: [{ name: String, hex: String }],
+  sizes: [{ size: String, stock: Number }],
+  colors: [{ name: String, hex: String }],
   variants: [
 {
     color: {
@@ -59,7 +59,7 @@ const productSchema = new mongoose.Schema({
   weight: { type: Number },
   dimensions: { length: Number, width: Number, height: Number },
   careInstructions: { type: String },
-  returnPolicy: { type: String, default: '7 days easy return' }
+  returnPolicy: { type: String, default: '15 days easy return' }
 }, { timestamps: true });
 
 productSchema.pre('save', function(next) {

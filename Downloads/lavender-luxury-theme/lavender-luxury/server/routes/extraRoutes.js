@@ -4,6 +4,7 @@ const router = express.Router();
 const { Wishlist, Review, Coupon, Category } = require('../models/index');
 const StoreSettings = require('../models/StoreSettings');
 const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
+const Product = require('../models/Product');
 // const { protect, adminOnly } = require('../middleware/auth');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
@@ -50,19 +51,57 @@ module.exports.wishlistRouter = (() => {
 
 module.exports.reviewRouter = (() => {
   const r = express.Router();
+
+  // GET reviews for a product
   r.get('/product/:productId', async (req, res) => {
     try {
-      const reviews = await Review.findOne ? 
-        await require('mongoose').model('Review').find({ product: req.params.productId }).populate('user', 'name avatar') : [];
+      const reviews = await Review.find({ product: req.params.productId })
+        .populate('user', 'name avatar')
+        .sort({ createdAt: -1 });
       res.json({ success: true, reviews });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
+
+  // POST a new review (logged-in users only)
   r.post('/', protect, async (req, res) => {
     try {
-      const review = await require('mongoose').model('Review').create({ ...req.body, user: req.user._id });
-      res.status(201).json({ success: true, review });
+      const { product: productId, rating, comment, title } = req.body;
+
+      if (!productId || !rating) {
+        return res.status(400).json({ success: false, message: 'Product and rating are required' });
+      }
+      if (rating < 1 || rating > 5) {
+        return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+      }
+
+      // Check if user already reviewed this product
+      const existing = await Review.findOne({ user: req.user._id, product: productId });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'You have already reviewed this product' });
+      }
+
+      const review = await Review.create({
+        user: req.user._id,
+        product: productId,
+        rating: Number(rating),
+        comment: comment || '',
+        title: title || ''
+      });
+
+      // Recalculate product ratings
+      const allReviews = await Review.find({ product: productId });
+      const numReviews = allReviews.length;
+      const avgRating = numReviews > 0
+        ? parseFloat((allReviews.reduce((sum, r) => sum + r.rating, 0) / numReviews).toFixed(1))
+        : 0;
+
+      await Product.findByIdAndUpdate(productId, { ratings: avgRating, numReviews });
+
+      const populated = await review.populate('user', 'name avatar');
+      res.status(201).json({ success: true, review: populated, avgRating, numReviews });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
+
   return r;
 })();
 
@@ -82,8 +121,12 @@ module.exports.couponRouter = (() => {
       if (!coupon) return res.status(404).json({ success: false, message: 'Invalid coupon code' });
       if (coupon.expiresAt && new Date() > coupon.expiresAt) return res.status(400).json({ success: false, message: 'Coupon expired' });
       if (orderValue < coupon.minOrderValue) return res.status(400).json({ success: false, message: `Minimum order value ₹${coupon.minOrderValue} required` });
+      if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({ success: false, message: 'Coupon usage limit reached' });
+      }
       let discount = coupon.type === 'percentage' ? (orderValue * coupon.value / 100) : coupon.value;
       if (coupon.maxDiscount) discount = Math.min(discount, coupon.maxDiscount);
+      console.log(`Coupon validated: ${code.toUpperCase()}, current usedCount: ${coupon.usedCount}, usageLimit: ${coupon.usageLimit || 'unlimited'}`);
       res.json({ success: true, coupon, discount: Math.round(discount) });
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });

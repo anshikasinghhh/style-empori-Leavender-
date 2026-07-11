@@ -409,7 +409,7 @@ export default function CheckoutPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-body font-semibold text-gray-900 text-sm line-clamp-1">{item.product?.name}</p>
                       <p className="font-body text-xs text-gray-500 mt-0.5">Qty: {item.quantity}{item.size ? ` · Size: ${item.size}` : ''}</p>
-                      <p className="font-display font-bold text-primary text-sm mt-1">{formatPrice((item.product?.price||0)*item.quantity)}</p>
+                      <p className="font-body font-semibold text-primary text-sm mt-1">{formatPrice((item.product?.price||0)*item.quantity)}</p>
                     </div>
                   </div>
                 ))}
@@ -450,32 +450,32 @@ export default function CheckoutPage() {
             {enriched.map(i => (
               <div key={i._id} className="flex justify-between text-xs font-body text-gray-600">
                 <span className="truncate mr-2 flex-1">{i.product?.name?.substring(0,26)}… ×{i.quantity}</span>
-                <span className="shrink-0 font-semibold">{formatPrice((i.product?.price||0)*i.quantity)}</span>
+                <span className="shrink-0 font-body font-semibold text-gray-700">{formatPrice((i.product?.price||0)*i.quantity)}</span>
               </div>
             ))}
           </div>
           <div className="border-t border-gray-50 pt-3 space-y-2 text-sm font-body">
-            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-semibold">{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold">{formatPrice(shipping)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(subtotal)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(shipping)}</span></div>
             {handlingCharge > 0 && (
-              <div className="flex justify-between text-gray-600"><span>Handling Charge</span><span className="font-semibold">{formatPrice(handlingCharge)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Handling Charge</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(handlingCharge)}</span></div>
             )}
             {couponDiscount > 0 && (
-              <div className="flex justify-between text-emerald-600"><span>Coupon Discount</span><span className="font-semibold">-{formatPrice(couponDiscount)}</span></div>
+              <div className="flex justify-between text-emerald-600"><span>Coupon Discount</span><span className="font-body font-medium text-sm">-{formatPrice(couponDiscount)}</span></div>
             )}
             {giftCardDiscount > 0 && (
-              <div className="flex justify-between text-emerald-600"><span>Gift Card</span><span className="font-semibold">-{formatPrice(giftCardDiscount)}</span></div>
+              <div className="flex justify-between text-emerald-600"><span>Gift Card</span><span className="font-body font-medium text-sm">-{formatPrice(giftCardDiscount)}</span></div>
             )}
-            <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-semibold">{formatPrice(tax)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(tax)}</span></div>
             {giftWrapCost > 0 && (
-              <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-semibold">{formatPrice(giftWrapCost)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(giftWrapCost)}</span></div>
             )}
             {donationAmount > 0 && (
-              <div className="flex justify-between text-gray-600"><span>Donation</span><span className="font-semibold text-rose">{formatPrice(donationAmount)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Donation</span><span className="font-body font-medium text-sm text-rose">{formatPrice(donationAmount)}</span></div>
             )}
-            <div className="flex justify-between font-bold text-base border-t border-gray-50 pt-2 mt-1">
-              <span className="font-display text-gray-900">Total</span>
-              <span className="font-display text-primary text-lg">{formatPrice(total)}</span>
+            <div className="flex justify-between border-t border-gray-50 pt-2 mt-1">
+              <span className="font-body text-gray-900">Total</span>
+              <span className="font-body text-primary text-base font-semibold">{formatPrice(total)}</span>
             </div>
           </div>
 

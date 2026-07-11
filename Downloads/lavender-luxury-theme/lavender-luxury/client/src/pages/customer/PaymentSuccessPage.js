@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Package, ShoppingBag, Truck, Star } from 'lucide-react';
 
 export default function PaymentSuccessPage() {
-  const orderNum = 'VE' + Date.now().toString().slice(-6);
+  const orderNum = 'LAV' + Date.now().toString().slice(-6);
   const delivery = new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
   return (
     <div className="max-w-lg mx-auto px-4 pt-28 pb-16 text-center">

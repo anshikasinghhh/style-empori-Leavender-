@@ -14,25 +14,14 @@ const StoreSettings = require('../models/StoreSettings');
 // @GET /api/admin/dashboard - Analytics overview
 router.get('/dashboard', protect, adminOnly, async (req, res) => {
   try {
-    let settings = await StoreSettings.findOne({ key: 'global' });
-    if (!settings) {
-      settings = await StoreSettings.create({ key: 'global', dashboardStartDate: new Date() });
-    } else if (!settings.dashboardStartDate) {
-      settings.dashboardStartDate = new Date();
-      await settings.save();
-    }
-
-    const startDate = settings.dashboardStartDate || new Date();
-    const dateMatch = { createdAt: { $gte: startDate } };
-
-    const totalOrders = await Order.countDocuments({ ...dateMatch });
-    const pendingOrders = await Order.countDocuments({ ...dateMatch, orderStatus: 'placed' });
-    const totalCustomers = await User.countDocuments({ role: 'customer', createdAt: { $gte: startDate } });
+    // Use all time data instead of date-restricted
+    const totalOrders = await Order.countDocuments({});
+    const pendingOrders = await Order.countDocuments({ orderStatus: 'placed' });
+    const totalCustomers = await User.countDocuments({ role: 'customer' });
     const totalProducts = await Product.countDocuments({ isActive: true });
     const lowStockProducts = await Product.countDocuments({ stock: { $lt: 10 }, isActive: true });
 
     const revenueMatch = {
-      ...dateMatch,
       orderStatus: { $nin: ['cancelled'] },
       paymentStatus: { $nin: ['failed', 'refunded'] }
     };
@@ -43,7 +32,7 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     ]);
     const totalRevenue = revenueAgg[0]?.total || 0;
 
-    // Monthly sales for dashboard period
+    // Monthly sales for all time
     const monthlyData = await Order.aggregate([
       { $match: revenueMatch },
       { $group: {
@@ -78,15 +67,15 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
       { $limit: 8 }
     ]);
 
-    // Recent orders since reset date
-    const recentOrders = await Order.find({ createdAt: { $gte: startDate } })
+    // Recent orders
+    const recentOrders = await Order.find({})
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
       .limit(10);
 
-    // Customer growth since reset date
+    // Customer growth for all time
     const customerGrowth = await User.aggregate([
-      { $match: { role: 'customer', createdAt: { $gte: startDate } } },
+      { $match: { role: 'customer' } },
       { $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
         count: { $sum: 1 }
@@ -189,7 +178,9 @@ router.put(
 });
 router.post('/coupon', protect, couponAccess, async (req, res) => {
   try {
-    const coupon = await Coupon.create(req.body);
+    // Ensure usedCount is initialized to 0 if not provided
+    const couponData = { ...req.body, usedCount: req.body.usedCount || 0 };
+    const coupon = await Coupon.create(couponData);
 
     res.status(201).json({
       success: true,

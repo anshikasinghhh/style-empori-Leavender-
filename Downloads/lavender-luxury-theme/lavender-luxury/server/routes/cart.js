@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Cart } = require('../models/index');
+const Product = require('../models/Product');
 const { protect } = require('../middleware/auth');
 
 const getPopulatedCart = async (userId) => {
@@ -32,12 +33,34 @@ router.get('/', protect, async (req, res) => {
 router.post('/add', protect, async (req, res) => {
   try {
     const { productId, quantity = 1, size, color } = req.body;
+    
+    // Check product stock
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    if (product.stock <= 0) {
+      return res.status(400).json({ success: false, message: 'No more product left' });
+    }
+    
     let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) cart = await Cart.create({ user: req.user._id, items: [] });
     
     const existingIdx = cart.items.findIndex(i => i.product && i.product.toString() === productId && i.size === size);
+    const currentQuantity = existingIdx > -1 ? cart.items[existingIdx].quantity : 0;
+    const newQuantity = currentQuantity + quantity;
+    
+    if (newQuantity > product.stock) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Only ${product.stock} item(s) available in stock`,
+        availableStock: product.stock
+      });
+    }
+    
     if (existingIdx > -1) {
-      cart.items[existingIdx].quantity += quantity;
+      cart.items[existingIdx].quantity = newQuantity;
     } else {
       cart.items.push({ product: productId, quantity, size, color });
     }
@@ -57,6 +80,17 @@ router.put('/update/:itemId', protect, async (req, res) => {
     if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
     const item = cart.items.id(req.params.itemId);
     if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+    
+    // Check product stock
+    const product = await Product.findById(item.product);
+    if (product && quantity > product.stock) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Only ${product.stock} item(s) available in stock`,
+        availableStock: product.stock
+      });
+    }
+    
     if (quantity <= 0) {
       cart.items.pull(req.params.itemId);
     } else {

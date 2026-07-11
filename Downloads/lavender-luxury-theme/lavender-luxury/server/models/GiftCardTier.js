@@ -60,7 +60,7 @@ giftCardTierSchema.statics.seedDefaults = async function () {
         name: 'Lavender Gold',
         amount: 1500,
         bonusAmount: 150,
-        benefits: ['Free shipping', 'Premium gift wrapping', 'Early access to new collections'],
+        benefits: ['Priority dispatch', 'Premium gift wrapping', 'Early access to new collections'],
         sortOrder: 3,
         color: '#d4a853',
       },
