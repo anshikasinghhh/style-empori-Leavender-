@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Star, Zap, AlertTriangle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, ShoppingBag, Star, Zap, AlertTriangle, ArrowRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../../slices/cartSlice';
 import { toggleWishlist } from '../../slices/wishlistSlice';
 import { formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
+import logo from '../../assets/logo.jpeg';
 
 export function LoadingSpinner() {
   return (
@@ -14,7 +15,7 @@ export function LoadingSpinner() {
       <div className="relative w-14 h-14">
         <div className="w-14 h-14 rounded-full border-4 border-gold-pale border-t-primary animate-spin"/>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-primary text-xs font-bold font-display">VE</span>
+          <img src={logo} alt="Lavender" className="w-8 h-8 object-contain"/>
         </div>
       </div>
       <p className="font-body text-sm text-gray-400 animate-pulse">Loading...</p>
@@ -39,6 +40,7 @@ const BADGE_COLORS = {
 
 export function ProductCard({ product, index = 0 }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { token } = useSelector(s => s.auth);
   const { products: wishlistItems } = useSelector(s => s.wishlist);
   const isWishlisted = wishlistItems?.some(p => (p._id || p) === product._id);
@@ -48,7 +50,16 @@ export function ProductCard({ product, index = 0 }) {
   const handleCart = (e) => {
     e.preventDefault();
     if (!token) { toast.error('Please login to add to cart'); return; }
-    dispatch(addToCart({ productId: product._id, quantity: 1, size: product.sizes?.[0]?.size || 'Free Size' }));
+    
+    // If product has sizes, navigate to product detail to select size
+    if (product.sizes && product.sizes.length > 0) {
+      navigate(`/products/${product._id}`);
+      toast('Please select a size before adding to cart', { icon: '📏', duration: 2000 });
+      return;
+    }
+    
+    // If no sizes, add directly with Free Size
+    dispatch(addToCart({ productId: product._id, quantity: 1, size: 'Free Size' }));
     const stock = product.stock ?? 999;
     if (stock <= 3 && stock > 0) {
       toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
@@ -68,9 +79,9 @@ export function ProductCard({ product, index = 0 }) {
   const badgeStyle = BADGE_COLORS[product.badge] || BADGE_COLORS.default;
 
   return (
-    <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4, delay:index*0.06 }} whileHover={{ y:-5 }} className="group">
-      <Link to={`/products/${product._id}`}>
-        <div className="bg-white rounded-2xl shadow-card hover:shadow-hover transition-all duration-400 overflow-hidden border border-gold-pale/60/60">
+    <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:0.4, delay:index*0.06 }} whileHover={{ y:-5 }} className="group h-full p-1.5 sm:p-2">
+      <div className="relative h-full bg-white rounded-[1.35rem] shadow-card hover:shadow-hover transition-all duration-400 overflow-hidden border border-gold-pale/60/60">
+        <Link to={`/products/${product._id}`} className="block h-full">
           {/* Image */}
           <div className="relative overflow-hidden aspect-[3/4] bg-champagne-light product-img-wrap">
             <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500&q=80'}
@@ -103,9 +114,9 @@ export function ProductCard({ product, index = 0 }) {
           </div>
 
           {/* Info */}
-          <div className="p-4">
-            <p className="font-body text-[11px] text-primary font-semibold uppercase tracking-widest mb-1">{typeof product.category === 'object' ? product.category?.name : product.category}</p>
-            <h3 className="font-display text-sm font-semibold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors leading-snug">{product.name}</h3>
+          <div className="p-4 sm:p-5 pt-5 sm:pt-6">
+            <p className="font-body text-[12px] sm:text-sm text-primary font-semibold uppercase tracking-widest mb-2">{typeof product.category === 'object' ? product.category?.name : product.category}</p>
+            <h3 className="font-display text-sm sm:text-[15px] font-semibold text-gray-900 line-clamp-2 mb-3 group-hover:text-primary transition-colors leading-snug">{product.name}</h3>
             {product.ratings > 0 && (
               <div className="flex items-center gap-1.5 mb-2.5">
                 <div className="flex gap-0.5">{[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= Math.round(product.ratings) ? 'text-gold-light fill-gold-light' : 'text-gray-200 fill-gray-200'}/>)}</div>
@@ -113,14 +124,27 @@ export function ProductCard({ product, index = 0 }) {
               </div>
             )}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-display font-bold text-gray-900 text-base">{formatPrice(effectivePrice)}</span>
+              <span className="font-body font-semibold text-gray-900 text-base sm:text-lg">{formatPrice(effectivePrice)}</span>
               {product.originalPrice && product.originalPrice > effectivePrice && (
-                <span className="font-body text-xs text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+                <span className="font-body text-xs sm:text-sm text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
               )}
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(`/products/${product._id}`);
+          }}
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-gold-pale/70 bg-white/90 text-primary shadow-sm backdrop-blur transition-all hover:-translate-y-0.5 hover:bg-primary hover:text-white"
+          aria-label={`Open ${product.name}`}
+        >
+          <ArrowRight size={15} />
+        </button>
+      </div>
     </motion.div>
   );
 }
@@ -141,7 +165,7 @@ export function SkeletonCard() {
 
 export function SectionHeader({ title, subtitle, center=true }) {
   return (
-    <div className={`mb-10 ${center ? 'text-center' : ''}`}>
+    <div className={`mb-10 ${center ? 'flex flex-col items-center text-center' : ''}`}>
       {subtitle && <p className="section-tag mb-1.5">{subtitle}</p>}
       <h2 className="section-title">{title}</h2>
       {center && <div className="section-divider"><div className="h-px w-16 bg-gradient-to-r from-transparent to-primary/40"/><div className="w-2 h-2 rounded-full bg-primary"/><div className="h-px w-16 bg-gradient-to-l from-transparent to-primary/40"/></div>}

@@ -21,7 +21,7 @@ const getStockUrgency = (product) => {
 };
 
 export default function CartPage() {
-  const { items } = useSelector(s => s.cart);
+  const { items, loading, error } = useSelector(s => s.cart);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState([]);
@@ -43,8 +43,14 @@ export default function CartPage() {
     product: item.product?.price ? item.product : PRODUCTS.find(p => p._id === (item.product?._id || item.product)) || item.product
   }));
 
-  const subtotal = enriched.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
-  const shipping = subtotal > 999 ? 0 : 99;
+  // Check if any items are out of stock
+  const hasOutOfStockItems = enriched.some(item => (item.product?.stock ?? 999) <= 0);
+
+  const subtotal = enriched.reduce((s, i) => {
+    const itemPrice = (i.product?.stock ?? 999) <= 0 ? 0 : (i.product?.price || 0);
+    return s + itemPrice * i.quantity;
+  }, 0);
+  const shipping = 99;
   const total = subtotal + shipping;
 
   // Find items with stock urgency
@@ -150,8 +156,14 @@ export default function CartPage() {
 
   const handleAddToCart = (product) => {
     const defaultSize = product.sizes?.[0]?.size || 'Free Size';
-    dispatch(addToCart({ productId: product._id, quantity: 1, size: defaultSize }));
-    toast.success(`${product.name} added to cart!`);
+    dispatch(addToCart({ productId: product._id, quantity: 1, size: defaultSize }))
+      .unwrap()
+      .then(() => {
+        toast.success(`${product.name} added to cart!`);
+      })
+      .catch((err) => {
+        toast.error(err || 'Failed to add to cart');
+      });
   };
 
   if (enriched.length === 0) return (
@@ -198,13 +210,21 @@ export default function CartPage() {
                         <span className={`font-body text-[11px] font-semibold ${urgency.color}`}>{urgency.message}</span>
                       </div>
                     )}
-                    <p className="font-display font-bold text-primary mb-3">{formatPrice(item.product?.price)}</p>
+                    <p className="font-display font-bold text-primary mb-3">{(item.product?.stock ?? 999) <= 0 ? formatPrice(0) : formatPrice(item.product?.price)}</p>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center border border-gray-100 rounded-xl overflow-hidden">
-                        <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }))}
+                        <button onClick={() => {
+                          dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }))
+                            .unwrap()
+                            .catch((err) => toast.error(err || 'Failed to update cart'));
+                        }}
                           className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={13}/></button>
                         <span className="w-8 text-center font-body font-bold text-gray-900 text-sm">{item.quantity}</span>
-                        <button onClick={() => dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }))}
+                        <button onClick={() => {
+                          dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }))
+                            .unwrap()
+                            .catch((err) => toast.error(err || 'Failed to update cart'));
+                        }}
                           className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={13}/></button>
                       </div>
                       <button onClick={() => { dispatch(removeFromCart(item._id)); toast.success('Removed from cart'); }}
@@ -213,7 +233,7 @@ export default function CartPage() {
                   </div>
                 </div>
                 <div className="flex sm:block items-center justify-between sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0">
-                  <p className="font-display font-bold text-gray-900">{formatPrice((item.product?.price || 0) * item.quantity)}</p>
+                  <p className="font-display font-bold text-gray-900">{(item.product?.stock ?? 999) <= 0 ? formatPrice(0) : formatPrice((item.product?.price || 0) * item.quantity)}</p>
                   {urgency && urgency.level === 'popular' && (
                     <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold font-body">
                       <Flame size={10}/> {urgency.label}
@@ -259,18 +279,7 @@ export default function CartPage() {
             </motion.div>
           )}
 
-          {/* Free shipping progress */}
-          {subtotal < 999 && (
-            <div className="bg-champagne-light/80 border border-primary-100 rounded-2xl p-4 flex items-center gap-3">
-              <Truck size={18} className="text-primary shrink-0"/>
-              <div className="flex-1">
-                <p className="font-body text-sm font-medium text-gray-700">Add <span className="font-bold text-primary">{formatPrice(999 - subtotal)}</span> more for free shipping!</p>
-                <div className="w-full h-1.5 bg-primary-100 rounded-full mt-2 overflow-hidden">
-                  <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.min(100,(subtotal/999)*100)}%` }}/>
-                </div>
-              </div>
-            </div>
-          )}
+
         </div>
 
         {/* Summary */}
@@ -280,15 +289,19 @@ export default function CartPage() {
             <h3 className="font-display font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 text-sm font-body">
               <div className="flex justify-between text-gray-600"><span>Subtotal ({enriched.length} items)</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
-              <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping === 0 ? 'text-emerald-600 font-bold' : 'font-semibold text-gray-800'}>{shipping === 0 ? '🎉 FREE' : formatPrice(shipping)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold text-gray-800">{formatPrice(shipping)}</span></div>
               <div className="flex justify-between text-gray-600 text-xs pb-3 border-b border-gray-50"><span>Taxes (incl.)</span><span>Included</span></div>
               <div className="flex justify-between font-bold text-base pt-1">
-                <span className="font-display text-gray-900">Total</span>
-                <span className="font-display text-primary text-xl">{formatPrice(total)}</span>
+                <span className="font-body text-gray-900">Total</span>
+                <span className="font-body text-primary text-xl">{formatPrice(total)}</span>
               </div>
             </div>
-            <button onClick={() => navigate('/checkout')} className="w-full btn-primary mt-5 py-4 text-base gap-2">
-              Proceed to Checkout <ArrowRight size={18}/>
+            <button 
+              onClick={() => navigate('/checkout')} 
+              disabled={hasOutOfStockItems}
+              className={`w-full btn-primary mt-5 py-4 text-base gap-2 ${hasOutOfStockItems ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {hasOutOfStockItems ? 'Remove Unavailable Items' : 'Proceed to Checkout'} <ArrowRight size={18}/>
             </button>
             <Link to="/products" className="block text-center font-body text-sm text-gray-400 hover:text-primary transition-colors mt-3">← Continue Shopping</Link>
           </div>

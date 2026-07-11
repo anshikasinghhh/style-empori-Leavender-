@@ -124,7 +124,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex justify-center">
-                  <div id="realGoogleSignInButton" className="w-full"></div>
+                  <div id="realGoogleSignInButton" className="w-full flex justify-center"></div>
                 </div>
 
                 

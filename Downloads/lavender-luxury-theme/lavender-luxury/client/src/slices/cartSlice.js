@@ -8,11 +8,11 @@ export const fetchCart = createAsyncThunk('cart/fetch', async (_, { rejectWithVa
 });
 export const addToCart = createAsyncThunk('cart/add', async (item, { rejectWithValue }) => {
   try { const { data } = await api.post('/cart/add', item); return data.cart; }
-  catch (err) { return rejectWithValue(err.response?.data?.message); }
+  catch (err) { return rejectWithValue(err.response?.data?.message || 'Failed to add to cart'); }
 });
 export const updateCartItem = createAsyncThunk('cart/update', async ({ itemId, quantity }, { rejectWithValue }) => {
   try { const { data } = await api.put(`/cart/update/${itemId}`, { quantity }); return data.cart; }
-  catch (err) { return rejectWithValue(err.response?.data?.message); }
+  catch (err) { return rejectWithValue(err.response?.data?.message || 'Failed to update cart'); }
 });
 export const removeFromCart = createAsyncThunk('cart/remove', async (itemId, { rejectWithValue }) => {
   try { const { data } = await api.delete(`/cart/remove/${itemId}`); return data.cart; }

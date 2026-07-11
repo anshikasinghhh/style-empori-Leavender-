@@ -125,7 +125,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="flex justify-center">
-                  <div id="realGoogleSignUpButton" className="w-full"></div>
+                  <div id="realGoogleSignUpButton" className="w-full flex justify-center"></div>
                 </div>
               </form>
               <p className="mt-6 text-center font-body text-sm text-gray-500">Already have an account? <Link to="/login" className="text-primary font-semibold hover:underline">Sign in</Link></p>

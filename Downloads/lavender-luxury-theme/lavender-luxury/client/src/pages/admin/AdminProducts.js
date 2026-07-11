@@ -90,6 +90,7 @@ export default function AdminProducts({ Layout = AdminLayout }) {
 
   const [selectedSize, setSelectedSize] = useState("");
   const [customSize, setCustomSize] = useState("");
+  const [selectedCoupon, setSelectedCoupon] = useState("");
 
   // Variant builder state
   const [variantSize, setVariantSize] = useState("");
@@ -117,9 +118,12 @@ const [customCoupon, setCustomCoupon] = useState(EMPTY_CUSTOM_COUPON);
 
 const loadAvailableCoupons = async () => {
   try {
+    console.log('Loading available coupons...');
     const res = await api.get('/coupons/available');
+    console.log('Available coupons response:', res.data);
     setAvailableCoupons(res.data.coupons || []);
   } catch (err) {
+    console.error('Error loading coupons:', err);
     // coupons optional — silent fail
   }
 };
@@ -141,6 +145,7 @@ console.log("Filtered:", filtered);
   };
   const openEdit = (p) => {
     // Normalize product shape before editing to avoid runtime errors
+    console.log('Opening edit for product:', p);
     setForm({
       ...p,
       mrp: String(p.mrp || ''),
@@ -155,12 +160,18 @@ console.log("Filtered:", filtered);
       couponCode: p.couponCode || ''
     });
     setEditId(p._id);
+    console.log('Available coupons:', availableCoupons);
+    console.log('Product coupon code:', p.couponCode);
     if (p.couponCode && Array.isArray(availableCoupons) && availableCoupons.some(c => c.code === p.couponCode)) {
-      setCouponMode(p.couponCode);
+      console.log('Setting coupon mode to existing');
+      setCouponMode('existing');
+      setSelectedCoupon(p.couponCode);
     } else if (p.couponCode) {
+      console.log('Setting coupon mode to custom');
       setCouponMode('custom');
       setCustomCoupon({ ...EMPTY_CUSTOM_COUPON, code: p.couponCode });
     } else {
+      console.log('Setting coupon mode to none');
       setCouponMode('none');
       setCustomCoupon(EMPTY_CUSTOM_COUPON);
     }
@@ -188,6 +199,30 @@ useEffect(() => {
       toast.error('Name and price are required');
       return;
     }
+    
+    // Validate negative values
+    const price = Number(form.price);
+    const mrp = Number(form.mrp);
+    const originalPrice = Number(form.originalPrice);
+    const stock = Number(form.stock);
+    
+    if (price < 0) {
+      toast.error('Price cannot be negative - this is invalid amount');
+      return;
+    }
+    if (mrp < 0) {
+      toast.error('MRP cannot be negative - this is invalid amount');
+      return;
+    }
+    if (originalPrice < 0) {
+      toast.error('Original Price cannot be negative - this is invalid amount');
+      return;
+    }
+    if (stock < 0) {
+      toast.error('Stock cannot be negative - this is invalid amount');
+      return;
+    }
+    
     // Client-side duplicate productCode check (exclude current edit)
     if (form.productCode) {
       const codeToCheck = String(form.productCode).trim();
@@ -206,10 +241,40 @@ useEffect(() => {
     });
 
     const payload = { ...form, couponCode: resolvedCouponCode };
+    console.log('Payload to send:', payload);
+
+    // Ensure sizes and colors are properly formatted
+    if (form.sizes && Array.isArray(form.sizes)) {
+      payload.sizes = form.sizes.map(s => ({
+        size: s.size,
+        stock: Number(s.stock) || 0
+      }));
+    }
+    if (form.colors && Array.isArray(form.colors)) {
+      payload.colors = form.colors.map(c => ({
+        name: c.name,
+        hex: c.hex || ''
+      }));
+    }
+    if (form.variants && Array.isArray(form.variants)) {
+      payload.variants = form.variants.map(v => ({
+        size: v.size,
+        color: v.color,
+        stock: Number(v.stock) || 0
+      }));
+    }
+
+    console.log('Final payload after formatting:', payload);
 
     if (editId) {
-      await api.put(`/products/${editId}`, payload);
+      console.log('Updating product with ID:', editId);
+      const res = await api.put(`/products/${editId}`, payload);
+      console.log('Update response:', res.data);
       toast.success('Product Updated');
+      // Update the product in the local state with the returned data
+      if (res.data.success && res.data.product) {
+        setProducts(ps => ps.map(p => p._id === editId ? res.data.product : p));
+      }
     } else {
       await api.post('/products', payload);
       toast.success('Product Added');
@@ -346,7 +411,7 @@ const deleteProduct = async (id) => {
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Category</label>
                     <select value={form.category} onChange={e => setForm(f=>({...f,category:e.target.value}))} className="input-field text-sm">
                       <option value="">Select category</option>
-                      {CATEGORIES.map(c => <option key={c._id} value={c.name}>{c.icon} {c.name}</option>)}
+                      {CATEGORIES.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units</label><input type="number" value={form.stock} onChange={e => setForm(f=>({...f,stock:e.target.value}))} className="input-field text-sm" placeholder="50"/></div>
@@ -681,7 +746,14 @@ colors:f.colors.filter((_,i)=>i!==index)
                         <option value="">Select color</option>
                         {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
                       </select>
-                      <input type="number" value={variantStock} onChange={e=>setVariantStock(Number(e.target.value))} className="input-field" placeholder="Stock" />
+                      <input type="number" value={variantStock} onChange={e=>{
+        const val = Number(e.target.value);
+        if (val < 0) {
+          toast.error('Stock cannot be negative - this is invalid amount');
+          return;
+        }
+        setVariantStock(val);
+      }} className="input-field" placeholder="Stock" />
                     </div>
                     <div className="flex gap-2 mt-2">
                       <button type="button" onClick={()=>{
@@ -725,6 +797,8 @@ colors:f.colors.filter((_,i)=>i!==index)
                     customCoupon={customCoupon}
                     setCustomCoupon={setCustomCoupon}
                     availableCoupons={availableCoupons}
+                    selectedCoupon={selectedCoupon}
+                    setSelectedCoupon={setSelectedCoupon}
                   />
                 </div>
               </div>

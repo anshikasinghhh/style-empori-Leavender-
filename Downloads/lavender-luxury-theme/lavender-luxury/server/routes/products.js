@@ -102,13 +102,16 @@ router.post('/', protect, staffOnly, async (req, res) => {
 // @PUT /api/products/:id - Admin & employee
 router.put('/:id', protect, staffOnly, async (req, res) => {
   try {
+    console.log('PUT /api/products/:id - Request body:', req.body);
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     // assign incoming fields and save so pre-save hooks run (e.g., aggregate stock)
     Object.assign(product, req.body || {});
     await product.save();
+    console.log('Product saved successfully:', product);
     res.json({ success: true, product });
   } catch (err) {
+    console.error('Error updating product:', err);
     if (err.code === 11000 && err.keyPattern && err.keyPattern.productCode) {
       return res.status(400).json({ success: false, message: 'Product with same code exists, try a different code' });
     }

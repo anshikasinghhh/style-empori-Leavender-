@@ -29,17 +29,13 @@ export default function AdminInventory() {
   });
   const loadInventory = async () => {
   try {
-
+    console.log('Loading inventory...');
     const res = await api.get('/products');
-
+    console.log('Inventory response:', res.data);
     setProducts(res.data.products || []);
-
   } catch (err) {
-
-    console.error(err);
-
+    console.error('Error loading inventory:', err);
     toast.error('Failed to load inventory');
-
   }
 };
 
@@ -161,6 +157,7 @@ useEffect(() => {
                       ) : (
                         <span className="text-gray-300 text-xs">—</span>
                       )}
+                      <p className="text-[9px] text-gray-400 mt-1">{p.couponCode ? 'Applied' : 'No coupon'}</p>
                     </td>
                     <td className="px-4 py-3">
                       <button onClick={() => restock(p._id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-champagne-light/80 hover:bg-primary text-primary hover:text-white text-xs font-semibold transition-all">

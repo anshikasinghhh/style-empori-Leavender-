@@ -79,18 +79,24 @@ export default function ProductDetailPage() {
   const handleCart = () => {
     if (!token) { toast.error('Please login to add to cart'); return; }
     if (product.sizes?.length > 0 && !selSize) { toast.error('Please select a size'); return; }
-    dispatch(addToCart({ productId: product._id, quantity: qty, size: selSize || 'Free Size' }));
-    setAddedToCart(true);
-    // Stock urgency warning
-    const stock = product.stock ?? 999;
-    if (stock <= 3 && stock > 0) {
-      toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
-    } else if (stock <= 8) {
-      toast(`Stock is limited — only ${stock} left!`, { icon: '⏰', duration: 3000 });
-    } else {
-      toast.success('Added to cart! 🛍️');
-    }
-    setTimeout(() => setAddedToCart(false), 2500);
+    dispatch(addToCart({ productId: product._id, quantity: qty, size: selSize || 'Free Size' }))
+      .unwrap()
+      .then(() => {
+        setAddedToCart(true);
+        // Stock urgency warning
+        const stock = product.stock ?? 999;
+        if (stock <= 3 && stock > 0) {
+          toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
+        } else if (stock <= 8) {
+          toast(`Stock is limited — only ${stock} left!`, { icon: '⏰', duration: 3000 });
+        } else {
+          toast.success('Added to cart! 🛍️');
+        }
+        setTimeout(() => setAddedToCart(false), 2500);
+      })
+      .catch((err) => {
+        toast.error(err || 'Failed to add to cart');
+      });
   };
   const handleWishlist = () => {
     if (!token) { toast.error('Please login'); return; }
@@ -130,10 +136,14 @@ export default function ProductDetailPage() {
             <p className="font-body text-xs font-bold text-primary uppercase tracking-widest mb-1.5">{product.category?.name}</p>
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">{product.name}</h1>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-gold-pale border border-gold/20 rounded-full px-3 py-1">
-                <Star size={14} className="text-gold-light fill-gold-light"/><span className="font-body font-bold text-gold text-sm">{product.ratings}</span>
-              </div>
-              <span className="font-body text-sm text-gray-400">({product.numReviews} reviews)</span>
+              {product.ratings > 0 && (
+                <>
+                  <div className="flex items-center gap-1 bg-gold-pale border border-gold/20 rounded-full px-3 py-1">
+                    <Star size={14} className="text-gold-light fill-gold-light"/><span className="font-body font-bold text-gold text-sm">{product.ratings}</span>
+                  </div>
+                  <span className="font-body text-sm text-gray-400">({product.numReviews} reviews)</span>
+                </>
+              )}
               <span className={`font-body text-sm font-semibold ${product.stock < 10 ? 'text-rose' : 'text-emerald-600'}`}>{product.stock < 10 ? `Only ${product.stock} left!` : 'In Stock'}</span>
             </div>
           </div>
@@ -160,7 +170,7 @@ export default function ProductDetailPage() {
 
           {/* Price */}
           <div className="flex items-baseline gap-2 sm:gap-3 py-2 flex-wrap">
-            <span className="font-display text-3xl sm:text-4xl font-bold text-gray-900">{formatPrice(effectivePrice)}</span>
+            <span className="font-body text-3xl sm:text-4xl font-bold text-gray-900">{formatPrice(effectivePrice)}</span>
             {product.originalPrice && product.originalPrice > effectivePrice && <>
               <span className="font-body text-lg text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
               <span className="badge bg-rose text-white shadow-sm">{discount}% OFF</span>
@@ -190,6 +200,11 @@ export default function ProductDetailPage() {
                   </button>
                 ))}
               </div>
+              {selSize && (
+                <p className="font-body text-xs text-gray-500 mt-2">
+                  Stock for {selSize}: {product.sizes.find(s => s.size === selSize)?.stock || product.stock} units
+                </p>
+              )}
             </div>
           )}
 
@@ -211,14 +226,26 @@ export default function ProductDetailPage() {
             <button onClick={handleWishlist} className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${isWishlisted ? 'border-rose bg-rose-soft text-rose' : 'border-gray-200 hover:border-rose hover:text-rose text-gray-400'}`}>
               <Heart size={18} className={isWishlisted ? 'fill-rose' : ''}/>
             </button>
-            <button className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary text-gray-400 transition-all">
+            <button onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: product.name,
+                  text: product.shortDescription || product.description,
+                  url: window.location.href
+                }).catch((error) => console.log('Error sharing:', error));
+              } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copied to clipboard!');
+              }
+            }} className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-primary hover:text-primary text-gray-400 transition-all">
               <Share2 size={18}/>
             </button>
           </div>
 
           {/* Benefits strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-gray-100 pt-5">
-            {[{icon:Truck,text:'Free above ₹999'},{icon:RefreshCw,text:'7-Day Returns'},{icon:Shield,text:'100% Authentic'}].map((b,i) => (
+            {[{icon:Truck,text:'Fast Dispatch'},{icon:RefreshCw,text:'15-Day Returns'},{icon:Shield,text:'100% Authentic'}].map((b,i) => (
               <div key={i} className="flex items-center sm:flex-col sm:text-center gap-2 sm:gap-1.5 p-3 bg-champagne-light/80 rounded-xl">
                 <b.icon size={18} className="text-primary"/><span className="font-body text-[11px] text-gray-600 leading-tight">{b.text}</span>
               </div>
@@ -227,7 +254,7 @@ export default function ProductDetailPage() {
 
           {/* Details */}
           <div className="bg-white rounded-2xl p-4 border border-gold-pale/60 shadow-card space-y-2">
-            {[['Material', product.material],['Return Policy', product.returnPolicy],['SKU', product.sku || 'VE-'+product._id.toUpperCase()]].map(([l,v]) => v && (
+            {[['Material', product.material],['Return Policy', product.returnPolicy]].map(([l,v]) => v && (
               <div key={l} className="flex justify-between text-sm font-body">
                 <span className="text-gray-400">{l}</span><span className="text-gray-800 font-medium">{v}</span>
               </div>
@@ -249,15 +276,79 @@ export default function ProductDetailPage() {
         <div className="bg-white rounded-2xl p-6 border border-gold-pale/60 shadow-card">
           {tab==='description' && <div className="font-body text-gray-600 leading-relaxed space-y-3"><p>{product.description}</p>{product.tags?.length > 0 && <div className="flex flex-wrap gap-2 pt-2">{product.tags.map(tag => <span key={tag} className="badge bg-champagne-light/80 text-primary border border-primary-100">#{tag}</span>)}</div>}</div>}
           {tab==='reviews' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-6 pb-5 border-b border-gray-50">
-                <div className="text-center"><div className="font-display text-6xl font-bold text-primary">{product.ratings}</div><div className="flex justify-center gap-0.5 my-1">{[1,2,3,4,5].map(s=><Star key={s} size={14} className={s<=Math.round(product.ratings)?'text-gold-light fill-gold-light':'text-gray-200 fill-gray-200'}/>)}</div><div className="font-body text-sm text-gray-400">{product.numReviews} reviews</div></div>
-                <div className="flex-1 space-y-1.5">{[5,4,3,2,1].map(s=><div key={s} className="flex items-center gap-2"><span className="font-body text-xs w-2 text-gray-500">{s}</span><div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full rounded-full bg-gold-light" style={{width:`${s===5?70:s===4?20:s===3?6:s===2?3:1}%`}}/></div></div>)}</div>
+            <div className="space-y-6">
+              {product.ratings > 0 ? (
+                <div className="flex items-center gap-6 pb-5 border-b border-gray-50">
+                  <div className="text-center"><div className="font-display text-6xl font-bold text-primary">{product.ratings}</div><div className="flex justify-center gap-0.5 my-1">{[1,2,3,4,5].map(s=><Star key={s} size={14} className={s<=Math.round(product.ratings)?'text-gold-light fill-gold-light':'text-gray-200 fill-gray-200'}/>)}</div><div className="font-body text-sm text-gray-400">{product.numReviews} reviews</div></div>
+                  <div className="flex-1 space-y-1.5">{[5,4,3,2,1].map(s=><div key={s} className="flex items-center gap-2"><span className="font-body text-xs w-2 text-gray-500">{s}</span><div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden"><div className="h-full rounded-full bg-gold-light" style={{width:`${s===5?70:s===4?20:s===3?6:s===2?3:1}%`}}/></div></div>)}</div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="font-body text-gray-500 mb-4">No reviews yet. Be the first to review this product!</p>
+                </div>
+              )}
+              
+              {/* Review Form */}
+              <div className="border-t border-gray-100 pt-6">
+                <h3 className="font-display font-semibold text-gray-900 mb-4">Write a Review</h3>
+                {!token ? (
+                  <p className="font-body text-gray-500 text-sm">Please <Link to="/login" className="text-primary underline">login</Link> to submit a review.</p>
+                ) : (
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const rating = parseInt(e.target.rating.value);
+                    const comment = e.target.comment.value;
+                    const title = e.target.title.value;
+                    
+                    if (!rating) {
+                      toast.error('Please select a rating');
+                      return;
+                    }
+                    
+                    try {
+                      const res = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ product: product._id, rating, comment, title })
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        toast.success('Review submitted successfully!');
+                        e.target.reset();
+                        dispatch(fetchProductById(id));
+                      } else {
+                        toast.error(data.message || 'Failed to submit review');
+                      }
+                    } catch (err) {
+                      toast.error('Failed to submit review');
+                    }
+                  }} className="space-y-4">
+                    <div>
+                      <label className="font-body text-sm font-semibold text-gray-800 mb-2 block">Rating</label>
+                      <div className="flex gap-2">
+                        {[1,2,3,4,5].map(s => (
+                          <label key={s} className="cursor-pointer">
+                            <input type="radio" name="rating" value={s} className="sr-only peer"/>
+                            <Star size={24} className="text-gray-200 peer-checked:text-gold-light peer-checked:fill-gold-light transition-colors"/>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="font-body text-sm font-semibold text-gray-800 mb-2 block">Title (optional)</label>
+                      <input name="title" type="text" placeholder="Summarize your review" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body text-sm"/>
+                    </div>
+                    <div>
+                      <label className="font-body text-sm font-semibold text-gray-800 mb-2 block">Your Review</label>
+                      <textarea name="comment" rows="4" placeholder="Share your experience with this product..." className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all font-body text-sm resize-none"/>
+                    </div>
+                    <button type="submit" className="btn-primary py-2.5 px-6 rounded-full font-body font-semibold text-sm">Submit Review</button>
+                  </form>
+                )}
               </div>
-              <p className="font-body text-gray-400 text-sm text-center py-4">Connect backend to load verified customer reviews</p>
             </div>
           )}
-          {tab==='care' && <div className="font-body text-gray-600 space-y-3 leading-relaxed"><p>{product.careInstructions || 'Dry clean recommended. Store in a cool, dry place in muslin cloth. Avoid direct sunlight. Iron on low heat with a pressing cloth to protect embellishments.'}</p><div className="grid grid-cols-2 gap-3 mt-4">{[{icon:Truck,label:'Shipping',text:'3-7 business days'},{icon:RefreshCw,label:'Returns',text:'7-day easy return'},{icon:Shield,label:'Packaging',text:'Gift-ready box'},{icon:Sparkles,label:'Authenticity',text:'100% genuine'}].map(({icon:Icon,label,text}) => <div key={label} className="flex items-start gap-2.5 p-3 bg-champagne-light/80 rounded-xl"><Icon size={16} className="text-primary mt-0.5 shrink-0"/><div><p className="font-body font-semibold text-gray-800 text-xs">{label}</p><p className="font-body text-gray-500 text-xs">{text}</p></div></div>)}</div></div>}
+          {tab==='care' && <div className="font-body text-gray-600 space-y-3 leading-relaxed"><p>{product.careInstructions || 'Dry clean recommended. Store in a cool, dry place in muslin cloth. Avoid direct sunlight. Iron on low heat with a pressing cloth to protect embellishments.'}</p><div className="grid grid-cols-2 gap-3 mt-4">{[{icon:Truck,label:'Shipping',text:'3-7 business days'},{icon:RefreshCw,label:'Returns',text:'15-day easy return'},{icon:Shield,label:'Packaging',text:'Gift-ready box'},{icon:Sparkles,label:'Authenticity',text:'100% genuine'}].map(({icon:Icon,label,text}) => <div key={label} className="flex items-start gap-2.5 p-3 bg-champagne-light/80 rounded-xl"><Icon size={16} className="text-primary mt-0.5 shrink-0"/><div><p className="font-body font-semibold text-gray-800 text-xs">{label}</p><p className="font-body text-gray-500 text-xs">{text}</p></div></div>)}</div></div>}
         </div>
       </div>
 

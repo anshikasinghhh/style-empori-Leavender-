@@ -61,10 +61,10 @@ function TrustBanner() {
   return (
     <div className="bg-gradient-to-r from-champagne-light via-champagne to-champagne-light border-y border-gold-pale overflow-hidden">
       <div className="flex items-center py-3">
-        <div className="flex gap-10 px-6 marquee-track">
+        <div className="flex marquee-track gap-4">
           {[...TRUST_BADGES, ...TRUST_BADGES].map((b, i) => (
-            <div key={i} className="flex items-center gap-2.5 shrink-0">
-              <span className="text-xl">{b.icon}</span>
+            <div key={i} className="flex items-center gap-2.5 shrink-0 px-4 py-1.5 rounded-full bg-white/60 border border-white/70 shadow-sm">
+              <span className="h-2.5 w-2.5 rounded-full bg-primary shrink-0" />
               <div>
                 <p className="font-body font-semibold text-gray-800 text-xs whitespace-nowrap">{b.title}</p>
                 <p className="font-body text-gray-500 text-[10px] whitespace-nowrap">{b.desc}</p>
@@ -81,11 +81,12 @@ function TrustBanner() {
 function FlashSaleTimer() {
   const [sale, setSale] = useState(null);
   const [t, setT] = useState({ h: 0, m: 0, s: 0 });
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     api.get('/flash-sales/active').then(res => {
       if (res.data) setSale(res.data);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -112,16 +113,19 @@ function FlashSaleTimer() {
       <p className="font-body text-white/80 text-[10px] mt-1 uppercase tracking-widest">{l}</p>
     </div>
   );
+
+  if (!ready || !sale?.name && !sale?.bannerText && !sale?.endDate) return null;
+
   return (
-    <section className="mx-3 sm:mx-6 my-12">
-      <div className="relative overflow-hidden rounded-3xl shadow-premium">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      <div className="relative overflow-hidden rounded-[1.5rem] shadow-premium border border-white/10">
         <div className="absolute inset-0 bg-gradient-to-br from-plum via-primary to-primary-light" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(232,192,106,0.14),transparent_45%)]" />
         <div className="absolute inset-0 opacity-15">
           {[...Array(4)].map((_, i) => <div key={i} className="absolute rounded-full border border-gold-shine/20" style={{ width: `${(i + 1) * 200}px`, height: `${(i + 1) * 200}px`, top: '50%', left: '30%', transform: 'translate(-50%,-50%)' }} />)}
         </div>
-        <div className="relative flex flex-col lg:flex-row items-center justify-between gap-8 p-8 md:p-12">
-          <div className="text-center lg:text-left">
+        <div className="relative flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8 p-6 sm:p-8 lg:p-10">
+          <div className="w-full lg:w-auto text-center lg:text-left lg:flex-1">
             <div className="inline-flex items-center gap-2 bg-white/10 border border-gold-shine/25 rounded-full px-4 py-1.5 mb-4 backdrop-blur-sm">
               <Zap size={14} className="text-gold-shine fill-gold-shine" /><span className="font-body text-white/90 text-sm font-semibold">Limited Time Only</span>
             </div>
@@ -129,14 +133,18 @@ function FlashSaleTimer() {
             <p className="font-body text-white/80 mb-1">{sale?.bannerText || (sale?.discountPercent ? `Up to ${sale.discountPercent}% off on selected styles` : 'Up to 48% off on selected styles')}</p>
             {sale?.products?.length > 0 && <p className="font-accent text-gold-shine text-lg italic">"{sale.products[0].name}" & more →</p>}
           </div>
-          <div className="flex items-center gap-3 md:gap-4">
-            <Block v={t.h} l="Hours" /> <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
-            <Block v={t.m} l="Mins" />  <span className="font-display text-3xl font-bold text-white/60 -mt-5">:</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 lg:flex-shrink-0">
+            <Block v={t.h} l="Hours" />
+            <span className="hidden sm:block font-display text-3xl font-bold text-white/60 -mt-5">:</span>
+            <Block v={t.m} l="Mins" />
+            <span className="hidden sm:block font-display text-3xl font-bold text-white/60 -mt-5">:</span>
             <Block v={t.s} l="Secs" />
           </div>
-          <Link to="/products?isFlashSale=true" className="btn-gold whitespace-nowrap text-base">
-            Shop Flash Sale <ArrowRight size={18} />
-          </Link>
+          <div className="w-full lg:w-auto lg:flex-shrink-0 flex justify-center lg:justify-end">
+            <Link to="/products?isFlashSale=true" className="btn-gold whitespace-nowrap text-base">
+              Shop Flash Sale <ArrowRight size={18} />
+            </Link>
+          </div>
         </div>
       </div>
     </section>
@@ -279,11 +287,9 @@ const festive = products.filter(p => p.isFestival);
                 <div className="aspect-[4/5] overflow-hidden bg-champagne-light">
                   <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"/>
                 </div>
-                <div className="px-2.5 py-2 flex items-center gap-1.5" style={{ background: cat.color }}>
-                  <span className="text-base leading-none">{cat.icon}</span>
+                <div className="px-3 py-3 flex items-center" style={{ background: cat.color }}>
                   <div className="min-w-0">
-                    <p className="font-body font-bold text-gray-900 text-[11px] leading-tight truncate">{cat.name}</p>
-                    <p className="font-body text-[9px] mt-0.5 hidden sm:block" style={{ color: cat.accent }}>Explore →</p>
+                    <p className="font-body font-bold text-gray-900 text-[11px] sm:text-[12px] leading-tight truncate">{cat.name}</p>
                   </div>
                 </div>
               </Link>
@@ -294,9 +300,11 @@ const festive = products.filter(p => p.isFestival);
 
       {/* Featured */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex items-end justify-between mb-8">
-          <SectionHeader title="Featured Collection" subtitle="Handpicked for you" center={false}/>
-          <Link to="/products?isFeatured=true" className="btn-ghost text-sm hidden md:flex gap-2">View All <ArrowRight size={15}/></Link>
+        <div className="relative mb-8">
+          <div className="flex justify-center">
+            <SectionHeader title="Featured Collection" subtitle="Handpicked for you" center={true}/>
+          </div>
+          <Link to="/products?isFeatured=true" className="absolute right-0 top-1/2 -translate-y-1/2 btn-ghost text-sm hidden md:flex gap-2">View All <ArrowRight size={15}/></Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {featured.map((p, i) => <ProductCard key={p._id} product={p} index={i}/>)}
@@ -307,9 +315,11 @@ const festive = products.filter(p => p.isFestival);
 
       {/* New Arrivals */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex items-end justify-between mb-8">
-          <SectionHeader title="New Arrivals" subtitle="Just landed" center={false}/>
-          <Link to="/products?isNewArrival=true" className="btn-ghost text-sm hidden md:flex gap-2">See All <ArrowRight size={15}/></Link>
+        <div className="relative mb-8">
+          <div className="flex justify-center">
+            <SectionHeader title="New Arrivals" subtitle="Just landed" center={true}/>
+          </div>
+          <Link to="/products?isNewArrival=true" className="absolute right-0 top-1/2 -translate-y-1/2 btn-ghost text-sm hidden md:flex gap-2">See All <ArrowRight size={15}/></Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {newArrivals.map((p,i) => <ProductCard key={p._id} product={p} index={i}/>)}
@@ -318,7 +328,7 @@ const festive = products.filter(p => p.isFestival);
 
       {/* Best Sellers */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <SectionHeader title="Best Sellers" subtitle="Most loved picks"/>
+        <SectionHeader title="Best Sellers" subtitle="Most loved picks" center={true}/>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
           {bestSellers.map((p,i) => <ProductCard key={p._id} product={p} index={i}/>)}
         </div>

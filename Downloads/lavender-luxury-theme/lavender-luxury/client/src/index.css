@@ -192,9 +192,11 @@
   /* Marquee */
   .marquee-track {
     display: flex;
-    gap: 2rem;
-    animation: marquee 30s linear infinite;
+    width: max-content;
+    gap: 1rem;
+    animation: marquee 24s linear infinite;
     white-space: nowrap;
+    will-change: transform;
   }
 
   /* Product image zoom */
