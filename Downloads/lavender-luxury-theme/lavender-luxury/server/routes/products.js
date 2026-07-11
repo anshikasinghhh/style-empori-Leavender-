@@ -119,6 +119,45 @@ router.put('/:id', protect, staffOnly, async (req, res) => {
   }
 });
 
+// @PUT /api/products/:id/restock - Safely increment stock or a variant stock
+router.put('/:id/restock', protect, staffOnly, async (req, res) => {
+  try {
+    const { increment = 0, variantIndex, variantSize, variantColorName } = req.body || {};
+    const inc = Number(increment) || 0;
+    if (!inc) return res.status(400).json({ success: false, message: 'Invalid increment value' });
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    // If product has variants, update the matching variant (by index, size, or color), then recalc total
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      let idx = -1;
+      if (typeof variantIndex === 'number') idx = variantIndex;
+      else if (variantSize) idx = product.variants.findIndex(v => String(v.size).toLowerCase() === String(variantSize).toLowerCase());
+      else if (variantColorName) idx = product.variants.findIndex(v => v.color && String(v.color.name).toLowerCase() === String(variantColorName).toLowerCase());
+
+      if (idx > -1 && product.variants[idx]) {
+        product.variants[idx].stock = (Number(product.variants[idx].stock) || 0) + inc;
+      } else if (idx === -1) {
+        // No matching variant specified — add a new variant with the increment as stock
+        product.variants.push({ size: variantSize || 'UNSPECIFIED', color: variantColorName ? { name: variantColorName } : undefined, stock: inc });
+      }
+
+      // Recalculate aggregate stock (pre-save also does this, but do it explicitly)
+      product.stock = product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+      await product.save();
+      return res.json({ success: true, product });
+    }
+
+    // No variants — increment root stock directly using atomic update
+    const updated = await Product.findByIdAndUpdate(req.params.id, { $inc: { stock: inc } }, { new: true });
+    return res.json({ success: true, product: updated });
+  } catch (err) {
+    console.error('Error restocking product:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @DELETE /api/products/:id - Admin & employee
 router.delete('/:id', protect, staffOnly, async (req, res) => {
   try {

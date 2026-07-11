@@ -30,7 +30,7 @@ export default function AdminInventory() {
   const loadInventory = async () => {
   try {
     console.log('Loading inventory...');
-    const res = await api.get('/products');
+    const res = await api.get('/products', { params: { limit: 500 } });
     console.log('Inventory response:', res.data);
     setProducts(res.data.products || []);
   } catch (err) {
@@ -48,29 +48,15 @@ useEffect(() => {
   //   toast.success('Restocked +50 units');
   // };
   const restock = async (id) => {
-
-  const product = products.find(p => p._id === id);
-
-  try {
-
-    await api.put(
-      `/products/${id}`,
-      {
-        ...product,
-        stock: product.stock + 50
-      }
-    );
-
-    toast.success('Restocked +50 units');
-
-    loadInventory();
-
-  } catch (err) {
-
-    toast.error('Restock failed');
-
-  }
-};
+    try {
+      await api.put(`/products/${id}/restock`, { increment: 50 });
+      toast.success('Restocked +50 units');
+      await loadInventory();
+    } catch (err) {
+      console.error('Restock error', err);
+      toast.error('Restock failed');
+    }
+  };
 
   const summaryStats = [
     { label:'Total Products', value:products.length,                                     color:'from-primary to-gold-light',  icon:Package },
