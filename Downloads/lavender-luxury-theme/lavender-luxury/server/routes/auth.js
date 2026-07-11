@@ -66,6 +66,42 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
+// @GET /api/auth/addresses
+router.get('/addresses', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.json({ success: true, addresses: user.addresses || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @POST /api/auth/addresses
+router.post('/addresses', protect, async (req, res) => {
+  try {
+    const { fullName, address, city, state, pincode, phone, label } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user.addresses) user.addresses = [];
+    user.addresses.push({ fullName, address, city, state, pincode, phone, label: label || 'Address' });
+    await user.save();
+    res.json({ success: true, addresses: user.addresses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// @DELETE /api/auth/addresses/:addressId
+router.delete('/addresses/:addressId', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    user.addresses = user.addresses.filter(addr => addr._id.toString() !== req.params.addressId);
+    await user.save();
+    res.json({ success: true, addresses: user.addresses });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // @PUT /api/auth/change-password
 router.put('/change-password', protect, async (req, res) => {
   try {

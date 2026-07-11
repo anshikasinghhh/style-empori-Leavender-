@@ -62,6 +62,16 @@ module.exports.reviewRouter = (() => {
     } catch (err) { res.status(500).json({ success: false, message: err.message }); }
   });
 
+  // GET reviews by logged-in user
+  r.get('/my', protect, async (req, res) => {
+    try {
+      const reviews = await Review.find({ user: req.user._id })
+        .populate('product', 'name images')
+        .sort({ createdAt: -1 });
+      res.json({ success: true, reviews });
+    } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  });
+
   // POST a new review (logged-in users only)
   r.post('/', protect, async (req, res) => {
     try {
