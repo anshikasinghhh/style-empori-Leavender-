@@ -32,7 +32,7 @@ export default function EmployeeInventoryStock() {
 
   const loadInventory = async () => {
     try {
-      const res = await api.get('/products');
+      const res = await api.get('/products', { params: { limit: 500 } });
       setProducts(res.data.products || []);
     } catch (err) {
       toast.error('Failed to load inventory');
@@ -46,12 +46,9 @@ export default function EmployeeInventoryStock() {
   const restock = async (id) => {
     const product = products.find((p) => p._id === id);
     try {
-      await api.put(`/products/${id}`, {
-        ...product,
-        stock: product.stock + 50,
-      });
+      await api.put(`/products/${id}/restock`, { increment: 50 });
       toast.success('Restocked +50 units');
-      loadInventory();
+      await loadInventory();
     } catch (err) {
       toast.error('Restock failed');
     }

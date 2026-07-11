@@ -33,7 +33,7 @@ export default function EmployeeInventory() {
     const loadProductsAndProduct = async () => {
       setLoading(true);
       try {
-        const res = await api.get('/products');
+        const res = await api.get('/products', { params: { limit: 500 } });
         const activeProducts = res.data.products || [];
         setProducts(activeProducts);
 
