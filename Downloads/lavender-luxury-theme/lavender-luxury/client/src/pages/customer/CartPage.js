@@ -5,7 +5,7 @@ import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Sparkles, Star, Al
 import { useDispatch, useSelector } from 'react-redux';
 import { updateCartItem, removeFromCart, addToCart } from '../../slices/cartSlice';
 import { EmptyState } from '../../components/common/LoadingSpinner';
-import { PRODUCTS, formatPrice, getDiscount } from '../../utils/data';
+import { formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
@@ -37,10 +37,11 @@ export default function CartPage() {
     fetchProducts();
   }, []);
 
-  // Use demo products if backend not connected
   const enriched = items.map(item => ({
     ...item,
-    product: item.product?.price ? item.product : PRODUCTS.find(p => p._id === (item.product?._id || item.product)) || item.product
+    product: item.product && typeof item.product === 'object'
+      ? item.product
+      : allProducts.find(p => String(p._id) === String(item.product)) || item.product
   }));
 
   // Check if any items are out of stock
@@ -59,20 +60,14 @@ export default function CartPage() {
     .filter(item => item.urgency && item.urgency.level !== 'popular');
   const hasUrgency = urgencyItems.length > 0;
 
-  // "You Might Also Like" — uses backend + local data for relevant products
+  // "You Might Also Like" — use only live backend inventory products for recommendations
   const recommendations = useMemo(() => {
     if (enriched.length === 0) return [];
 
     const cartIds = new Set(enriched.map(i => String(i.product?._id)));
 
-    // Merge local PRODUCTS (has tags, occasions) with backend products
-    const productPool = allProducts.length > 0 ? allProducts : PRODUCTS;
-
-    // Enrich backend products with local data (tags, occasions)
-    const enrichedPool = productPool.map(p => {
-      const local = PRODUCTS.find(lp => String(lp._id) === String(p._id));
-      return local ? { ...p, tags: p.tags?.length ? p.tags : local.tags, occasion: p.occasion?.length ? p.occasion : local.occasion } : p;
-    });
+    const productPool = allProducts.filter(p => p && p._id && p.stock > 0);
+    const enrichedPool = productPool;
 
     // Related category groups
     const RELATED_GROUPS = [
@@ -94,11 +89,7 @@ export default function CartPage() {
       return norm(slug || name);
     }).filter(Boolean);
 
-    // Also look up local PRODUCTS for cart items to get richer data
-    const cartLocalProducts = enriched
-      .map(i => PRODUCTS.find(p => String(p._id) === String(i.product?._id)))
-      .filter(Boolean);
-    const cartSource = cartLocalProducts.length > 0 ? cartLocalProducts : enriched.map(i => i.product).filter(Boolean);
+    const cartSource = enriched.map(i => i.product).filter(Boolean);
 
     const cartTags = cartSource.flatMap(p => (p.tags || []).map(t => t.toLowerCase()));
     const cartOccasions = cartSource.flatMap(p => (p.occasion || []).map(o => o.toLowerCase()));
@@ -192,7 +183,7 @@ export default function CartPage() {
                 className={`bg-white rounded-2xl p-3 sm:p-4 shadow-card border flex flex-col sm:flex-row gap-3 sm:gap-4 ${urgency && (urgency.level === 'critical' || urgency.level === 'out') ? 'border-rose-200' : urgency?.level === 'low' ? 'border-amber-200' : 'border-gold-pale/60'}`}>
                 <div className="flex gap-3 sm:gap-4">
                   <Link to={`/products/${item.product?._id}`} className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-champagne-light shrink-0 block relative">
-                    <img src={item.product?.images?.[0]?.url || PRODUCTS[0].images[0].url} alt={item.product?.name}
+                    <img src={item.product?.images?.[0]?.url || ''} alt={item.product?.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"/>
                     {urgency && urgency.level !== 'popular' && (
                       <span className={`absolute bottom-1.5 left-1.5 right-1.5 text-center font-body text-[9px] font-bold px-1.5 py-0.5 rounded-full ${urgency.badge}`}>

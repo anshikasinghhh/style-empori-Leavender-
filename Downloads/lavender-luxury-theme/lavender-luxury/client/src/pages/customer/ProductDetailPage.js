@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, ShoppingBag, Star, Truck, Shield, RefreshCw, Share2, ChevronRight, Plus, Minus, Check, Sparkles } from 'lucide-react';
@@ -16,6 +16,7 @@ export default function ProductDetailPage() {
   const { product, loading, error, items: allProducts } = useSelector((s) => s.products);
   const [selImg, setSelImg] = useState(0);
   const [selSize, setSelSize] = useState('');
+  const [selColor, setSelColor] = useState('');
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState('description');
   const [addedToCart, setAddedToCart] = useState(false);
@@ -29,9 +30,55 @@ export default function ProductDetailPage() {
     return () => dispatch(clearProduct());
   }, [dispatch, id]);
 
-  useEffect(() => {
-    setSelImg(0);
-  }, [product]);
+  const productColors = product?.colors;
+  const productVariants = product?.variants;
+  const productSizes = product?.sizes;
+  const productImages = product?.images;
+
+  const discount = product?.originalPrice ? getDiscount(product.originalPrice, product?.price ?? 0) : 0;
+  const effectivePrice = product?.isFlashSale && product?.flashSalePrice ? product.flashSalePrice : (product?.price ?? 0);
+  const availableColors = useMemo(() => {
+    const variantColors = Array.isArray(productVariants)
+      ? productVariants.map(v => v.color).filter(c => c?.name)
+      : [];
+    const uniqueVariantColors = variantColors.reduce((acc, c) => {
+      if (!acc.some(existing => existing.name === c.name)) acc.push(c);
+      return acc;
+    }, []);
+    return Array.isArray(productColors) && productColors.length ? productColors : uniqueVariantColors;
+  }, [productColors, productVariants]);
+
+  const availableSizes = useMemo(() => {
+    if (selColor && Array.isArray(productVariants) && productVariants.length) {
+      return productVariants
+        .filter(v => v.color?.name === selColor)
+        .map(v => ({ size: v.size, stock: v.stock }));
+    }
+    return Array.isArray(productSizes) ? productSizes : [];
+  }, [selColor, productVariants, productSizes]);
+
+  const selectedVariant = useMemo(() => {
+    if (!selColor || !selSize || !Array.isArray(productVariants)) return null;
+    return productVariants.find(v => v.size === selSize && v.color?.name === selColor) || null;
+  }, [selColor, selSize, productVariants]);
+
+  const selectedStock = selectedVariant ? selectedVariant.stock : product?.stock;
+
+  const productCategory = (cat) => {
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat.toLowerCase();
+    return (cat.slug || cat.name || '').toLowerCase();
+  };
+  const related = (Array.isArray(allProducts) ? allProducts : []).filter(p => {
+    if (p._id === product?._id) return false;
+    return productCategory(p.category) === productCategory(product?.category);
+  }).slice(0, 4);
+  const images = (Array.isArray(productImages) && productImages.length > 0)
+    ? productImages
+    : [
+        { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },
+        { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Pattern detail' },
+      ];
 
   if (loading && !product) {
     return (
@@ -57,29 +104,27 @@ export default function ProductDetailPage() {
     );
   }
 
-  const discount = product.originalPrice ? getDiscount(product.originalPrice, product.price) : 0;
-  const effectivePrice = product.isFlashSale && product.flashSalePrice ? product.flashSalePrice : product.price;
-  const productCategory = (cat) => {
-    if (!cat) return '';
-    if (typeof cat === 'string') return cat.toLowerCase();
-    return (cat.slug || cat.name || '').toLowerCase();
-  };
-  const related = allProducts.filter(p => {
-    if (p._id === product._id) return false;
-    return productCategory(p.category) === productCategory(product.category);
-  }).slice(0, 4);
-  // Use all provided images if available; otherwise fall back to a couple of placeholders
-  const images = (Array.isArray(product.images) && product.images.length > 0)
-    ? product.images
-    : [
-        { url:'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85', alt:'Fabric detail' },
-        { url:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700&q=85', alt:'Pattern detail' },
-      ];
+  const categoryName = typeof product?.category === 'object' ? product.category.name : product.category;
+  const categorySlug = typeof product?.category === 'object'
+    ? product.category.slug
+    : String(product?.category || '').toLowerCase().replace(/\s+/g, '-');
 
   const handleCart = () => {
     if (!token) { toast.error('Please login to add to cart'); return; }
-    if (product.sizes?.length > 0 && !selSize) { toast.error('Please select a size'); return; }
-    dispatch(addToCart({ productId: product._id, quantity: qty, size: selSize || 'Free Size' }))
+    if (availableColors.length > 0 && !selColor) { toast.error('Please select a color'); return; }
+    if (availableSizes.length > 0 && !selSize) { toast.error('Please select a size'); return; }
+    const variantStock = selectedStock;
+    if (variantStock !== undefined && variantStock !== null && qty > variantStock) {
+      const variantInfo = selSize && selColor ? ` for ${selColor} - ${selSize}` : selSize ? ` for ${selSize}` : selColor ? ` for ${selColor}` : '';
+      toast.error(`Only ${variantStock} item(s) available${variantInfo}. Try changing size or color.`);
+      return;
+    }
+    dispatch(addToCart({
+      productId: product._id,
+      quantity: qty,
+      size: selSize || 'Free Size',
+      color: selColor || undefined
+    }))
       .unwrap()
       .then(() => {
         setAddedToCart(true);
@@ -110,7 +155,7 @@ export default function ProductDetailPage() {
       <nav className="hidden sm:flex items-center gap-2 text-sm font-body text-gray-400 mb-6 sm:mb-8">
         <Link to="/" className="hover:text-primary transition-colors">Home</Link><ChevronRight size={14}/>
         <Link to="/products" className="hover:text-primary transition-colors">Products</Link><ChevronRight size={14}/>
-        <Link to={`/products?category=${product.category?.slug}`} className="hover:text-primary transition-colors">{product.category?.name}</Link><ChevronRight size={14}/>
+        <Link to={`/products?category=${product.category?.slug || ''}`} className="hover:text-primary transition-colors">{product.category?.name || 'Category'}</Link><ChevronRight size={14}/>
         <span className="text-primary truncate max-w-[200px]">{product.name}</span>
       </nav>
 
@@ -133,7 +178,7 @@ export default function ProductDetailPage() {
         <motion.div className="space-y-5" initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }}>
           {product.badge && <span className="badge-primary text-xs">{product.badge}</span>}
           <div>
-            <p className="font-body text-xs font-bold text-primary uppercase tracking-widest mb-1.5">{product.category?.name}</p>
+            <p className="font-body text-xs font-bold text-primary uppercase tracking-widest mb-1.5">{categoryName}</p>
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 leading-tight mb-3">{product.name}</h1>
             <div className="flex items-center gap-3">
               {product.ratings > 0 && (
@@ -186,23 +231,47 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Sizes */}
-          {product.sizes?.length > 0 && (
+          {availableColors.length > 0 && (
+            <div>
+              <p className="font-body font-semibold text-gray-800 mb-2.5">Select Color</p>
+              <div className="flex flex-wrap gap-2">
+                {availableColors.map((color) => (
+                  <button
+                    type="button"
+                    key={color.name}
+                    onClick={() => {
+                      setSelColor(color.name);
+                      if (Array.isArray(product.variants) && product.variants.length) {
+                        const variant = product.variants.find(v => v.color?.name === color.name);
+                        if (variant) setSelSize(variant.size);
+                      }
+                    }}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-body transition-all ${selColor === color.name ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-700 hover:border-primary'}`}
+                  >
+                    <span className="w-3.5 h-3.5 rounded-full border border-gray-200" style={{ backgroundColor: color.hex || '#ccc' }} />
+                    {color.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {availableSizes.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <p className="font-body font-semibold text-gray-800">Select Size</p>
                 <button className="font-body text-xs text-primary underline underline-offset-2">Size Guide</button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {product.sizes.map(({ size, stock }) => (
-                  <button key={size} onClick={() => setSelSize(size)} disabled={stock===0}
-                    className={`px-4 py-2 rounded-xl border-2 text-sm font-body transition-all ${selSize===size ? 'border-primary bg-primary text-white shadow-sm' : stock===0 ? 'border-gray-100 text-gray-300 cursor-not-allowed line-through' : 'border-gray-200 text-gray-700 hover:border-primary hover:text-primary'}`}>
+                {availableSizes.map(({ size, stock }) => (
+                  <button key={size} onClick={() => setSelSize(size)} disabled={stock === 0}
+                    className={`px-4 py-2 rounded-xl border-2 text-sm font-body transition-all ${selSize === size ? 'border-primary bg-primary text-white shadow-sm' : stock === 0 ? 'border-gray-100 text-gray-300 cursor-not-allowed line-through' : 'border-gray-200 text-gray-700 hover:border-primary hover:text-primary'}`}>
                     {size}
                   </button>
                 ))}
               </div>
               {selSize && (
                 <p className="font-body text-xs text-gray-500 mt-2">
-                  Stock for {selSize}: {product.sizes.find(s => s.size === selSize)?.stock || product.stock} units
+                  Stock for {selSize}{selColor ? ` (${selColor})` : ''}: {selectedStock ?? product.stock} units
                 </p>
               )}
             </div>
@@ -214,7 +283,15 @@ export default function ProductDetailPage() {
             <div className="flex items-center gap-0 border-2 border-gray-100 rounded-xl overflow-hidden">
               <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-10 h-10 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={14}/></button>
               <span className="w-10 text-center font-body font-bold text-gray-900">{qty}</span>
-              <button onClick={() => setQty(q => Math.min(product.stock,q+1))} className="w-10 h-10 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={14}/></button>
+              <button onClick={() => {
+                const maxStock = selectedStock ?? product.stock;
+                if (qty >= maxStock) {
+                  const variantInfo = selSize && selColor ? ` for ${selColor} - ${selSize}` : selSize ? ` for ${selSize}` : selColor ? ` for ${selColor}` : '';
+                  toast.error(`No more left${variantInfo}. Try changing size or color.`);
+                  return;
+                }
+                setQty(q => q + 1);
+              }} className="w-10 h-10 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={14}/></button>
             </div>
           </div>
 
