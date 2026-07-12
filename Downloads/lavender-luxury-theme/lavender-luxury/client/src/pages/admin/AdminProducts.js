@@ -415,150 +415,51 @@ const deleteProduct = async (id) => {
                     </select>
                   </div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units</label><input type="number" value={form.stock} onChange={e => setForm(f=>({...f,stock:e.target.value}))} className="input-field text-sm" placeholder="50"/></div>
-                  <div className="col-span-2">
 
-<label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
-Sizes
-</label>
+                  {/* Variants builder */}
+                  <div className="col-span-2 mt-4">
+                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Variants (Size / Color / Stock)</label>
+                    <div className="grid grid-cols-3 gap-2 items-end">
+                      <select value={variantSize} onChange={e=>setVariantSize(e.target.value)} className="input-field">
+                        <option value="">Select size</option>
+                        {[...new Set([...SIZE_OPTIONS, ...form.sizes.map(s=>s.size)])].map(s=> <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <select value={variantColor} onChange={e=>setVariantColor(e.target.value)} className="input-field">
+                        <option value="">Select color</option>
+                        {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <input type="number" value={variantStock} onChange={e=>{
+        const val = Number(e.target.value);
+        if (val < 0) {
+          toast.error('Stock cannot be negative - this is invalid amount');
+          return;
+        }
+        setVariantStock(val);
+      }} className="input-field" placeholder="Stock" />
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button type="button" onClick={()=>{
+                        if(!variantSize || !variantColor) { toast.error('Select size and color'); return; }
+                        // prevent duplicates
+                        if(form.variants.some(v=>v.size===variantSize && v.color?.name===variantColor)) { toast.error('Variant exists'); return; }
+                        setForm(f=>({...f, variants:[...f.variants, { size: variantSize, color:{ name: variantColor, hex: '' }, stock: Number(variantStock || 0) }]}));
+                        setVariantSize(''); setVariantColor(''); setVariantStock(0);
+                      }} className="btn-primary">Add Variant</button>
+                    </div>
 
-<div className="flex gap-2">
-
-<select
-value={selectedSize}
-onChange={(e)=>setSelectedSize(e.target.value)}
-className="input-field flex-1"
->
-
-<option value="">Select Size</option>
-
-{SIZE_OPTIONS.map(size=>(
-
-<option
-key={size}
-value={size}
->
-{size}
-</option>
-
-))}
-
-</select>
-
-<button
-type="button"
-onClick={()=>{
-
-if(!selectedSize) return;
-
-if(form.sizes.some(s=>s.size===selectedSize))
-return;
-
-setForm(f=>({
-
-...f,
-
-sizes:[
-...f.sizes,
-{
-size:selectedSize,
-stock:Number(f.stock || 0)
-}
-]
-
-}));
-
-setSelectedSize("");
-
-}}
-className="btn-primary"
->
-
-Add
-
-</button>
-
-</div>
-
-<div className="flex gap-2 mt-3">
-
-<input
-value={customSize}
-onChange={(e)=>setCustomSize(e.target.value)}
-placeholder="Custom Size"
-className="input-field flex-1"
-/>
-
-<button
-type="button"
-onClick={()=>{
-
-if(!customSize) return;
-
-if(form.sizes.some(s=>s.size===customSize))
-return;
-
-setForm(f=>({
-
-...f,
-
-sizes:[
-...f.sizes,
-{
-size:customSize,
-stock:Number(f.stock || 0)
-}
-]
-
-}));
-
-setCustomSize("");
-
-}}
-className="btn-outline"
->
-
-Add Custom
-
-</button>
-
-</div>
-
-</div>
-<div className="flex flex-wrap gap-2 mt-3">
-
-{form.sizes.map((size,index)=>(
-
-<div
-key={index}
-className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2"
->
-
-{size.size}
-
-<button
-type="button"
-onClick={()=>{
-
-setForm(f=>({
-
-...f,
-
-sizes:f.sizes.filter((_,i)=>i!==index)
-
-}));
-
-}}
->
-
-✕
-
-</button>
-
-</div>
-
-))}
-
-</div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {form.variants.map((v, i)=> (
+                        <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-3">
+                          <div className="text-xs"><strong>{v.size}</strong> / {v.color?.name} — <span className="font-mono">{v.stock}</span></div>
+                          <div className="flex gap-1">
+                            <button type="button" onClick={()=>{
+                              setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
+                            }} className="text-rose">Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <div className="col-span-2">
 
 <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
@@ -697,6 +598,40 @@ colors:f.colors.filter((_,i)=>i!==index)
 ))}
 
 </div>
+
+                  {/* Sizes */}
+                  <div className="col-span-2">
+                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Sizes</label>
+                    <div className="flex gap-2">
+                      <select value={selectedSize} onChange={(e)=>setSelectedSize(e.target.value)} className="input-field flex-1">
+                        <option value="">Select Size</option>
+                        {SIZE_OPTIONS.map(size=>(<option key={size} value={size}>{size}</option>))}
+                      </select>
+                      <button type="button" onClick={()=>{
+                        if(!selectedSize) return;
+                        if(form.sizes.some(s=>s.size===selectedSize)) return;
+                        setForm(f=>({...f, sizes:[...f.sizes, {size:selectedSize, stock:Number(f.stock || 0)}]}));
+                        setSelectedSize("");
+                      }} className="btn-primary">Add</button>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <input value={customSize} onChange={(e)=>setCustomSize(e.target.value)} placeholder="Custom Size" className="input-field flex-1"/>
+                      <button type="button" onClick={()=>{
+                        if(!customSize) return;
+                        if(form.sizes.some(s=>s.size===customSize)) return;
+                        setForm(f=>({...f, sizes:[...f.sizes, {size:customSize, stock:Number(f.stock || 0)}]}));
+                        setCustomSize("");
+                      }} className="btn-outline">Add Custom</button>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {form.sizes.map((size,index)=>(
+                        <div key={index} className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2">
+                          {size.size}
+                          <button type="button" onClick={()=>{setForm(f=>({...f, sizes:f.sizes.filter((_,i)=>i!==index)}));}}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Material</label><input value={form.material} onChange={e => setForm(f=>({...f,material:e.target.value}))} className="input-field text-sm" placeholder="Pure Kanjivaram Silk"/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Description</label><textarea value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} className="input-field text-sm h-24 resize-none" placeholder="Product description..."/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Images *</label>
@@ -729,51 +664,6 @@ colors:f.colors.filter((_,i)=>i!==index)
                         <div key={idx} className="w-20 h-20 rounded-lg overflow-hidden bg-champagne-light relative">
                           <img src={img.url || 'https://via.placeholder.com/200'} alt={img.alt || form.name} className="w-full h-full object-cover"/>
                           <button type="button" onClick={() => setForm(f => ({ ...f, images: f.images.filter((_, i) => i !== idx) }))} className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-xs">✕</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Variants builder */}
-                  <div className="col-span-2 mt-4">
-                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Variants (Size / Color / Stock)</label>
-                    <div className="grid grid-cols-3 gap-2 items-end">
-                      <select value={variantSize} onChange={e=>setVariantSize(e.target.value)} className="input-field">
-                        <option value="">Select size</option>
-                        {[...new Set([...SIZE_OPTIONS, ...form.sizes.map(s=>s.size)])].map(s=> <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <select value={variantColor} onChange={e=>setVariantColor(e.target.value)} className="input-field">
-                        <option value="">Select color</option>
-                        {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <input type="number" value={variantStock} onChange={e=>{
-        const val = Number(e.target.value);
-        if (val < 0) {
-          toast.error('Stock cannot be negative - this is invalid amount');
-          return;
-        }
-        setVariantStock(val);
-      }} className="input-field" placeholder="Stock" />
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button type="button" onClick={()=>{
-                        if(!variantSize || !variantColor) { toast.error('Select size and color'); return; }
-                        // prevent duplicates
-                        if(form.variants.some(v=>v.size===variantSize && v.color?.name===variantColor)) { toast.error('Variant exists'); return; }
-                        setForm(f=>({...f, variants:[...f.variants, { size: variantSize, color:{ name: variantColor, hex: '' }, stock: Number(variantStock || 0) }]}));
-                        setVariantSize(''); setVariantColor(''); setVariantStock(0);
-                      }} className="btn-primary">Add Variant</button>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {form.variants.map((v, i)=> (
-                        <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-3">
-                          <div className="text-xs"><strong>{v.size}</strong> / {v.color?.name} — <span className="font-mono">{v.stock}</span></div>
-                          <div className="flex gap-1">
-                            <button type="button" onClick={()=>{
-                              setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
-                            }} className="text-rose">Remove</button>
-                          </div>
                         </div>
                       ))}
                     </div>
