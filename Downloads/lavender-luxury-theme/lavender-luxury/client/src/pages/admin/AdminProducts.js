@@ -546,23 +546,37 @@ const deleteProduct = async (id) => {
                           { name: variantColor, hex: '' } : 
                           { name: variantCustomColorName, hex: variantCustomColorHex };
                         
-                        // prevent duplicates
-                        if(form.variants.some(v=>v.size===finalSize && v.color?.name===finalColorName)) { 
-                          toast.error('This variant already exists'); 
-                          return; 
-                        }
+                        // Check if variant already exists
+                        const existingIndex = form.variants.findIndex(v=>v.size===finalSize && v.color?.name===finalColorName);
                         
-                        setForm(f=>({
-                          ...f, 
-                          variants:[
-                            ...f.variants, 
-                            { 
-                              size: finalSize, 
-                              color: colorObj, 
-                              stock: Number(variantStock || 0) 
-                            }
-                          ]
-                        }));
+                        if(existingIndex > -1) { 
+                          // Variant exists - update its quantity instead
+                          const oldStock = Number(form.variants[existingIndex].stock) || 0;
+                          const newStock = oldStock + Number(variantStock || 0);
+                          
+                          setForm(f => {
+                            const updated = [...f.variants];
+                            updated[existingIndex].stock = newStock;
+                            return { ...f, variants: updated };
+                          });
+                          
+                          toast.success(`✓ Updated ${finalSize} / ${finalColorName}: +${variantStock} qty (Total: ${newStock})`);
+                        } else {
+                          // New variant - add it
+                          setForm(f=>({
+                            ...f, 
+                            variants:[
+                              ...f.variants, 
+                              { 
+                                size: finalSize, 
+                                color: colorObj, 
+                                stock: Number(variantStock || 0) 
+                              }
+                            ]
+                          }));
+                          
+                          toast.success(`✓ New variant added: ${finalSize} / ${finalColorName}`);
+                        }
                         
                         // Reset form
                         setVariantSize(''); 
@@ -571,35 +585,36 @@ const deleteProduct = async (id) => {
                         setVariantCustomSize('');
                         setVariantCustomColorName('');
                         setVariantCustomColorHex('#2D0845');
-                        
-                        toast.success('Variant added!');
-                      }} className="btn-primary flex-1">✓ Add Variant</button>
+                      }} className="btn-primary flex-1">✓ Add / Update Variant</button>
                     </div>
 
                     {/* Display Added Variants */}
                     {form.variants.length > 0 && (
                       <div className="mt-5 pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center mb-3">
-                          <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">Added Variants:</p>
+                          <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">📦 Added Variants:</p>
                           <div className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-lg">
                             <p className="font-body text-[11px] font-bold text-primary">Total Stock: <span className="text-lg">{form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)}</span> units</p>
                           </div>
                         </div>
+                        <p className="text-[10px] text-gray-500 mb-2">💡 Tip: Select same size & color again with different quantity to update stock</p>
                         <div className="flex flex-wrap gap-2">
                           {form.variants.map((v, i)=> (
-                            <div key={i} className="px-3 py-2 bg-white border border-primary/30 rounded-lg flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                            <div key={i} className="px-3 py-2 bg-white border-2 border-primary/30 rounded-lg flex items-center gap-3 shadow-sm hover:shadow-md hover:border-primary transition-all">
                               <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-primary/40" style={{backgroundColor: v.color?.hex || '#f0f0f0'}}></div>
+                                <div className="w-5 h-5 rounded-full border-2 border-primary/40 flex items-center justify-center" style={{backgroundColor: v.color?.hex || '#f0f0f0'}}>
+                                  {v.color?.hex && <div className="w-3 h-3 rounded-full border border-white" style={{backgroundColor: v.color.hex}}></div>}
+                                </div>
                                 <div className="text-xs">
-                                  <strong className="text-primary">{v.size}</strong>
+                                  <strong className="text-primary text-sm">{v.size}</strong>
                                   <span className="text-gray-500"> / {v.color?.name}</span>
-                                  <span className="text-gray-400 ml-1 font-mono text-[10px]">({v.stock} qty)</span>
+                                  <span className="text-primary font-bold ml-2 font-mono text-[11px]">{v.stock} qty</span>
                                 </div>
                               </div>
                               <button type="button" onClick={()=>{
                                 setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
                                 toast.success('Variant removed');
-                              }} className="text-rose text-sm font-bold hover:text-red-700 transition-colors">×</button>
+                              }} className="text-rose text-lg font-bold hover:text-red-700 transition-colors" title="Remove variant">×</button>
                             </div>
                           ))}
                         </div>
