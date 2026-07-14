@@ -56,7 +56,7 @@ const SIZE_OPTIONS = [
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'', material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
+const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'0', material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
@@ -85,11 +85,9 @@ export default function AdminProducts({ Layout = AdminLayout }) {
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(EMPTY);
-  const [selectedColor, setSelectedColor] = useState("");
-  const [customColor, setCustomColor] = useState("");
-
-  const [selectedSize, setSelectedSize] = useState("");
-  const [customSize, setCustomSize] = useState("");
+  const [variantCustomSize, setVariantCustomSize] = useState("");
+  const [variantCustomColorName, setVariantCustomColorName] = useState("");
+  const [variantCustomColorHex, setVariantCustomColorHex] = useState("#2D0845");
   const [selectedCoupon, setSelectedCoupon] = useState("");
 
   // Variant builder state
@@ -101,17 +99,57 @@ export default function AdminProducts({ Layout = AdminLayout }) {
   
   const uploadImages = async (files) => {
     try {
+      if (!files || files.length === 0) {
+        toast.error('No files selected');
+        return;
+      }
+
+      // Validate file types
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const invalidFiles = files.filter(f => !validTypes.includes(f.type));
+      if (invalidFiles.length > 0) {
+        toast.error(`Invalid file types: ${invalidFiles.map(f => f.name).join(', ')}`);
+        return;
+      }
+
       toast.loading('Uploading image(s)...', { id: 'upload' });
       const formData = new FormData();
       files.forEach(f => formData.append('images', f));
-      const res = await api.post('/uploads', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-      const uploaded = (res.data.images || []).map(i => ({ url: i.url, alt: '' }));
-      setForm(f => ({ ...f, images: [...(f.images || []), ...uploaded] }));
-      toast.success('Upload complete', { id: 'upload' });
+      
+      const res = await api.post('/uploads', formData, { 
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 30000 
+      });
+      
+      if (!res.data.success) {
+        throw new Error(res.data.message || 'Upload failed');
+      }
+
+      const uploadedImages = (res.data.images || []).filter(i => i && i.url);
+      
+      if (uploadedImages.length === 0) {
+        toast.error('No images were uploaded');
+        return;
+      }
+
+      // Add images to form with URL validation
+      const validImages = uploadedImages.map(i => ({ 
+        url: i.url.trim(), 
+        alt: i.alt || '' 
+      }));
+
+      setForm(f => ({ 
+        ...f, 
+        images: [...(f.images || []), ...validImages] 
+      }));
+
+      toast.success(`${uploadedImages.length} image(s) uploaded successfully`, { id: 'upload' });
     } catch (err) {
+      console.error('Upload error:', err);
       toast.error(err.response?.data?.message || err.message || 'Upload failed', { id: 'upload' });
     }
   };
+
 const [availableCoupons, setAvailableCoupons] = useState([]);
 const [couponMode, setCouponMode] = useState('none');
 const [customCoupon, setCustomCoupon] = useState(EMPTY_CUSTOM_COUPON);
@@ -151,7 +189,7 @@ console.log("Filtered:", filtered);
       mrp: String(p.mrp || ''),
       price: String(p.price || ''),
       originalPrice: String(p.originalPrice || ''),
-      stock: String(p.stock || ''),
+      stock: '0', // Stock will be calculated from variants
       category: typeof p.category === 'object' && p.category !== null ? (p.category.name || '') : (p.category || ''),
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       colors: Array.isArray(p.colors) ? p.colors : [],
@@ -204,7 +242,6 @@ useEffect(() => {
     const price = Number(form.price);
     const mrp = Number(form.mrp);
     const originalPrice = Number(form.originalPrice);
-    const stock = Number(form.stock);
     
     if (price < 0) {
       toast.error('Price cannot be negative - this is invalid amount');
@@ -218,10 +255,11 @@ useEffect(() => {
       toast.error('Original Price cannot be negative - this is invalid amount');
       return;
     }
-    if (stock < 0) {
-      toast.error('Stock cannot be negative - this is invalid amount');
-      return;
-    }
+    
+    // Calculate total stock from variants
+    const calculatedStock = form.variants.length > 0 
+      ? form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
+      : 0;
     
     // Client-side duplicate productCode check (exclude current edit)
     if (form.productCode) {
@@ -240,7 +278,22 @@ useEffect(() => {
       api,
     });
 
-    const payload = { ...form, couponCode: resolvedCouponCode };
+    // Validate images
+    const validImages = (form.images || []).filter(img => img && img.url && img.url.trim());
+    if (validImages.length === 0) {
+      toast.error('Please add at least one product image');
+      return;
+    }
+
+    const payload = { 
+      ...form, 
+      couponCode: resolvedCouponCode, 
+      stock: calculatedStock,
+      images: validImages.map(img => ({
+        url: img.url.trim(),
+        alt: (img.alt || form.name || 'Product image').trim()
+      }))
+    };
     console.log('Payload to send:', payload);
 
     // Ensure sizes and colors are properly formatted
@@ -414,224 +467,146 @@ const deleteProduct = async (id) => {
                       {CATEGORIES.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units</label><input type="number" value={form.stock} onChange={e => setForm(f=>({...f,stock:e.target.value}))} className="input-field text-sm" placeholder="50"/></div>
+                  <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units (Auto-calculated from Variants)</label><input type="number" value={form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} readOnly className="input-field text-sm bg-gray-50 cursor-not-allowed font-bold text-primary" placeholder="0"/><p className="text-[10px] text-gray-400 mt-1">⚠️ Add variants above to set stock. Total = Sum of all variant quantities</p></div>
 
                   {/* Variants builder */}
-                  <div className="col-span-2 mt-4">
-                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Variants (Size / Color / Stock)</label>
-                    <div className="grid grid-cols-3 gap-2 items-end">
-                      <select value={variantSize} onChange={e=>setVariantSize(e.target.value)} className="input-field">
-                        <option value="">Select size</option>
-                        {[...new Set([...SIZE_OPTIONS, ...form.sizes.map(s=>s.size)])].map(s=> <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <select value={variantColor} onChange={e=>setVariantColor(e.target.value)} className="input-field">
-                        <option value="">Select color</option>
-                        {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <input type="number" value={variantStock} onChange={e=>{
-        const val = Number(e.target.value);
-        if (val < 0) {
-          toast.error('Stock cannot be negative - this is invalid amount');
-          return;
-        }
-        setVariantStock(val);
-      }} className="input-field" placeholder="Stock" />
-                    </div>
-                    <div className="flex gap-2 mt-2">
-                      <button type="button" onClick={()=>{
-                        if(!variantSize || !variantColor) { toast.error('Select size and color'); return; }
-                        // prevent duplicates
-                        if(form.variants.some(v=>v.size===variantSize && v.color?.name===variantColor)) { toast.error('Variant exists'); return; }
-                        setForm(f=>({...f, variants:[...f.variants, { size: variantSize, color:{ name: variantColor, hex: '' }, stock: Number(variantStock || 0) }]}));
-                        setVariantSize(''); setVariantColor(''); setVariantStock(0);
-                      }} className="btn-primary">Add Variant</button>
+                  <div className="col-span-2 mt-4 border-l-4 border-primary/30 pl-4 py-3 bg-champagne-light/20 rounded-r-lg">
+                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 block">➕ Add Custom Variant (Size / Color / Stock)</label>
+                    
+                    {/* Size Section */}
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <label className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2 block">Size Option</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="font-body text-[10px] text-gray-500 mb-1 block">Preset Size</label>
+                          <select value={variantSize} onChange={e=>setVariantSize(e.target.value)} className="input-field text-sm">
+                            <option value="">-- Select preset --</option>
+                            {[...new Set([...SIZE_OPTIONS, ...form.sizes.map(s=>s.size)])].map(s=> <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] text-gray-500 mb-1 block">Or Custom Size</label>
+                          <input value={variantCustomSize} onChange={e=>setVariantCustomSize(e.target.value)} placeholder="e.g., S, M, L" className="input-field text-sm" />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-400 mt-1">Select preset OR enter custom size</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {form.variants.map((v, i)=> (
-                        <div key={i} className="px-3 py-2 bg-gray-50 rounded-lg flex items-center gap-3">
-                          <div className="text-xs"><strong>{v.size}</strong> / {v.color?.name} — <span className="font-mono">{v.stock}</span></div>
-                          <div className="flex gap-1">
-                            <button type="button" onClick={()=>{
-                              setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
-                            }} className="text-rose">Remove</button>
+                    {/* Color Section */}
+                    <div className="mb-4 pb-4 border-b border-gray-200">
+                      <label className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2 block">Color Option</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="font-body text-[10px] text-gray-500 mb-1 block">Preset Color</label>
+                          <select value={variantColor} onChange={e=>setVariantColor(e.target.value)} className="input-field text-sm">
+                            <option value="">-- Select preset --</option>
+                            {[...new Set([...COLOR_OPTIONS, ...form.colors.map(c=>c.name)])].map(c=> <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="font-body text-[10px] text-gray-500 mb-1 block">Or Custom Color</label>
+                          <input value={variantCustomColorName} onChange={e=>setVariantCustomColorName(e.target.value)} placeholder="e.g., Royal Blue" className="input-field text-sm" />
+                        </div>
+                      </div>
+                      {variantCustomColorName && (
+                        <div className="mt-2">
+                          <label className="font-body text-[10px] text-gray-500 mb-1 block">Color Hex Code</label>
+                          <input type="color" value={variantCustomColorHex} onChange={e=>setVariantCustomColorHex(e.target.value)} className="w-full h-9 cursor-pointer border border-gray-200 rounded" />
+                        </div>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-1">Select preset OR enter custom color</p>
+                    </div>
+
+                    {/* Stock Section */}
+                    <div className="mb-3">
+                      <label className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2 block">Stock Quantity</label>
+                      <input type="number" value={variantStock} onChange={e=>{
+                        const val = Number(e.target.value);
+                        if (val < 0) {
+                          toast.error('Stock cannot be negative - this is invalid amount');
+                          return;
+                        }
+                        setVariantStock(val);
+                      }} className="input-field w-full" placeholder="0" />
+                    </div>
+
+                    {/* Add Button */}
+                    <div className="flex gap-2 mt-4">
+                      <button type="button" onClick={()=>{
+                        // Get size - either preset or custom
+                        const finalSize = variantSize || variantCustomSize;
+                        // Get color - either preset or custom
+                        const finalColorName = variantColor || variantCustomColorName;
+                        
+                        if(!finalSize) { toast.error('Please specify a size (preset or custom)'); return; }
+                        if(!finalColorName) { toast.error('Please specify a color (preset or custom)'); return; }
+                        
+                        // Create color object
+                        const colorObj = variantColor ? 
+                          { name: variantColor, hex: '' } : 
+                          { name: variantCustomColorName, hex: variantCustomColorHex };
+                        
+                        // prevent duplicates
+                        if(form.variants.some(v=>v.size===finalSize && v.color?.name===finalColorName)) { 
+                          toast.error('This variant already exists'); 
+                          return; 
+                        }
+                        
+                        setForm(f=>({
+                          ...f, 
+                          variants:[
+                            ...f.variants, 
+                            { 
+                              size: finalSize, 
+                              color: colorObj, 
+                              stock: Number(variantStock || 0) 
+                            }
+                          ]
+                        }));
+                        
+                        // Reset form
+                        setVariantSize(''); 
+                        setVariantColor(''); 
+                        setVariantStock(0);
+                        setVariantCustomSize('');
+                        setVariantCustomColorName('');
+                        setVariantCustomColorHex('#2D0845');
+                        
+                        toast.success('Variant added!');
+                      }} className="btn-primary flex-1">✓ Add Variant</button>
+                    </div>
+
+                    {/* Display Added Variants */}
+                    {form.variants.length > 0 && (
+                      <div className="mt-5 pt-4 border-t border-gray-200">
+                        <div className="flex justify-between items-center mb-3">
+                          <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">Added Variants:</p>
+                          <div className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-lg">
+                            <p className="font-body text-[11px] font-bold text-primary">Total Stock: <span className="text-lg">{form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)}</span> units</p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="col-span-2">
-
-<label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">
-Colors
-</label>
-
-<div className="flex gap-2">
-
-<select
-value={selectedColor}
-onChange={(e)=>setSelectedColor(e.target.value)}
-className="input-field flex-1"
->
-
-<option value="">Select Color</option>
-
-{COLOR_OPTIONS.map(color=>(
-
-<option key={color}>
-{color}
-</option>
-
-))}
-
-</select>
-
-<button
-type="button"
-onClick={()=>{
-
-if(!selectedColor) return;
-
-if(form.colors.some(c=>c.name===selectedColor))
-return;
-
-setForm(f=>({
-
-...f,
-
-colors:[
-...f.colors,
-{
-name:selectedColor,
-hex:""
-}
-]
-
-}));
-
-setSelectedColor("");
-
-}}
-className="btn-primary"
->
-
-Add
-
-</button>
-
-</div>
-
-<div className="flex gap-2 mt-3">
-
-<input
-value={customColor}
-onChange={(e)=>setCustomColor(e.target.value)}
-placeholder="Custom Color"
-className="input-field flex-1"
-/>
-
-<button
-type="button"
-onClick={()=>{
-
-if(!customColor) return;
-
-setForm(f=>({
-
-...f,
-
-colors:[
-...f.colors,
-{
-name:customColor,
-hex:""
-}
-]
-
-}));
-
-setCustomColor("");
-
-}}
-className="btn-outline"
->
-
-Add Custom
-
-</button>
-
-</div>
-
-</div>
-<div className="flex flex-wrap gap-2 mt-3">
-
-{form.colors.map((color,index)=>(
-
-<div
-key={index}
-className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2"
->
-
-{color.name}
-
-<button
-type="button"
-onClick={()=>{
-
-setForm(f=>({
-
-...f,
-
-colors:f.colors.filter((_,i)=>i!==index)
-
-}));
-
-}}
->
-
-✕
-
-</button>
-
-</div>
-
-))}
-
-</div>
-
-                  {/* Sizes */}
-                  <div className="col-span-2">
-                    <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 block">Sizes</label>
-                    <div className="flex gap-2">
-                      <select value={selectedSize} onChange={(e)=>setSelectedSize(e.target.value)} className="input-field flex-1">
-                        <option value="">Select Size</option>
-                        {SIZE_OPTIONS.map(size=>(<option key={size} value={size}>{size}</option>))}
-                      </select>
-                      <button type="button" onClick={()=>{
-                        if(!selectedSize) return;
-                        if(form.sizes.some(s=>s.size===selectedSize)) return;
-                        setForm(f=>({...f, sizes:[...f.sizes, {size:selectedSize, stock:Number(f.stock || 0)}]}));
-                        setSelectedSize("");
-                      }} className="btn-primary">Add</button>
-                    </div>
-                    <div className="flex gap-2 mt-3">
-                      <input value={customSize} onChange={(e)=>setCustomSize(e.target.value)} placeholder="Custom Size" className="input-field flex-1"/>
-                      <button type="button" onClick={()=>{
-                        if(!customSize) return;
-                        if(form.sizes.some(s=>s.size===customSize)) return;
-                        setForm(f=>({...f, sizes:[...f.sizes, {size:customSize, stock:Number(f.stock || 0)}]}));
-                        setCustomSize("");
-                      }} className="btn-outline">Add Custom</button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {form.sizes.map((size,index)=>(
-                        <div key={index} className="px-3 py-1 bg-primary text-white rounded-full flex items-center gap-2">
-                          {size.size}
-                          <button type="button" onClick={()=>{setForm(f=>({...f, sizes:f.sizes.filter((_,i)=>i!==index)}));}}>✕</button>
+                        <div className="flex flex-wrap gap-2">
+                          {form.variants.map((v, i)=> (
+                            <div key={i} className="px-3 py-2 bg-white border border-primary/30 rounded-lg flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-full border-2 border-primary/40" style={{backgroundColor: v.color?.hex || '#f0f0f0'}}></div>
+                                <div className="text-xs">
+                                  <strong className="text-primary">{v.size}</strong>
+                                  <span className="text-gray-500"> / {v.color?.name}</span>
+                                  <span className="text-gray-400 ml-1 font-mono text-[10px]">({v.stock} qty)</span>
+                                </div>
+                              </div>
+                              <button type="button" onClick={()=>{
+                                setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
+                                toast.success('Variant removed');
+                              }} className="text-rose text-sm font-bold hover:text-red-700 transition-colors">×</button>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
+
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Material</label><input value={form.material} onChange={e => setForm(f=>({...f,material:e.target.value}))} className="input-field text-sm" placeholder="Pure Kanjivaram Silk"/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Description</label><textarea value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} className="input-field text-sm h-24 resize-none" placeholder="Product description..."/></div>
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Images *</label>
