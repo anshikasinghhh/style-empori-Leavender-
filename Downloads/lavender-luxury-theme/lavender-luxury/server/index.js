@@ -104,7 +104,6 @@ app.use('/api/employee/tasks', require('./routes/tasks'));
 app.use('/api/employee/inventory-requests', require('./routes/inventoryRequests'));
 app.use('/api/employee/admin', require('./routes/employeeAdmin'));
 app.use('/api/loyalty-settings', require('./routes/loyaltySettings'));
-app.use('/api/giftcards', require('./routes/giftcards'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/flash-sales', require('./routes/flashSales'));
 app.use('/api/uploads', require('./routes/uploads'));
@@ -146,6 +145,26 @@ const connectToDatabase = async () => {
   throw new Error('Unable to connect to any MongoDB instance. Check MONGODB_URI or run a local MongoDB server.');
 };
 
+const removeGiftCardCollections = async () => {
+  try {
+    const db = mongoose.connection.db;
+    if (!db) return;
+
+    for (const collectionName of ['giftcards', 'giftcardtiers']) {
+      try {
+        await db.dropCollection(collectionName);
+        console.log(`🗑️ Dropped gift-card collection: ${collectionName}`);
+      } catch (err) {
+        if (err.code !== 26) {
+          console.warn(`⚠️ Could not drop ${collectionName}:`, err.message);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Gift-card cleanup skipped:', err.message);
+  }
+};
+
 const seedDefaultUsers = async () => {
   const defaultUsers = [
     { name: 'Admin User', email: 'admin@vastra.com', password: 'admin123', role: 'admin' },
@@ -165,10 +184,8 @@ const seedDefaultUsers = async () => {
 const startServer = async () => {
   try {
     await connectToDatabase();
+    await removeGiftCardCollections();
     await seedDefaultUsers();
-    // Seed default gift card tiers if none exist
-    const GiftCardTier = require('./models/GiftCardTier');
-    await GiftCardTier.seedDefaults();
   } catch (err) {
     console.error('❌ MongoDB startup failed:', err.message);
     console.warn('⚠️ The server is starting up, but database operations will fail until MongoDB is reachable.');

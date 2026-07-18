@@ -68,7 +68,6 @@ export default function Footer({ className = '' }) {
                 { label: 'Careers', to: '/careers' },
                 { label: 'Press & Media', to: '/press-media' },
                 { label: 'Sustainability', to: '/sustainability' },
-                { label: 'Gift Cards', to: '/gift-cards' },
                 { label: 'Our Artisans & Craftsmanship', to: '/craftsmanship' },
               ].map(item => (
                 <li key={item.label}><Link to={item.to} onClick={(e) => handleFooterLinkClick(e, item.to)} className="font-body text-white/60 hover:text-white text-sm transition-colors hover:pl-1.5 inline-block">{item.label}</Link></li>

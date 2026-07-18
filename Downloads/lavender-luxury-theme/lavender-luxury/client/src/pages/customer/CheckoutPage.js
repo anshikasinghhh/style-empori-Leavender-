@@ -27,11 +27,6 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponMessage, setCouponMessage] = useState('');
   const [handlingCharge, setHandlingCharge] = useState(0);
-  const [giftCardCode, setGiftCardCode] = useState('');
-  const [giftCardDiscount, setGiftCardDiscount] = useState(0);
-  const [giftCardLoading, setGiftCardLoading] = useState(false);
-  const [giftCardMessage, setGiftCardMessage] = useState('');
-  const [giftCardBalance, setGiftCardBalance] = useState(0);
   const { items } = useSelector(s => s.cart);
   const { user, token } = useSelector(s => s.auth);
   const navigate = useNavigate();
@@ -52,7 +47,7 @@ export default function CheckoutPage() {
       : donationPreset
         ? donationPreset
         : 0;
-  const total = Math.max(0, subtotal - couponDiscount - giftCardDiscount + shipping + handlingCharge + tax + giftWrapCost + donationAmount);
+  const total = Math.max(0, subtotal - couponDiscount + shipping + handlingCharge + tax + giftWrapCost + donationAmount);
 
   useEffect(() => {
     const loadAvailableCoupons = async () => {
@@ -463,9 +458,6 @@ export default function CheckoutPage() {
             {couponDiscount > 0 && (
               <div className="flex justify-between text-emerald-600"><span>Coupon Discount</span><span className="font-body font-medium text-sm">-{formatPrice(couponDiscount)}</span></div>
             )}
-            {giftCardDiscount > 0 && (
-              <div className="flex justify-between text-emerald-600"><span>Gift Card</span><span className="font-body font-medium text-sm">-{formatPrice(giftCardDiscount)}</span></div>
-            )}
             <div className="flex justify-between text-gray-600"><span>Tax (5%)</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(tax)}</span></div>
             {giftWrapCost > 0 && (
               <div className="flex justify-between text-gray-600"><span>Gift Wrap</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(giftWrapCost)}</span></div>
@@ -526,51 +518,6 @@ export default function CheckoutPage() {
                 <span className="font-body text-sm text-gray-800 flex-1">Add gift wrap</span>
                 <span className="font-body text-sm font-bold text-primary">+{formatPrice(GIFT_WRAP_COST)}</span>
               </label>
-            </div>
-
-            <div>
-              <p className="font-body font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
-                <Gift size={15} className="text-primary" /> Gift Card
-              </p>
-              <p className="font-body text-xs text-gray-500 mb-3">Have a gift card? Enter the code here</p>
-              <div className="flex gap-2">
-                <input value={giftCardCode} onChange={e => setGiftCardCode(e.target.value.toUpperCase())}
-                  placeholder="LAV-XXXX-XXXX" maxLength={12}
-                  className="flex-1 input-field text-sm font-mono tracking-wider" />
-                <button onClick={async () => {
-                  const code = giftCardCode.trim();
-                  if (!code) { toast.error('Enter a gift card code'); return; }
-                  setGiftCardLoading(true);
-                  try {
-                    const { data } = await api.post('/giftcards/verify', { code });
-                    if (data.success) {
-                      const applyAmount = Math.min(data.giftCard.remainingBalance, total);
-                      const redeemRes = await api.post('/giftcards/redeem', { code, amount: applyAmount });
-                      if (redeemRes.data.success) {
-                        setGiftCardDiscount(redeemRes.data.redeemed);
-                        setGiftCardBalance(redeemRes.data.remainingBalance);
-                        setGiftCardMessage(`Gift card applied! ₹${redeemRes.data.redeemed} deducted`);
-                        toast.success('Gift card applied!');
-                      }
-                    }
-                  } catch (err) {
-                    setGiftCardMessage(err.response?.data?.message || 'Invalid gift card');
-                    toast.error(err.response?.data?.message || 'Invalid gift card code');
-                  } finally {
-                    setGiftCardLoading(false);
-                  }
-                }} disabled={giftCardLoading}
-                  className="px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-body font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50">
-                  {giftCardLoading ? '...' : 'Apply'}
-                </button>
-              </div>
-              {giftCardMessage && (
-                <p className={`font-body text-xs mt-2 ${giftCardDiscount > 0 ? 'text-emerald-600' : 'text-rose'}`}>{giftCardMessage}</p>
-              )}
-              {giftCardDiscount > 0 && (
-                <button type="button" onClick={() => { setGiftCardCode(''); setGiftCardDiscount(0); setGiftCardMessage(''); setGiftCardBalance(0); }}
-                  className="text-xs font-semibold text-primary mt-2">Remove gift card</button>
-              )}
             </div>
 
             <div>

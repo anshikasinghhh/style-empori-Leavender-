@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList, Gift, Zap } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Archive, Tag, Settings, LogOut, Menu, X, Bell, ChevronRight, Sparkles, TrendingUp, Calendar, ClipboardList, Zap } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../slices/authSlice';
 import NotificationBell from '../../components/common/NotificationBell';
@@ -20,7 +20,6 @@ const NAV = [
   { icon:ClipboardList,   label:'Tasks',      path:'/admin/tasks',      badge:null },
   { icon:Calendar,        label:'Attendance', path:'/admin/attendance', badge:null },
   { icon: Archive,         label:'Stock Requests', path:'/admin/inventory-requests', badge:null },
-  { icon: Gift,             label:'Gift Cards',    path:'/admin/gift-cards',        badge:null },
   { icon: Zap,              label:'Flash Sales',   path:'/admin/flash-sales',       badge:null },
   { icon: Settings,        label:'Settings',   path:'/admin/settings',   badge:null },
 ];

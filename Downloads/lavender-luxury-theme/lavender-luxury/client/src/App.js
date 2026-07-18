@@ -27,7 +27,6 @@ import PressMediaPage from './pages/customer/PressMedia';
 import CareersPage from './pages/customer/CareersPage';
 import SustainabilityPage from './pages/customer/SustainabilityPage';
 import CraftsmanshipPage from './pages/customer/CraftsmanshipPage';
-import GiftCardsPage from './pages/customer/GiftCardsPage';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -41,7 +40,6 @@ import AdminEmployees from './pages/admin/AdminEmployees';
 import AdminTasks from './pages/admin/AdminTasks';
 import AdminAttendance from './pages/admin/AdminAttendance';
 import AdminInventoryRequests from './pages/admin/AdminInventoryRequests';
-import AdminGiftCards from './pages/admin/AdminGiftCards';
 import AdminFlashSales from './pages/admin/AdminFlashSales';
 
 // Employee pages
@@ -79,7 +77,7 @@ const EmployeeRoute = ({ children }) => {
 };
 const CustomerLayout = ({ children }) => {
   const location = useLocation();
-  const footerClass = ['/press-media', '/careers', '/gift-cards'].includes(location.pathname) ? 'pt-28' : '';
+  const footerClass = ['/press-media', '/careers'].includes(location.pathname) ? 'pt-28' : '';
   return (
   <div className="min-h-screen flex flex-col" style={{ background:'#FDF8F0' }}>
     <Navbar />
@@ -122,7 +120,6 @@ export default function App() {
         <Route path="/careers" element={<CustomerLayout><CareersPage /></CustomerLayout>} />
         <Route path="/sustainability" element={<CustomerLayout><SustainabilityPage /></CustomerLayout>} />
         <Route path="/craftsmanship" element={<CustomerLayout><CraftsmanshipPage /></CustomerLayout>} />
-        <Route path="/gift-cards" element={<CustomerLayout><GiftCardsPage /></CustomerLayout>} />
         {/* Protected */}
         <Route path="/cart" element={<ProtectedRoute><CustomerLayout><CartPage /></CustomerLayout></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><CustomerLayout><WishlistPage /></CustomerLayout></ProtectedRoute>} />
@@ -143,7 +140,6 @@ export default function App() {
         <Route path="/admin/tasks" element={<AdminRoute><AdminTasks /></AdminRoute>} />
         <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance /></AdminRoute>} />
         <Route path="/admin/inventory-requests" element={<AdminRoute><AdminInventoryRequests /></AdminRoute>} />
-        <Route path="/admin/gift-cards" element={<AdminOrEmployeeRoute><AdminGiftCards /></AdminOrEmployeeRoute>} />
 <Route path="/admin/flash-sales" element={<AdminRoute><AdminFlashSales /></AdminRoute>} />
         {/* Employee */}
         <Route path="/employee" element={<EmployeeRoute><EmployeeDashboard /></EmployeeRoute>} />
