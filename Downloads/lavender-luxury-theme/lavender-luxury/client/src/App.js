@@ -52,6 +52,7 @@ import EmployeeProducts from './pages/employee/EmployeeProducts';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
 import EmployeeCoupons from './pages/employee/EmployeeCoupons';
 import EmployeeFlashSales from './pages/employee/EmployeeFlashSales';
+import EmployeeRequestHistory from './pages/employee/EmployeeRequestHistory';
 
 const ProtectedRoute = ({ children }) => {
   const { token } = useSelector(s => s.auth);
@@ -148,6 +149,7 @@ export default function App() {
         <Route path="/employee/products" element={<EmployeeRoute><EmployeeProducts /></EmployeeRoute>} />
         <Route path="/employee/inventory" element={<EmployeeRoute><EmployeeInventoryStock /></EmployeeRoute>} />
         <Route path="/employee/stock-requests" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
+        <Route path="/employee/request-history" element={<EmployeeRoute><EmployeeRequestHistory /></EmployeeRoute>} />
         <Route path="/employee/profile" element={<EmployeeRoute><EmployeeProfile /></EmployeeRoute>} />
         <Route path="/employee/coupons" element={<EmployeeRoute><EmployeeCoupons /></EmployeeRoute>} />
 <Route path="/employee/flash-sales" element={<EmployeeRoute><EmployeeFlashSales /></EmployeeRoute>} />
