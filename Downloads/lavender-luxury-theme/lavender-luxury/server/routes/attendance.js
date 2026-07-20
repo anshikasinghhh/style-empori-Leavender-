@@ -66,9 +66,10 @@ router.post('/punch-out', protect, authorize('employee'), async (req, res) => {
     const now = new Date();
     attendance.punchOut = now;
 
-    // Calculate working hours
-    const diffMs = now - attendance.punchIn;
-    attendance.workingHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+    // Calculate working hours in hours with 2 decimal precision
+    const diffMs = now.getTime() - attendance.punchIn.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    attendance.workingHours = Math.round(diffHours * 100) / 100;
 
     await attendance.save();
 

@@ -1,7 +1,7 @@
 // import React, { useState } from 'react';
 // import React, {useState,useEffect} from 'react';
 import AdminLayout from './AdminLayout';
-import { Plus, Search, Edit2, Trash2, X, Save, Tag } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Save, Tag, RefreshCw } from 'lucide-react';
 import { CATEGORIES, formatPrice } from '../../utils/data';
 import api from '../../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,7 +56,7 @@ const SIZE_OPTIONS = [
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:'0', material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[{url:'',alt:''}], couponCode:'' };
+const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:0, material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[], couponCode:'' };
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
@@ -94,6 +94,7 @@ export default function AdminProducts({ Layout = AdminLayout }) {
   const [variantSize, setVariantSize] = useState("");
   const [variantColor, setVariantColor] = useState("");
   const [variantStock, setVariantStock] = useState(0);
+  const [editingVariantIndex, setEditingVariantIndex] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
   const [imageAlt, setImageAlt] = useState("");
   
@@ -126,21 +127,21 @@ export default function AdminProducts({ Layout = AdminLayout }) {
       }
 
       const uploadedImages = (res.data.images || []).filter(i => i && i.url);
-      
+
       if (uploadedImages.length === 0) {
         toast.error('No images were uploaded');
         return;
       }
 
       // Add images to form with URL validation
-      const validImages = uploadedImages.map(i => ({ 
-        url: i.url.trim(), 
-        alt: i.alt || '' 
+      const validImages = uploadedImages.map(i => ({
+        url: i.url.trim(),
+        alt: i.alt || ''
       }));
 
-      setForm(f => ({ 
-        ...f, 
-        images: [...(f.images || []), ...validImages] 
+      setForm(f => ({
+        ...f,
+        images: [...(f.images || []), ...validImages]
       }));
 
       toast.success(`${uploadedImages.length} image(s) uploaded successfully`, { id: 'upload' });
@@ -179,7 +180,36 @@ console.log("Filtered:", filtered);
     setEditId(null);
     setCouponMode('none');
     setCustomCoupon(EMPTY_CUSTOM_COUPON);
+    setEditingVariantIndex(null);
+    resetVariantForm();
     setModal(true);
+  };
+
+  const resetVariantForm = () => {
+    setVariantSize('');
+    setVariantColor('');
+    setVariantStock(0);
+    setVariantCustomSize('');
+    setVariantCustomColorName('');
+    setVariantCustomColorHex('#2D0845');
+    setEditingVariantIndex(null);
+  };
+
+  const handleEditVariant = (index) => {
+    const variant = form.variants[index];
+    if (!variant) return;
+
+    setEditingVariantIndex(index);
+    setVariantSize(variant.size || '');
+    setVariantColor(variant.color?.name || '');
+    setVariantCustomSize(variant.size || '');
+    setVariantCustomColorName(variant.color?.name || '');
+    setVariantCustomColorHex(variant.color?.hex || '#2D0845');
+    setVariantStock(variant.stock || 0);
+  };
+
+  const handleCancelEditVariant = () => {
+    resetVariantForm();
   };
   const openEdit = (p) => {
     // Normalize product shape before editing to avoid runtime errors
@@ -189,14 +219,16 @@ console.log("Filtered:", filtered);
       mrp: String(p.mrp || ''),
       price: String(p.price || ''),
       originalPrice: String(p.originalPrice || ''),
-      stock: '0', // Stock will be calculated from variants
+      stock: Number(p.stock || 0),
       category: typeof p.category === 'object' && p.category !== null ? (p.category.name || '') : (p.category || ''),
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       colors: Array.isArray(p.colors) ? p.colors : [],
-      images: Array.isArray(p.images) && p.images.length ? p.images : [{ url: '', alt: '' }],
+      images: Array.isArray(p.images) && p.images.length ? p.images : [],
       variants: Array.isArray(p.variants) ? p.variants : [],
       couponCode: p.couponCode || ''
     });
+    setEditingVariantIndex(null);
+    resetVariantForm();
     setEditId(p._id);
     console.log('Available coupons:', availableCoupons);
     console.log('Product coupon code:', p.couponCode);
@@ -255,11 +287,11 @@ useEffect(() => {
       toast.error('Original Price cannot be negative - this is invalid amount');
       return;
     }
-    
-    // Calculate total stock from variants
-    const calculatedStock = form.variants.length > 0 
+
+    // Calculate total stock from variants, otherwise use form stock
+    const calculatedStock = form.variants.length > 0
       ? form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
-      : 0;
+      : Number(form.stock) || 0;
     
     // Client-side duplicate productCode check (exclude current edit)
     if (form.productCode) {
@@ -278,12 +310,8 @@ useEffect(() => {
       api,
     });
 
-    // Validate images
+    // Validate images - only filter out invalid ones, don't require images
     const validImages = (form.images || []).filter(img => img && img.url && img.url.trim());
-    if (validImages.length === 0) {
-      toast.error('Please add at least one product image');
-      return;
-    }
 
     const payload = { 
       ...form, 
@@ -365,11 +393,25 @@ const deleteProduct = async (id) => {
   }
 
 };
+
+  const recalculateAllStock = async () => {
+    try {
+      toast.loading('Recalculating stock for all products...', { id: 'recalc' });
+      const res = await api.post('/admin/recalculate-stock');
+      toast.success(res.data.message, { id: 'recalc' });
+      loadProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to recalculate stock', { id: 'recalc' });
+    }
+  };
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
         <div><h1 className="font-display text-2xl font-bold text-gray-900">Products</h1><p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p></div>
-        <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
+        <div className="flex gap-2">
+          <button onClick={recalculateAllStock} className="btn-outline text-sm gap-2 py-2.5"><RefreshCw size={16}/> Recalculate Stock</button>
+          <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
+        </div>
       </div>
      
 
@@ -399,7 +441,14 @@ const deleteProduct = async (id) => {
                   <td className="px-4 py-3"><span className="badge bg-champagne-light/80 text-primary border border-primary-100">{p.category}</span></td>
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.mrp)}</p></td>
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.price)}</p>{p.originalPrice && <p className="text-xs text-gray-400 line-through">{formatPrice(p.originalPrice)}</p>}</td>
-                  <td className="px-4 py-3"><span className={`badge text-xs font-bold ${p.stock < 10 ? 'bg-rose-soft text-rose' : p.stock < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{p.stock} left</span></td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col gap-1">
+                      <span className={`badge text-xs font-bold ${p.stock === 0 ? 'bg-gray-100 text-gray-600' : p.stock < 10 ? 'bg-rose-soft text-rose' : p.stock < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {p.stock} available
+                      </span>
+                      <span className="text-[10px] text-gray-400">{p.sold || 0} sold</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3">
                     {p.couponCode ? (
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-champagne-light/80 text-primary text-[10px] font-bold tracking-widest border border-primary-100">
@@ -530,93 +579,137 @@ const deleteProduct = async (id) => {
                       }} className="input-field w-full" placeholder="0" />
                     </div>
 
-                    {/* Add Button */}
+                    {/* Add/Update Button */}
                     <div className="flex gap-2 mt-4">
-                      <button type="button" onClick={()=>{
-                        // Get size - either preset or custom
-                        const finalSize = variantSize || variantCustomSize;
-                        // Get color - either preset or custom
-                        const finalColorName = variantColor || variantCustomColorName;
-                        
-                        if(!finalSize) { toast.error('Please specify a size (preset or custom)'); return; }
-                        if(!finalColorName) { toast.error('Please specify a color (preset or custom)'); return; }
-                        
-                        // Create color object
-                        const colorObj = variantColor ? 
-                          { name: variantColor, hex: '' } : 
-                          { name: variantCustomColorName, hex: variantCustomColorHex };
-                        
-                        // Check if variant already exists
-                        const existingIndex = form.variants.findIndex(v=>v.size===finalSize && v.color?.name===finalColorName);
-                        
-                        if(existingIndex > -1) { 
-                          // Variant exists - update its quantity instead
-                          const oldStock = Number(form.variants[existingIndex].stock) || 0;
-                          const newStock = oldStock + Number(variantStock || 0);
-                          
-                          setForm(f => {
-                            const updated = [...f.variants];
-                            updated[existingIndex].stock = newStock;
-                            return { ...f, variants: updated };
-                          });
-                          
-                          toast.success(`✓ Updated ${finalSize} / ${finalColorName}: +${variantStock} qty (Total: ${newStock})`);
-                        } else {
-                          // New variant - add it
+                      {editingVariantIndex !== null ? (
+                        <>
+                          <button type="button" onClick={()=>{
+                            const finalSize = variantSize || variantCustomSize;
+                            const finalColorName = variantColor || variantCustomColorName;
+
+                            if(!finalSize) { toast.error('Please specify a size'); return; }
+                            if(!finalColorName) { toast.error('Please specify a color'); return; }
+
+                            const colorObj = variantColor ?
+                              { name: variantColor, hex: '' } :
+                              { name: variantCustomColorName, hex: variantCustomColorHex };
+
+                            // Check for duplicate with other variants (excluding current editing variant)
+                            const duplicateIndex = form.variants.findIndex((v, i) =>
+                              i !== editingVariantIndex && v.size === finalSize && v.color?.name === finalColorName
+                            );
+
+                            if(duplicateIndex > -1) {
+                              toast.error('Variant with this Size + Color already exists');
+                              return;
+                            }
+
+                            setForm(f => {
+                              const updated = [...f.variants];
+                              updated[editingVariantIndex] = {
+                                size: finalSize,
+                                color: colorObj,
+                                stock: Number(variantStock || 0)
+                              };
+                              return { ...f, variants: updated };
+                            });
+
+                            toast.success(`✓ Updated variant: ${finalSize} / ${finalColorName}`);
+                            resetVariantForm();
+                          }} className="btn-primary flex-1">✓ Update Variant</button>
+                          <button type="button" onClick={handleCancelEditVariant} className="btn-outline">Cancel</button>
+                        </>
+                      ) : (
+                        <button type="button" onClick={()=>{
+                          const finalSize = variantSize || variantCustomSize;
+                          const finalColorName = variantColor || variantCustomColorName;
+
+                          if(!finalSize) { toast.error('Please specify a size (preset or custom)'); return; }
+                          if(!finalColorName) { toast.error('Please specify a color (preset or custom)'); return; }
+
+                          const colorObj = variantColor ?
+                            { name: variantColor, hex: '' } :
+                            { name: variantCustomColorName, hex: variantCustomColorHex };
+
+                          const existingIndex = form.variants.findIndex(v=>v.size===finalSize && v.color?.name===finalColorName);
+
+                          if(existingIndex > -1) {
+                            toast.error('Variant with this Size + Color already exists. Click the variant to edit it.');
+                            return;
+                          }
+
                           setForm(f=>({
-                            ...f, 
+                            ...f,
                             variants:[
-                              ...f.variants, 
-                              { 
-                                size: finalSize, 
-                                color: colorObj, 
-                                stock: Number(variantStock || 0) 
+                              ...f.variants,
+                              {
+                                size: finalSize,
+                                color: colorObj,
+                                stock: Number(variantStock || 0)
                               }
                             ]
                           }));
-                          
+
                           toast.success(`✓ New variant added: ${finalSize} / ${finalColorName}`);
-                        }
-                        
-                        // Reset form
-                        setVariantSize(''); 
-                        setVariantColor(''); 
-                        setVariantStock(0);
-                        setVariantCustomSize('');
-                        setVariantCustomColorName('');
-                        setVariantCustomColorHex('#2D0845');
-                      }} className="btn-primary flex-1">✓ Add / Update Variant</button>
+                          resetVariantForm();
+                        }} className="btn-primary flex-1">✓ Add Variant</button>
+                      )}
                     </div>
 
                     {/* Display Added Variants */}
                     {form.variants.length > 0 && (
                       <div className="mt-5 pt-4 border-t border-gray-200">
                         <div className="flex justify-between items-center mb-3">
-                          <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">📦 Added Variants:</p>
+                          <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">📦 Product Variants:</p>
                           <div className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-lg">
                             <p className="font-body text-[11px] font-bold text-primary">Total Stock: <span className="text-lg">{form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)}</span> units</p>
                           </div>
                         </div>
-                        <p className="text-[10px] text-gray-500 mb-2">💡 Tip: Select same size & color again with different quantity to update stock</p>
-                        <div className="flex flex-wrap gap-2">
-                          {form.variants.map((v, i)=> (
-                            <div key={i} className="px-3 py-2 bg-white border-2 border-primary/30 rounded-lg flex items-center gap-3 shadow-sm hover:shadow-md hover:border-primary transition-all">
-                              <div className="flex items-center gap-2">
-                                <div className="w-5 h-5 rounded-full border-2 border-primary/40 flex items-center justify-center" style={{backgroundColor: v.color?.hex || '#f0f0f0'}}>
-                                  {v.color?.hex && <div className="w-3 h-3 rounded-full border border-white" style={{backgroundColor: v.color.hex}}></div>}
-                                </div>
-                                <div className="text-xs">
-                                  <strong className="text-primary text-sm">{v.size}</strong>
-                                  <span className="text-gray-500"> / {v.color?.name}</span>
-                                  <span className="text-primary font-bold ml-2 font-mono text-[11px]">{v.stock} qty</span>
-                                </div>
-                              </div>
-                              <button type="button" onClick={()=>{
-                                setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
-                                toast.success('Variant removed');
-                              }} className="text-rose text-lg font-bold hover:text-red-700 transition-colors" title="Remove variant">×</button>
-                            </div>
-                          ))}
+                        <p className="text-[10px] text-gray-500 mb-2">💡 Click any variant row to edit its details</p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-xs font-body">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="text-left px-3 py-2 font-bold text-gray-600">Size</th>
+                                <th className="text-left px-3 py-2 font-bold text-gray-600">Color</th>
+                                <th className="text-left px-3 py-2 font-bold text-gray-600">Stock</th>
+                                <th className="text-right px-3 py-2 font-bold text-gray-600">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {form.variants.map((v, i)=> (
+                                <tr
+                                  key={i}
+                                  onClick={() => handleEditVariant(i)}
+                                  className={`cursor-pointer hover:bg-champagne-light/50 transition-colors ${editingVariantIndex === i ? 'bg-primary/10 border-l-4 border-primary' : ''}`}
+                                >
+                                  <td className="px-3 py-2 font-semibold text-gray-900">{v.size}</td>
+                                  <td className="px-3 py-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-4 h-4 rounded-full border border-gray-200" style={{backgroundColor: v.color?.hex || '#f0f0f0'}}></div>
+                                      <span className="text-gray-600">{v.color?.name}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2 font-bold text-primary">{v.stock}</td>
+                                  <td className="px-3 py-2 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
+                                        if(editingVariantIndex === i) resetVariantForm();
+                                        toast.success('Variant removed');
+                                      }}
+                                      className="text-rose hover:text-red-700 font-bold transition-colors"
+                                      title="Remove variant"
+                                    >
+                                      ×
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}

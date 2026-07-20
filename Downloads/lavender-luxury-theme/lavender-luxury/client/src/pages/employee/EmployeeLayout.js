@@ -28,6 +28,7 @@ export default function EmployeeLayout({ children }) {
     { icon: Package, label: 'Products', path: '/employee/products' },
     { icon: Boxes, label: 'Inventory', path: '/employee/inventory' },
     { icon: Archive, label: 'Stock Requests', path: '/employee/stock-requests' },
+    { icon: Archive, label: 'Request History', path: '/employee/request-history' },
     { icon: Zap, label: 'Flash Sales', path: '/employee/flash-sales' },
     ...(user?.canManageCoupons ? [{ icon: Tag, label: 'Coupons', path: '/employee/coupons' }] : []),
     { icon: User, label: 'Profile', path: '/employee/profile' }

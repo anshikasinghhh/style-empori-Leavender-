@@ -39,7 +39,7 @@ const productSchema = new mongoose.Schema({
 ],
   material: { type: String },
   occasion: [String],
-  brand: { type: String, default: 'Vastra Elegance' },
+  brand: { type: String, default: 'Lavender' },
   sku: { type: String },
   stock: { type: Number, default: 0 },
   sold: { type: Number, default: 0 },
@@ -69,15 +69,29 @@ productSchema.pre('save', function(next) {
   if (this.originalPrice && this.price) {
     this.discountPercent = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
   }
-  // Aggregate total stock from variants when present
+  // Always aggregate total stock from variants when present
   if (Array.isArray(this.variants) && this.variants.length > 0) {
-    try {
-      this.stock = this.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-    } catch (e) {
-      this.stock = this.stock || 0;
-    }
+    this.stock = this.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+  } else if (!this.isModified('stock') && this.stock === undefined) {
+    // If no variants and stock not explicitly set, default to 0
+    this.stock = 0;
   }
   next();
 });
+
+// Static method to recalculate stock for all products with variants
+productSchema.statics.recalculateAllStock = async function() {
+  const products = await this.find({ variants: { $exists: true, $ne: [] } });
+  let updated = 0;
+  for (const product of products) {
+    const oldStock = product.stock;
+    product.stock = product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    if (oldStock !== product.stock) {
+      await product.save();
+      updated++;
+    }
+  }
+  return updated;
+};
 
 module.exports = mongoose.model('Product', productSchema);

@@ -58,7 +58,8 @@ export default function EmployeeInventoryStock() {
     { label: 'Total Products', value: products.length, color: 'from-primary to-gold-light', icon: Package },
     { label: 'Low Stock', value: products.filter((p) => p.stock > 0 && p.stock < 10).length, color: 'from-amber-500 to-orange-400', icon: AlertTriangle },
     { label: 'Out of Stock', value: products.filter((p) => p.stock === 0).length, color: 'from-rose to-pink-500', icon: TrendingDown },
-    { label: 'Total Units', value: products.reduce((s, p) => s + p.stock, 0), color: 'from-emerald-500 to-teal-400', icon: Package },
+    { label: 'Available Units', value: products.reduce((s, p) => s + p.stock, 0), color: 'from-emerald-500 to-teal-400', icon: Package },
+    { label: 'Total Sold', value: products.reduce((s, p) => s + (p.sold || 0), 0), color: 'from-blue-500 to-indigo-400', icon: Package },
   ];
 
   return (
@@ -68,7 +69,7 @@ export default function EmployeeInventoryStock() {
         <p className="font-body text-gray-500 text-sm mt-0.5">View and manage stock levels for all products</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         {summaryStats.map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-5 shadow-card border border-gray-50 flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center shadow-sm shrink-0`}>

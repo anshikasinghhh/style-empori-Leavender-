@@ -285,4 +285,14 @@ router.get('/inventory', protect, adminOnly, async (req, res) => {
   }
 });
 
+// @POST /api/admin/recalculate-stock - Recalculate stock for all products with variants
+router.post('/recalculate-stock', protect, adminOnly, async (req, res) => {
+  try {
+    const updated = await Product.recalculateAllStock();
+    res.json({ success: true, message: `Recalculated stock for ${updated} products`, updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 module.exports = router;

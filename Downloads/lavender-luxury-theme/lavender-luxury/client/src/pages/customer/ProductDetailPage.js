@@ -63,6 +63,7 @@ export default function ProductDetailPage() {
   }, [selColor, selSize, productVariants]);
 
   const selectedStock = selectedVariant ? selectedVariant.stock : product?.stock;
+  const isOutOfStock = selectedStock === 0 || (product?.stock === 0 && !selectedVariant);
 
   const productCategory = (cat) => {
     if (!cat) return '';
@@ -189,12 +190,14 @@ export default function ProductDetailPage() {
                   <span className="font-body text-sm text-gray-400">({product.numReviews} reviews)</span>
                 </>
               )}
-              <span className={`font-body text-sm font-semibold ${product.stock < 10 ? 'text-rose' : 'text-emerald-600'}`}>{product.stock < 10 ? `Only ${product.stock} left!` : 'In Stock'}</span>
+              <span className={`font-body text-sm font-semibold ${isOutOfStock ? 'text-rose' : product.stock < 10 ? 'text-rose' : 'text-emerald-600'}`}>
+                {isOutOfStock ? 'Out of Stock' : product.stock < 10 ? `Only ${product.stock} left!` : 'In Stock'}
+              </span>
             </div>
           </div>
 
           {/* Stock urgency banner */}
-          {product.stock <= 5 && product.stock > 0 && (
+          {!isOutOfStock && product.stock <= 5 && product.stock > 0 && (
             <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}
               className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200">
               <span className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center animate-pulse shrink-0">
@@ -206,7 +209,7 @@ export default function ProductDetailPage() {
               </div>
             </motion.div>
           )}
-          {product.stock <= 0 && (
+          {isOutOfStock && (
             <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200">
               <span className="text-base">😔</span>
               <p className="font-body text-sm font-semibold text-gray-500">Out of stock — this item is currently unavailable</p>
@@ -297,8 +300,12 @@ export default function ProductDetailPage() {
 
           {/* CTA */}
           <div className="flex gap-2 sm:gap-3">
-            <button onClick={handleCart} className={`flex-1 py-3 sm:py-4 rounded-full font-body font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-card hover:shadow-hover ${addedToCart ? 'bg-emerald-500 text-white' : 'bg-brand-gradient text-white hover:scale-[1.02]'}`}>
-              {addedToCart ? <><Check size={18}/> Added!</> : <><ShoppingBag size={18}/> Add to Cart</>}
+            <button
+              onClick={handleCart}
+              disabled={isOutOfStock}
+              className={`flex-1 py-3 sm:py-4 rounded-full font-body font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all duration-300 shadow-card hover:shadow-hover ${isOutOfStock ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : addedToCart ? 'bg-emerald-500 text-white' : 'bg-brand-gradient text-white hover:scale-[1.02]'}`}
+            >
+              {isOutOfStock ? 'Out of Stock' : addedToCart ? <><Check size={18}/> Added!</> : <><ShoppingBag size={18}/> Add to Cart</>}
             </button>
             <button onClick={handleWishlist} className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110 ${isWishlisted ? 'border-rose bg-rose-soft text-rose' : 'border-gray-200 hover:border-rose hover:text-rose text-gray-400'}`}>
               <Heart size={18} className={isWishlisted ? 'fill-rose' : ''}/>
