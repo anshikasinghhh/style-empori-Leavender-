@@ -107,6 +107,15 @@ router.put('/:id', protect, staffOnly, async (req, res) => {
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
     // assign incoming fields and save so pre-save hooks run (e.g., aggregate stock)
     Object.assign(product, req.body || {});
+    if (!Array.isArray(product.variants)) {
+      product.variants = [];
+    }
+    product.variants = product.variants.map(variant => ({
+      ...variant,
+      color: variant?.color ? { ...variant.color } : undefined,
+      stock: Number(variant?.stock) || 0
+    }));
+    product.stock = product.variants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
     await product.save();
     console.log('Product saved successfully:', product);
     res.json({ success: true, product });

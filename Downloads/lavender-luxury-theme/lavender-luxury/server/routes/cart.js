@@ -34,28 +34,58 @@ router.post('/add', protect, async (req, res) => {
   try {
     const { productId, quantity = 1, size, color } = req.body;
     
-    // Check product stock
+    // Check product exists
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
     
-    if (product.stock <= 0) {
-      return res.status(400).json({ success: false, message: 'No more product left' });
+    // Determine available stock based on variant or total product stock
+    let availableStock = product.stock || 0;
+    let variantInfo = '';
+    
+    if (size && Array.isArray(product.variants) && product.variants.length > 0) {
+      // Find matching variant by size and color
+      const variant = product.variants.find(v => 
+        v.size === size && 
+        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+      );
+      
+      if (variant) {
+        availableStock = variant.stock || 0;
+        variantInfo = variant.color?.name ? `${variant.color.name} - ${variant.size}` : variant.size;
+      }
+    }
+    
+    // Ensure stock is never negative
+    availableStock = Math.max(0, availableStock);
+    
+    if (availableStock <= 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: variantInfo ? `No more stock available for ${variantInfo}` : 'No more product left' 
+      });
     }
     
     let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) cart = await Cart.create({ user: req.user._id, items: [] });
     
-    const existingIdx = cart.items.findIndex(i => i.product && i.product.toString() === productId && i.size === size);
+    // Find existing item by productId + size + color
+    const existingIdx = cart.items.findIndex(i => 
+      i.product && i.product.toString() === productId && 
+      i.size === size && 
+      i.color === color
+    );
     const currentQuantity = existingIdx > -1 ? cart.items[existingIdx].quantity : 0;
     const newQuantity = currentQuantity + quantity;
     
-    if (newQuantity > product.stock) {
+    if (newQuantity > availableStock) {
       return res.status(400).json({ 
         success: false, 
-        message: `Only ${product.stock} item(s) available in stock`,
-        availableStock: product.stock
+        message: variantInfo 
+          ? `Only ${availableStock} item(s) available for ${variantInfo}` 
+          : `Only ${availableStock} item(s) available in stock`,
+        availableStock
       });
     }
     
@@ -81,13 +111,39 @@ router.put('/update/:itemId', protect, async (req, res) => {
     const item = cart.items.id(req.params.itemId);
     if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
     
-    // Check product stock
+    // Check product stock based on variant
     const product = await Product.findById(item.product);
-    if (product && quantity > product.stock) {
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    
+    // Determine available stock based on variant or total product stock
+    let availableStock = product.stock || 0;
+    let variantInfo = '';
+    
+    if (item.size && Array.isArray(product.variants) && product.variants.length > 0) {
+      // Find matching variant by size and color
+      const variant = product.variants.find(v => 
+        v.size === item.size && 
+        (!item.color || !v.color?.name || v.color.name.toLowerCase() === item.color.toLowerCase())
+      );
+      
+      if (variant) {
+        availableStock = variant.stock || 0;
+        variantInfo = variant.color?.name ? `${variant.color.name} - ${variant.size}` : variant.size;
+      }
+    }
+    
+    // Ensure stock is never negative
+    availableStock = Math.max(0, availableStock);
+    
+    if (quantity > availableStock) {
       return res.status(400).json({ 
         success: false, 
-        message: `Only ${product.stock} item(s) available in stock`,
-        availableStock: product.stock
+        message: variantInfo 
+          ? `Only ${availableStock} item(s) available for ${variantInfo}` 
+          : `Only ${availableStock} item(s) available in stock`,
+        availableStock
       });
     }
     

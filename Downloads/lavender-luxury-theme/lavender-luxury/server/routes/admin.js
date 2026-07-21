@@ -238,10 +238,10 @@ router.get('/settings', protect, adminOnly, async (req, res) => {
 
 router.put('/settings', protect, adminOnly, async (req, res) => {
   try {
-    const { handlingCharge } = req.body;
+    const { handlingCharge, shippingCharges } = req.body;
     const settings = await StoreSettings.findOneAndUpdate(
       { key: 'global' },
-      { $set: { handlingCharge: Number(handlingCharge || 0), updatedBy: req.user._id } },
+      { $set: { handlingCharge: Number(handlingCharge || 0), shippingCharges: Number(shippingCharges || 99), updatedBy: req.user._id } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
     res.json({ success: true, settings });

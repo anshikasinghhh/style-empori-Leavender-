@@ -62,8 +62,8 @@ export default function ProductDetailPage() {
     return productVariants.find(v => v.size === selSize && v.color?.name === selColor) || null;
   }, [selColor, selSize, productVariants]);
 
-  const selectedStock = selectedVariant ? selectedVariant.stock : product?.stock;
-  const isOutOfStock = selectedStock === 0 || (product?.stock === 0 && !selectedVariant);
+  const selectedStock = Math.max(0, selectedVariant ? selectedVariant.stock : product?.stock);
+  const isOutOfStock = selectedStock === 0 || (Math.max(0, product?.stock) === 0 && !selectedVariant);
 
   const productCategory = (cat) => {
     if (!cat) return '';
@@ -114,10 +114,12 @@ export default function ProductDetailPage() {
     if (!token) { toast.error('Please login to add to cart'); return; }
     if (availableColors.length > 0 && !selColor) { toast.error('Please select a color'); return; }
     if (availableSizes.length > 0 && !selSize) { toast.error('Please select a size'); return; }
-    const variantStock = selectedStock;
-    if (variantStock !== undefined && variantStock !== null && qty > variantStock) {
+    const variantStock = Math.max(0, selectedStock);
+    if (qty > variantStock) {
       const variantInfo = selSize && selColor ? ` for ${selColor} - ${selSize}` : selSize ? ` for ${selSize}` : selColor ? ` for ${selColor}` : '';
-      toast.error(`Only ${variantStock} item(s) available${variantInfo}. Try changing size or color.`);
+      toast.error(variantStock === 0 
+        ? `No more items available${variantInfo}.` 
+        : `Only ${variantStock} item(s) available${variantInfo}. Try changing size or color.`);
       return;
     }
     dispatch(addToCart({
@@ -234,7 +236,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Sizes */}
-          {availableColors.length > 0 && (
+          {!isOutOfStock && availableColors.length > 0 && (
             <div>
               <p className="font-body font-semibold text-gray-800 mb-2.5">Select Color</p>
               <div className="flex flex-wrap gap-2">
@@ -258,7 +260,7 @@ export default function ProductDetailPage() {
               </div>
             </div>
           )}
-          {availableSizes.length > 0 && (
+          {!isOutOfStock && availableSizes.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-2.5">
                 <p className="font-body font-semibold text-gray-800">Select Size</p>
@@ -272,7 +274,7 @@ export default function ProductDetailPage() {
                   </button>
                 ))}
               </div>
-              {selSize && (
+              {selSize && !isOutOfStock && (
                 <p className="font-body text-xs text-gray-500 mt-2">
                   Stock for {selSize}{selColor ? ` (${selColor})` : ''}: {selectedStock ?? product.stock} units
                 </p>
@@ -284,7 +286,7 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-4">
             <p className="font-body font-semibold text-gray-800">Quantity</p>
             <div className="flex items-center gap-0 border-2 border-gray-100 rounded-xl overflow-hidden">
-              <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-10 h-10 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={14}/></button>
+              <button onClick={() => setQty(q => Math.max(1,q-1))} disabled={isOutOfStock} className={`w-10 h-10 flex items-center justify-center transition-colors ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-champagne-light/80 text-primary'}`}><Minus size={14}/></button>
               <span className="w-10 text-center font-body font-bold text-gray-900">{qty}</span>
               <button onClick={() => {
                 const maxStock = selectedStock ?? product.stock;
@@ -294,7 +296,7 @@ export default function ProductDetailPage() {
                   return;
                 }
                 setQty(q => q + 1);
-              }} className="w-10 h-10 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={14}/></button>
+              }} disabled={isOutOfStock} className={`w-10 h-10 flex items-center justify-center transition-colors ${isOutOfStock ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'hover:bg-champagne-light/80 text-primary'}`}><Plus size={14}/></button>
             </div>
           </div>
 

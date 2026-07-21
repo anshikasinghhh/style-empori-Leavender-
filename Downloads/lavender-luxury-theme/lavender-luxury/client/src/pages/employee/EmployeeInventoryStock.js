@@ -7,9 +7,10 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const getStatus = (stock) => {
-  if (stock === 0) return { label: 'Out of Stock', cls: 'bg-rose-soft text-rose border border-rose/20', bar: 'bg-rose' };
-  if (stock < 10) return { label: 'Low Stock', cls: 'bg-amber-100 text-amber-700 border border-amber-200', bar: 'bg-amber-400' };
-  if (stock < 25) return { label: 'Limited', cls: 'bg-yellow-100 text-yellow-700 border border-yellow-200', bar: 'bg-yellow-400' };
+  const safeStock = Math.max(0, stock);
+  if (safeStock === 0) return { label: 'Out of Stock', cls: 'bg-rose-soft text-rose border border-rose/20', bar: 'bg-rose' };
+  if (safeStock < 10) return { label: 'Low Stock', cls: 'bg-amber-100 text-amber-700 border border-amber-200', bar: 'bg-amber-400' };
+  if (safeStock < 25) return { label: 'Limited', cls: 'bg-yellow-100 text-yellow-700 border border-yellow-200', bar: 'bg-yellow-400' };
   return { label: 'In Stock', cls: 'bg-emerald-100 text-emerald-700 border border-emerald-200', bar: 'bg-emerald-500' };
 };
 
@@ -24,9 +25,10 @@ export default function EmployeeInventoryStock() {
     const match =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.category?.toLowerCase().includes(search.toLowerCase());
-    if (filter === 'low') return match && p.stock > 0 && p.stock < 10;
-    if (filter === 'out') return match && p.stock === 0;
-    if (filter === 'ok') return match && p.stock >= 25;
+    const safeStock = Math.max(0, p.stock);
+    if (filter === 'low') return match && safeStock > 0 && safeStock < 10;
+    if (filter === 'out') return match && safeStock === 0;
+    if (filter === 'ok') return match && safeStock >= 25;
     return match;
   });
 
@@ -56,9 +58,9 @@ export default function EmployeeInventoryStock() {
 
   const summaryStats = [
     { label: 'Total Products', value: products.length, color: 'from-primary to-gold-light', icon: Package },
-    { label: 'Low Stock', value: products.filter((p) => p.stock > 0 && p.stock < 10).length, color: 'from-amber-500 to-orange-400', icon: AlertTriangle },
-    { label: 'Out of Stock', value: products.filter((p) => p.stock === 0).length, color: 'from-rose to-pink-500', icon: TrendingDown },
-    { label: 'Available Units', value: products.reduce((s, p) => s + p.stock, 0), color: 'from-emerald-500 to-teal-400', icon: Package },
+    { label: 'Low Stock', value: products.filter((p) => Math.max(0, p.stock) > 0 && Math.max(0, p.stock) < 10).length, color: 'from-amber-500 to-orange-400', icon: AlertTriangle },
+    { label: 'Out of Stock', value: products.filter((p) => Math.max(0, p.stock) === 0).length, color: 'from-rose to-pink-500', icon: TrendingDown },
+    { label: 'Available Units', value: products.reduce((s, p) => s + Math.max(0, p.stock), 0), color: 'from-emerald-500 to-teal-400', icon: Package },
     { label: 'Total Sold', value: products.reduce((s, p) => s + (p.sold || 0), 0), color: 'from-blue-500 to-indigo-400', icon: Package },
   ];
 
@@ -83,7 +85,7 @@ export default function EmployeeInventoryStock() {
         ))}
       </div>
 
-      {products.filter((p) => p.stock > 0 && p.stock < 10).length > 0 && (
+      {products.filter((p) => Math.max(0, p.stock) > 0 && Math.max(0, p.stock) < 10).length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 flex items-start gap-3">
           <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
             <AlertTriangle size={16} className="text-amber-600" />
@@ -92,8 +94,8 @@ export default function EmployeeInventoryStock() {
             <p className="font-body font-bold text-amber-800 text-sm">Low Stock Alert</p>
             <p className="font-body text-amber-700 text-xs mt-0.5">
               {products
-                .filter((p) => p.stock > 0 && p.stock < 10)
-                .map((p) => `${p.name.split(' ').slice(0, 3).join(' ')} (${p.stock})`)
+                .filter((p) => Math.max(0, p.stock) > 0 && Math.max(0, p.stock) < 10)
+                .map((p) => `${p.name.split(' ').slice(0, 3).join(' ')} (${Math.max(0, p.stock)})`)
                 .join(' · ')}
             </p>
           </div>
@@ -146,8 +148,9 @@ export default function EmployeeInventoryStock() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map((p) => {
-                const st = getStatus(p.stock);
-                const pct = Math.min(100, (p.stock / Math.max(p.stock + p.sold, 1)) * 100);
+                const safeStock = Math.max(0, p.stock);
+                const st = getStatus(safeStock);
+                const pct = Math.min(100, (safeStock / Math.max(safeStock + p.sold, 1)) * 100);
                 return (
                   <tr key={p._id} className="hover:bg-champagne-light/80/20 transition-colors">
                     <td className="px-4 py-3">
@@ -162,7 +165,7 @@ export default function EmployeeInventoryStock() {
                       <span className="badge bg-champagne-light/80 text-primary text-[10px]">{p.category}</span>
                     </td>
                     <td className="px-4 py-3 font-bold text-gray-900">{formatPrice(p.price)}</td>
-                    <td className="px-4 py-3 font-bold text-gray-900 text-center">{p.stock}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900 text-center">{safeStock}</td>
                     <td className="px-4 py-3 text-gray-500 text-center">{p.sold}</td>
                     <td className="px-4 py-3">
                       <span className={`badge text-[10px] ${st.cls}`}>{st.label}</span>

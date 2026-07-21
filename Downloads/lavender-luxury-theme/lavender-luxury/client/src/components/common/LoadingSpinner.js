@@ -51,6 +51,14 @@ export function ProductCard({ product, index = 0 }) {
     e.preventDefault();
     if (!token) { toast.error('Please login to add to cart'); return; }
     
+    // Check stock - ensure it's never negative
+    const stock = Math.max(0, product.stock ?? 999);
+    
+    if (stock <= 0) {
+      toast.error('No more items available.', { icon: '🚫' });
+      return;
+    }
+    
     // If product has sizes, navigate to product detail to select size
     if (product.sizes && product.sizes.length > 0) {
       navigate(`/products/${product._id}`);
@@ -60,7 +68,6 @@ export function ProductCard({ product, index = 0 }) {
     
     // If no sizes, add directly with Free Size
     dispatch(addToCart({ productId: product._id, quantity: 1, size: 'Free Size' }));
-    const stock = product.stock ?? 999;
     if (stock <= 3 && stock > 0) {
       toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });
     } else if (stock <= 8) {
@@ -92,11 +99,24 @@ export function ProductCard({ product, index = 0 }) {
               {discount > 0 && <span className="badge bg-rose text-white text-[11px] shadow-sm">{discount}% OFF</span>}
               {product.badge && <span className={`badge text-[10px] shadow-sm ${badgeStyle}`}>{product.badge}</span>}
               {product.isFlashSale && <span className="badge bg-gold text-white text-[10px] shadow-sm flex items-center gap-1"><Zap size={9} fill="white"/>Flash</span>}
-              {product.stock <= 5 && product.stock > 0 && (
-                <span className="badge bg-amber-500 text-white text-[10px] shadow-sm flex items-center gap-1 animate-pulse">
-                  <AlertTriangle size={9}/>Only {product.stock} left!
-                </span>
-              )}
+              {(() => {
+                const stock = Math.max(0, product.stock ?? 999);
+                if (stock <= 0) {
+                  return (
+                    <span className="badge bg-rose text-white text-[10px] shadow-sm flex items-center gap-1">
+                      <AlertTriangle size={9}/>Out of Stock
+                    </span>
+                  );
+                }
+                if (stock <= 5) {
+                  return (
+                    <span className="badge bg-amber-500 text-white text-[10px] shadow-sm flex items-center gap-1 animate-pulse">
+                      <AlertTriangle size={9}/>Only {stock} left!
+                    </span>
+                  );
+                }
+                return null;
+              })()}
             </div>
 
             {/* Wishlist btn */}

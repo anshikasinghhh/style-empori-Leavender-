@@ -26,7 +26,9 @@ const mapOrder = (o) => ({
   status: o.orderStatus || 'placed',
   payment: o.paymentMethod || 'cod',
   date: o.createdAt,
-  items: o.items?.length || 0
+  items: o.items?.length || 0,
+  productCount: o.items?.length || 0,
+  totalQuantity: o.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
 });
 
 export default function AdminOrders() {
@@ -126,8 +128,8 @@ export default function AdminOrders() {
           <div className="p-8 text-center text-gray-500 font-body text-sm">No orders found</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm font-body min-w-[750px]">
-              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Amount', 'Payment', 'Status', 'Date', 'Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
+            <table className="w-full text-sm font-body min-w-[850px]">
+              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Products', 'Qty', 'Amount', 'Payment', 'Status', 'Date', 'Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(order => (
                   <tr key={order.id} className="hover:bg-champagne-light/80/20 transition-colors group">
@@ -139,6 +141,8 @@ export default function AdminOrders() {
                         <span className="text-gray-600 text-xs line-clamp-2 max-w-[120px]">{order.product}{order.items > 1 ? ` +${order.items - 1} more` : ''}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3 font-bold text-gray-900 text-center">{order.productCount}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900 text-center">{order.totalQuantity}</td>
                     <td className="px-4 py-3 font-bold text-gray-900">₹{order.amount.toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3"><span className="badge bg-gray-100 text-gray-600 text-[10px] capitalize">{order.payment}</span></td>
                     <td className="px-4 py-3">

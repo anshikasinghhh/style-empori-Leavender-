@@ -17,7 +17,7 @@ const Toggle = ({ value, onChange, label, desc }) => (
 );
 
 export default function AdminSettings() {
-  const [store, setStore] = useState({ name:'Lavender', email:'hello@lavender-styleemporio.in', phone:'+91 98765 43210', address:'Fashion District, Bandra, Mumbai 400050', currency:'INR', freeShippingThreshold:999, tagline:'The Style Emporio', metaDesc:'Premium ethnic & traditional fashion', handlingCharge:0 });
+  const [store, setStore] = useState({ name:'Lavender', email:'hello@lavender-styleemporio.in', phone:'+91 98765 43210', address:'Fashion District, Bandra, Mumbai 400050', currency:'INR', shippingCharges:99, tagline:'The Style Emporio', metaDesc:'Premium ethnic & traditional fashion', handlingCharge:0 });
   const [payments, setPayments] = useState({ codEnabled:true, razorpayEnabled:true, stripeEnabled:false });
   const [notifs, setNotifs] = useState({ newOrder:true, lowStock:true, customerReview:false, paymentFail:true, dailyReport:false, weeklyReport:true });
   const [brand, setBrand] = useState({ primaryColor:'#4A1068', accentColor:'#C9963C', goldColor:'#B45309' });
@@ -65,7 +65,7 @@ export default function AdminSettings() {
   const save = async (section) => {
     try {
       if (section === 'Store') {
-        await api.put('/admin/settings', { handlingCharge: store.handlingCharge });
+        await api.put('/admin/settings', { handlingCharge: store.handlingCharge, shippingCharges: store.shippingCharges });
       }
       toast.success(`${section} settings saved! ✓`);
     } catch (error) {
@@ -96,8 +96,8 @@ export default function AdminSettings() {
               <input value={store.tagline} onChange={e => setStore(s=>({...s,tagline:e.target.value}))} className="input-field text-sm"/>
             </div>
             <div>
-              <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Free Shipping Threshold (₹)</label>
-              <input type="number" value={store.freeShippingThreshold} onChange={e => setStore(s=>({...s,freeShippingThreshold:Number(e.target.value)}))} className="input-field text-sm"/>
+              <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Shipping Charges (₹)</label>
+              <input type="number" value={store.shippingCharges} onChange={e => setStore(s=>({...s,shippingCharges:Number(e.target.value)}))} className="input-field text-sm"/>
             </div>
             <div>
               <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Handling Charge (₹)</label>
@@ -158,10 +158,6 @@ export default function AdminSettings() {
               <label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">SEO Meta Description</label>
               <textarea value={store.metaDesc} onChange={e => setStore(s=>({...s,metaDesc:e.target.value}))} className="input-field text-sm h-20 resize-none" placeholder="SEO description..."/>
             </div>
-          </div>
-          <div className="flex gap-2 p-4 bg-champagne-light/80 rounded-xl mb-4">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background:`linear-gradient(135deg, ${brand.primaryColor}, ${brand.accentColor})` }}>VE</div>
-            <div><p className="font-body text-xs font-bold text-gray-800">Preview</p><p className="font-body text-[11px] text-gray-500">Brand gradient looks like this ↑</p></div>
           </div>
           <button onClick={() => save('Brand')} className="w-full btn-primary text-sm gap-2 py-3"><Save size={14}/>Save Brand Settings</button>
         </div>
