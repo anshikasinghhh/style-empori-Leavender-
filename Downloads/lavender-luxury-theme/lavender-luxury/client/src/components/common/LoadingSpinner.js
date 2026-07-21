@@ -59,14 +59,18 @@ export function ProductCard({ product, index = 0 }) {
       return;
     }
     
-    // If product has sizes, navigate to product detail to select size
-    if (product.sizes && product.sizes.length > 0) {
+    // If product requires a selection (sizes, colors, or explicit variants), redirect user
+    const requiresSelection = (Array.isArray(product.sizes) && product.sizes.length > 0)
+      || (Array.isArray(product.colors) && product.colors.length > 0)
+      || (Array.isArray(product.variants) && product.variants.length > 0);
+
+    if (requiresSelection) {
       navigate(`/products/${product._id}`);
-      toast('Please select a size before adding to cart', { icon: '📏', duration: 2000 });
+      toast('Please select size and/or color on the product page before adding to cart', { icon: '📏', duration: 2500 });
       return;
     }
-    
-    // If no sizes, add directly with Free Size
+
+    // If no selection is required, add directly with Free Size
     dispatch(addToCart({ productId: product._id, quantity: 1, size: 'Free Size' }));
     if (stock <= 3 && stock > 0) {
       toast(`⚠️ Only ${stock} left in stock! Checkout soon to secure your item.`, { icon: '🔥', duration: 4000 });

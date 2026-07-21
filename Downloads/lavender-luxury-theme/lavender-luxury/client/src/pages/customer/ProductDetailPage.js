@@ -125,8 +125,8 @@ export default function ProductDetailPage() {
     dispatch(addToCart({
       productId: product._id,
       quantity: qty,
-      size: selSize || 'Free Size',
-      color: selColor || undefined
+      size: selSize ? String(selSize).trim() : 'Free Size',
+      color: selColor ? String(selColor).trim() : undefined
     }))
       .unwrap()
       .then(() => {
