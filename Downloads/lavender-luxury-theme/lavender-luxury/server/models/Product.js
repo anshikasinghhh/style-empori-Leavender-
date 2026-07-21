@@ -69,11 +69,10 @@ productSchema.pre('save', function(next) {
   if (this.originalPrice && this.price) {
     this.discountPercent = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
   }
-  // Always aggregate total stock from variants when present
-  if (Array.isArray(this.variants) && this.variants.length > 0) {
+  // Always aggregate total stock from variants when present, and fall back to 0 when variants are empty
+  if (Array.isArray(this.variants)) {
     this.stock = this.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
-  } else if (!this.isModified('stock') && this.stock === undefined) {
-    // If no variants and stock not explicitly set, default to 0
+  } else if (this.stock === undefined) {
     this.stock = 0;
   }
   next();

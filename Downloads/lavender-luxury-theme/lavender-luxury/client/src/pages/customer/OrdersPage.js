@@ -81,6 +81,11 @@ export default function OrdersPage() {
                 </div>
                 <p className="font-body text-gray-600 text-sm truncate">{order.items[0]?.name}</p>
                 <p className="font-body text-gray-400 text-xs mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}</p>
+                <div className="flex items-center gap-3 mt-2">
+                  <p className="font-body text-xs text-gray-500">{order.items?.length || 0} product{order.items?.length !== 1 ? 's' : ''}</p>
+                  <p className="font-body text-xs text-gray-500">•</p>
+                  <p className="font-body text-xs text-gray-500">{order.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0} items</p>
+                </div>
               </div>
               <div className="flex items-center justify-between w-full sm:w-auto sm:text-right shrink-0">
                 <p className="font-display font-bold text-primary">{formatPrice(order.total)}</p>

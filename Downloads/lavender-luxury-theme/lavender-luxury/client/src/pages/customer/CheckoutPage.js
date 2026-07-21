@@ -27,10 +27,27 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponMessage, setCouponMessage] = useState('');
   const [handlingCharge, setHandlingCharge] = useState(0);
+  const [storeSettings, setStoreSettings] = useState({ shippingCharges: 99 });
   const { items } = useSelector(s => s.cart);
   const { user, token } = useSelector(s => s.auth);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
+  // Fetch store settings for shipping charges
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/admin/settings');
+        if (res.data.settings) {
+          setStoreSettings(res.data.settings);
+          setHandlingCharge(res.data.settings.handlingCharge || 0);
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const enriched = items.map(item => ({
     ...item,
@@ -38,7 +55,7 @@ export default function CheckoutPage() {
   }));
 
   const subtotal = enriched.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
-  const shipping = subtotal > 999 ? 0 : 99;
+  const shipping = storeSettings.shippingCharges || 99;
   const tax = Math.round(subtotal * 0.05);
   const giftWrapCost = giftWrap ? GIFT_WRAP_COST : 0;
   const donationAmount =

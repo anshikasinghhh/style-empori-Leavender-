@@ -56,7 +56,67 @@ const SIZE_OPTIONS = [
 //   }
 // };
 
-const EMPTY = { name:'', productCode:'', mrp:'', price:'', originalPrice:'', category:'', description:'', stock:0, material:'', sizes:[], colors:[], variants:[], isFeatured:false, isNewArrival:false, isBestSeller:false, isFlashSale:false, isFestival:false, images:[], couponCode:'' };
+const createEmptyForm = () => ({
+  name:'',
+  productCode:'',
+  mrp:'',
+  price:'',
+  originalPrice:'',
+  category:'',
+  description:'',
+  stock:0,
+  material:'',
+  sizes:[],
+  colors:[],
+  variants:[],
+  isFeatured:false,
+  isNewArrival:false,
+  isBestSeller:false,
+  isFlashSale:false,
+  isFestival:false,
+  images:[],
+  couponCode:''
+});
+
+const getCalculatedStock = (formData = {}) => {
+  const variants = Array.isArray(formData.variants) ? formData.variants : [];
+  if (variants.length > 0) {
+    return variants.reduce((sum, variant) => sum + (Number(variant?.stock) || 0), 0);
+  }
+  return Number(formData.stock) || 0;
+};
+
+const normalizeFormState = (data = {}) => {
+  const base = createEmptyForm();
+  const variants = Array.isArray(data.variants)
+    ? data.variants.map(variant => ({
+        ...variant,
+        color: variant?.color ? { ...variant.color } : undefined,
+        stock: Number(variant?.stock) || 0
+      }))
+    : [];
+  const images = Array.isArray(data.images)
+    ? data.images.map(image => ({ ...(image || {}) }))
+    : [];
+  const normalizedStock = variants.length > 0
+    ? variants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0)
+    : 0;
+
+  return {
+    ...base,
+    ...data,
+    mrp: String(data.mrp ?? ''),
+    price: String(data.price ?? ''),
+    originalPrice: String(data.originalPrice ?? ''),
+    category: typeof data.category === 'object' && data.category !== null ? (data.category.name || '') : (data.category || ''),
+    sizes: Array.isArray(data.sizes) ? data.sizes.map(size => ({ ...size })) : [],
+    colors: Array.isArray(data.colors) ? data.colors.map(color => ({ ...color })) : [],
+    images,
+    variants,
+    couponCode: data.couponCode || '',
+    stock: normalizedStock
+  };
+};
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
@@ -84,7 +144,7 @@ export default function AdminProducts({ Layout = AdminLayout }) {
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(createEmptyForm());
   const [variantCustomSize, setVariantCustomSize] = useState("");
   const [variantCustomColorName, setVariantCustomColorName] = useState("");
   const [variantCustomColorHex, setVariantCustomColorHex] = useState("#2D0845");
@@ -176,7 +236,7 @@ console.log("Products:", products);
 console.log("Filtered:", filtered);
   // console.log("Current Products State:", products);
   const openAdd = () => {
-    setForm(EMPTY);
+    setForm(createEmptyForm());
     setEditId(null);
     setCouponMode('none');
     setCustomCoupon(EMPTY_CUSTOM_COUPON);
@@ -214,19 +274,20 @@ console.log("Filtered:", filtered);
   const openEdit = (p) => {
     // Normalize product shape before editing to avoid runtime errors
     console.log('Opening edit for product:', p);
-    setForm({
+    const normalized = normalizeFormState({
       ...p,
-      mrp: String(p.mrp || ''),
-      price: String(p.price || ''),
-      originalPrice: String(p.originalPrice || ''),
+      mrp: p.mrp,
+      price: p.price,
+      originalPrice: p.originalPrice,
       stock: Number(p.stock || 0),
-      category: typeof p.category === 'object' && p.category !== null ? (p.category.name || '') : (p.category || ''),
       sizes: Array.isArray(p.sizes) ? p.sizes : [],
       colors: Array.isArray(p.colors) ? p.colors : [],
       images: Array.isArray(p.images) && p.images.length ? p.images : [],
       variants: Array.isArray(p.variants) ? p.variants : [],
       couponCode: p.couponCode || ''
     });
+
+    setForm(normalized);
     setEditingVariantIndex(null);
     resetVariantForm();
     setEditId(p._id);
@@ -251,6 +312,8 @@ useEffect(() => {
     loadProducts();
     loadAvailableCoupons();
   }, []);
+
+  const totalStock = getCalculatedStock(form);
 
   // const handleSave = () => {
   //   if (!form.name || !form.price) { toast.error('Name and price are required'); return; }
@@ -288,10 +351,10 @@ useEffect(() => {
       return;
     }
 
-    // Calculate total stock from variants, otherwise use form stock
-    const calculatedStock = form.variants.length > 0
+    // Calculate total stock from current variant state only
+    const calculatedStock = Array.isArray(form.variants)
       ? form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)
-      : Number(form.stock) || 0;
+      : 0;
     
     // Client-side duplicate productCode check (exclude current edit)
     if (form.productCode) {
@@ -443,8 +506,8 @@ const deleteProduct = async (id) => {
                   <td className="px-4 py-3"><p className="font-bold text-gray-900">{formatPrice(p.price)}</p>{p.originalPrice && <p className="text-xs text-gray-400 line-through">{formatPrice(p.originalPrice)}</p>}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1">
-                      <span className={`badge text-xs font-bold ${p.stock === 0 ? 'bg-gray-100 text-gray-600' : p.stock < 10 ? 'bg-rose-soft text-rose' : p.stock < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                        {p.stock} available
+                      <span className={`badge text-xs font-bold ${Math.max(0, p.stock) === 0 ? 'bg-gray-100 text-gray-600' : Math.max(0, p.stock) < 10 ? 'bg-rose-soft text-rose' : Math.max(0, p.stock) < 25 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        {Math.max(0, p.stock)} available
                       </span>
                       <span className="text-[10px] text-gray-400">{p.sold || 0} sold</span>
                     </div>
@@ -516,7 +579,7 @@ const deleteProduct = async (id) => {
                       {CATEGORIES.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
-                  <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units (Auto-calculated from Variants)</label><input type="number" value={form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)} readOnly className="input-field text-sm bg-gray-50 cursor-not-allowed font-bold text-primary" placeholder="0"/><p className="text-[10px] text-gray-400 mt-1">⚠️ Add variants above to set stock. Total = Sum of all variant quantities</p></div>
+                  <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Stock Units (Auto-calculated from Variants)</label><input type="number" value={Math.max(0, totalStock)} readOnly className="input-field text-sm bg-gray-50 cursor-not-allowed font-bold text-primary" placeholder="0"/><p className="text-[10px] text-gray-400 mt-1">⚠️ Add variants above to set stock. Total = Sum of all variant quantities (shows 0 when sold out)</p></div>
 
                   {/* Variants builder */}
                   <div className="col-span-2 mt-4 border-l-4 border-primary/30 pl-4 py-3 bg-champagne-light/20 rounded-r-lg">
@@ -611,7 +674,7 @@ const deleteProduct = async (id) => {
                                 color: colorObj,
                                 stock: Number(variantStock || 0)
                               };
-                              return { ...f, variants: updated };
+                              return normalizeFormState({ ...f, variants: updated });
                             });
 
                             toast.success(`✓ Updated variant: ${finalSize} / ${finalColorName}`);
@@ -638,7 +701,7 @@ const deleteProduct = async (id) => {
                             return;
                           }
 
-                          setForm(f=>({
+                          setForm(f=>normalizeFormState({
                             ...f,
                             variants:[
                               ...f.variants,
@@ -662,7 +725,7 @@ const deleteProduct = async (id) => {
                         <div className="flex justify-between items-center mb-3">
                           <p className="font-body text-[11px] font-bold text-gray-600 uppercase tracking-wide">📦 Product Variants:</p>
                           <div className="px-3 py-1 bg-primary/10 border border-primary/30 rounded-lg">
-                            <p className="font-body text-[11px] font-bold text-primary">Total Stock: <span className="text-lg">{form.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0)}</span> units</p>
+                            <p className="font-body text-[11px] font-bold text-primary">Total Stock: <span className="text-lg">{totalStock}</span> units</p>
                           </div>
                         </div>
                         <p className="text-[10px] text-gray-500 mb-2">💡 Click any variant row to edit its details</p>
@@ -696,7 +759,10 @@ const deleteProduct = async (id) => {
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        setForm(f=>({...f, variants: f.variants.filter((_,idx)=>idx!==i)}));
+                                        setForm(f=>normalizeFormState({
+                                          ...f,
+                                          variants: f.variants.filter((_,idx)=>idx!==i)
+                                        }));
                                         if(editingVariantIndex === i) resetVariantForm();
                                         toast.success('Variant removed');
                                       }}

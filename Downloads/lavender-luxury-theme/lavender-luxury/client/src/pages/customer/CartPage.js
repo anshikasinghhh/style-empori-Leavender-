@@ -9,13 +9,35 @@ import { formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
-// Stock urgency helper
-const getStockUrgency = (product) => {
-  const stock = product?.stock ?? 999;
+// Stock urgency helper - checks variant stock if size/color are present
+const getStockUrgency = (item) => {
+  const product = item.product;
+  const size = item.size;
+  const color = item.color;
+  
+  let stock = product?.stock ?? 999;
+  let variantInfo = '';
+  
+  // Check variant stock if size and variants exist
+  if (size && Array.isArray(product?.variants) && product.variants.length > 0) {
+    const variant = product.variants.find(v => 
+      v.size === size && 
+      (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+    );
+    
+    if (variant) {
+      stock = variant.stock || 0;
+      variantInfo = variant.color?.name ? `${variant.color.name} - ${variant.size}` : variant.size;
+    }
+  }
+  
+  // Ensure stock is never negative for display
+  stock = Math.max(0, stock);
+  
   const sold = product?.sold ?? 0;
-  if (stock <= 0) return { level: 'out', label: 'Out of Stock', message: 'This item is no longer available', icon: AlertTriangle, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
-  if (stock <= 3) return { level: 'critical', label: `Only ${stock} left!`, message: 'Hurry! Almost gone — checkout now before it sells out', icon: Flame, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
-  if (stock <= 8) return { level: 'low', label: `Only ${stock} left`, message: 'Stock is running low — this item is in high demand', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', badge: 'bg-amber-500 text-white' };
+  if (stock <= 0) return { level: 'out', label: 'Out of Stock', message: variantInfo ? `This item (${variantInfo}) is no longer available` : 'This item is no longer available', icon: AlertTriangle, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
+  if (stock <= 3) return { level: 'critical', label: `Only ${stock} left!`, message: variantInfo ? `Hurry! Only ${stock} left for ${variantInfo} — checkout now` : 'Hurry! Almost gone — checkout now before it sells out', icon: Flame, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
+  if (stock <= 8) return { level: 'low', label: `Only ${stock} left`, message: variantInfo ? `Stock is running low for ${variantInfo} — this item is in high demand` : 'Stock is running low — this item is in high demand', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', badge: 'bg-amber-500 text-white' };
   if (sold > 100) return { level: 'popular', label: 'Selling fast!', message: `${sold}+ people already bought this — popular pick`, icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-500 text-white' };
   return null;
 };
@@ -25,6 +47,7 @@ export default function CartPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState([]);
+  const [storeSettings, setStoreSettings] = useState({ shippingCharges: 99 });
 
   // Fetch all products from backend for recommendations
   useEffect(() => {
@@ -37,6 +60,21 @@ export default function CartPage() {
     fetchProducts();
   }, []);
 
+  // Fetch store settings for shipping charges
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/admin/settings');
+        if (res.data.settings) {
+          setStoreSettings(res.data.settings);
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const enriched = items.map(item => ({
     ...item,
     product: item.product && typeof item.product === 'object'
@@ -45,18 +83,52 @@ export default function CartPage() {
   }));
 
   // Check if any items are out of stock
-  const hasOutOfStockItems = enriched.some(item => (item.product?.stock ?? 999) <= 0);
+  const hasOutOfStockItems = enriched.some(item => {
+    const size = item.size;
+    const color = item.color;
+    let stock = item.product?.stock ?? 999;
+    
+    // Check variant stock if size and variants exist
+    if (size && Array.isArray(item.product?.variants) && item.product.variants.length > 0) {
+      const variant = item.product.variants.find(v => 
+        v.size === size && 
+        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+      );
+      if (variant) stock = variant.stock || 0;
+    }
+    
+    // Ensure stock is never negative
+    stock = Math.max(0, stock);
+    
+    return stock <= 0;
+  });
 
   const subtotal = enriched.reduce((s, i) => {
-    const itemPrice = (i.product?.stock ?? 999) <= 0 ? 0 : (i.product?.price || 0);
+    const size = i.size;
+    const color = i.color;
+    let stock = i.product?.stock ?? 999;
+    
+    // Check variant stock if size and variants exist
+    if (size && Array.isArray(i.product?.variants) && i.product.variants.length > 0) {
+      const variant = i.product.variants.find(v => 
+        v.size === size && 
+        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+      );
+      if (variant) stock = variant.stock || 0;
+    }
+    
+    // Ensure stock is never negative
+    stock = Math.max(0, stock);
+    
+    const itemPrice = stock <= 0 ? 0 : (i.product?.price || 0);
     return s + itemPrice * i.quantity;
   }, 0);
-  const shipping = 99;
+  const shipping = storeSettings.shippingCharges || 99;
   const total = subtotal + shipping;
 
   // Find items with stock urgency
   const urgencyItems = enriched
-    .map(item => ({ ...item, urgency: getStockUrgency(item.product) }))
+    .map(item => ({ ...item, urgency: getStockUrgency(item) }))
     .filter(item => item.urgency && item.urgency.level !== 'popular');
   const hasUrgency = urgencyItems.length > 0;
 
@@ -194,14 +266,17 @@ export default function CartPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-body text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">{item.product?.category?.name}</p>
                     <Link to={`/products/${item.product?._id}`}><h3 className="font-display font-semibold text-gray-900 text-sm mb-1 line-clamp-2 hover:text-primary transition-colors">{item.product?.name}</h3></Link>
-                    {item.size && <p className="font-body text-xs text-gray-400 mb-2">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
+                    <div className="flex items-center gap-3 mb-2">
+                      {item.size && <p className="font-body text-xs text-gray-400">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
+                      {item.color && <p className="font-body text-xs text-gray-400">Color: <span className="font-semibold text-gray-600">{item.color}</span></p>}
+                    </div>
                     {urgency && (
                       <div className={`flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg border ${urgency.bg}`}>
                         <urgency.icon size={12} className={urgency.color} />
                         <span className={`font-body text-[11px] font-semibold ${urgency.color}`}>{urgency.message}</span>
                       </div>
                     )}
-                    <p className="font-display font-bold text-primary mb-3">{(item.product?.stock ?? 999) <= 0 ? formatPrice(0) : formatPrice(item.product?.price)}</p>
+                    <p className="font-display font-bold text-primary mb-3">{formatPrice((item.product?.price || 0) * item.quantity)}</p>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center border border-gray-100 rounded-xl overflow-hidden">
                         <button onClick={() => {
@@ -224,7 +299,25 @@ export default function CartPage() {
                   </div>
                 </div>
                 <div className="flex sm:block items-center justify-between sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0">
-                  <p className="font-display font-bold text-gray-900">{(item.product?.stock ?? 999) <= 0 ? formatPrice(0) : formatPrice((item.product?.price || 0) * item.quantity)}</p>
+                  {(() => {
+                    const size = item.size;
+                    const color = item.color;
+                    let stock = item.product?.stock ?? 999;
+                    
+                    // Check variant stock if size and variants exist
+                    if (size && Array.isArray(item.product?.variants) && item.product.variants.length > 0) {
+                      const variant = item.product.variants.find(v => 
+                        v.size === size && 
+                        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+                      );
+                      if (variant) stock = variant.stock || 0;
+                    }
+                    
+                    // Ensure stock is never negative
+                    stock = Math.max(0, stock);
+                    
+                    return stock <= 0 ? formatPrice(0) : formatPrice((item.product?.price || 0) * item.quantity);
+                  })()}
                   {urgency && urgency.level === 'popular' && (
                     <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold font-body">
                       <Flame size={10}/> {urgency.label}
