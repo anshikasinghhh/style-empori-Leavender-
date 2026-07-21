@@ -38,19 +38,42 @@ router.post('/', protect, async (req, res) => {
     const lowStockProducts = [];
 
     for (const item of items) {
-      if (item.product) {
-        const updated = await Product.findByIdAndUpdate(
-          item.product,
-          { $inc: { stock: -item.quantity, sold: item.quantity } },
-          { new: true }
-        );
-        // Check if stock is low
-        if (updated && updated.stock <= 5 && updated.stock > 0) {
-          lowStockProducts.push({ name: updated.name, stock: updated.stock });
+      if (!item.product) continue;
+      const product = await Product.findById(item.product);
+      if (!product) continue;
+
+      const normSize = item.size ? String(item.size).trim() : '';
+      const normColor = item.color ? String(item.color).trim().toLowerCase() : '';
+
+      // If product has variants and item refers to a variant, decrement that variant's stock
+      if (Array.isArray(product.variants) && product.variants.length > 0 && normSize) {
+        const idx = product.variants.findIndex(v => String(v.size).trim() === normSize && (!normColor || !v.color?.name || String(v.color.name).trim().toLowerCase() === normColor));
+        if (idx > -1) {
+          product.variants[idx].stock = Math.max(0, (Number(product.variants[idx].stock) || 0) - Number(item.quantity || 0));
+          product.sold = (Number(product.sold) || 0) + Number(item.quantity || 0);
+          // Recalculate aggregate stock
+          product.stock = product.variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+          await product.save();
+
+          // Variant-level low stock notification
+          const vstock = product.variants[idx].stock;
+          if (vstock <= 5 && vstock > 0) lowStockProducts.push({ name: `${product.name} (${product.variants[idx].size}${product.variants[idx].color?.name ? ' - ' + product.variants[idx].color.name : ''})`, stock: vstock });
+          if (vstock <= 0) lowStockProducts.push({ name: `${product.name} (${product.variants[idx].size}${product.variants[idx].color?.name ? ' - ' + product.variants[idx].color.name : ''})`, stock: 0 });
+          continue;
         }
-        if (updated && updated.stock <= 0) {
-          lowStockProducts.push({ name: updated.name, stock: 0 });
-        }
+      }
+
+      // Fallback: decrement root stock when no matching variant
+      const updated = await Product.findByIdAndUpdate(
+        item.product,
+        { $inc: { stock: -item.quantity, sold: item.quantity } },
+        { new: true }
+      );
+      if (updated && updated.stock <= 5 && updated.stock > 0) {
+        lowStockProducts.push({ name: updated.name, stock: updated.stock });
+      }
+      if (updated && updated.stock <= 0) {
+        lowStockProducts.push({ name: updated.name, stock: 0 });
       }
     }
 

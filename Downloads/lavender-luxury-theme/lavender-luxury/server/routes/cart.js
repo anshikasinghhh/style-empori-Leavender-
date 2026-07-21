@@ -33,22 +33,53 @@ router.get('/', protect, async (req, res) => {
 router.post('/add', protect, async (req, res) => {
   try {
     const { productId, quantity = 1, size, color } = req.body;
+    const normSize = size ? String(size).trim() : '';
+    const normColor = color ? String(color).trim() : '';
     
-    // Check product exists
+    // Check product exists and is active
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    if (product.isActive === false) {
+      return res.status(400).json({ success: false, message: 'This product is not available' });
+    }
+
+    // If product has explicit variants, require matching size/color variant
+    const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+    const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+    const hasColors = Array.isArray(product.colors) && product.colors.length > 0;
+
+    if (hasVariants && !normSize) {
+      // For products modeled with variants, we require a size (or variant identifier)
+      return res.status(400).json({ success: false, message: 'Please select a valid size for this product' });
+    }
+
+    if (normSize && hasSizes) {
+      // If the product declares a sizes list, ensure the requested size exists
+      const sizeExists = product.sizes.some(s => String(s.size).trim() === normSize);
+      if (!sizeExists && !hasVariants) {
+        return res.status(400).json({ success: false, message: 'Selected size is not available for this product' });
+      }
+    }
+
+    if (normColor && hasColors) {
+      // If product declares colors list, ensure the requested color exists
+      const colorExists = product.colors.some(c => String(c.name).trim().toLowerCase() === normColor.toLowerCase());
+      if (!colorExists && !hasVariants) {
+        return res.status(400).json({ success: false, message: 'Selected color is not available for this product' });
+      }
     }
     
     // Determine available stock based on variant or total product stock
     let availableStock = product.stock || 0;
     let variantInfo = '';
     
-    if (size && Array.isArray(product.variants) && product.variants.length > 0) {
-      // Find matching variant by size and color
+    if (normSize && Array.isArray(product.variants) && product.variants.length > 0) {
+      // Find matching variant by size and color (case-insensitive)
       const variant = product.variants.find(v => 
-        v.size === size && 
-        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+        String(v.size).trim() === normSize && 
+        (!normColor || !v.color?.name || String(v.color.name).trim().toLowerCase() === normColor.toLowerCase())
       );
       
       if (variant) {
@@ -73,8 +104,8 @@ router.post('/add', protect, async (req, res) => {
     // Find existing item by productId + size + color
     const existingIdx = cart.items.findIndex(i => 
       i.product && i.product.toString() === productId && 
-      i.size === size && 
-      i.color === color
+      String(i.size || '').trim() === normSize && 
+      String(i.color || '').trim().toLowerCase() === normColor.toLowerCase()
     );
     const currentQuantity = existingIdx > -1 ? cart.items[existingIdx].quantity : 0;
     const newQuantity = currentQuantity + quantity;
@@ -92,7 +123,7 @@ router.post('/add', protect, async (req, res) => {
     if (existingIdx > -1) {
       cart.items[existingIdx].quantity = newQuantity;
     } else {
-      cart.items.push({ product: productId, quantity, size, color });
+      cart.items.push({ product: productId, quantity, size: normSize || undefined, color: normColor || undefined });
     }
     await cart.save();
     
