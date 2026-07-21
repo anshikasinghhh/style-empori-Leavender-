@@ -25,6 +25,26 @@ router.post('/', protect, async (req, res) => {
     const donation = Math.max(0, Number(donationAmount) || 0);
     const total = subtotal - (couponDiscount || 0) + shippingCost + handlingCharge + tax + giftWrapCost + donation;
 
+    // Validate stock availability for each item before creating order
+    for (const item of items) {
+      if (!item.product) continue;
+      const product = await Product.findById(item.product);
+      if (!product) return res.status(404).json({ success: false, message: 'Product not found: ' + item.product });
+
+      const normSize = item.size ? String(item.size).trim() : '';
+      const normColor = item.color ? String(item.color).trim().toLowerCase() : '';
+
+      let availableStock = product.stock || 0;
+      if (normSize && Array.isArray(product.variants) && product.variants.length > 0) {
+        const variant = product.variants.find(v => String(v.size).trim() === normSize && (!normColor || !v.color?.name || String(v.color.name).trim().toLowerCase() === normColor));
+        if (variant) availableStock = Number(variant.stock) || 0;
+      }
+      availableStock = Math.max(0, availableStock);
+      if ((Number(item.quantity) || 0) > availableStock) {
+        return res.status(400).json({ success: false, message: `Insufficient stock for ${product.name}${normSize ? ' (' + normSize + (normColor ? ' - ' + item.color : '') + ')' : ''}. Available: ${availableStock}` });
+      }
+    }
+
     const order = await Order.create({
       user: req.user._id, items, shippingAddress, paymentMethod,
       couponCode, couponDiscount: couponDiscount || 0,
