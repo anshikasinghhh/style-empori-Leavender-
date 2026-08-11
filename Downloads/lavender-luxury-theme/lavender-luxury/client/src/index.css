@@ -13,6 +13,16 @@
     -moz-osx-font-smoothing: grayscale;
   }
   h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+  img, picture, svg, video {
+    max-width: 100%;
+    height: auto;
+  }
+  input, textarea, select, button {
+    font: inherit;
+  }
+  body {
+    min-height: 100vh;
+  }
 }
 
 @layer components {

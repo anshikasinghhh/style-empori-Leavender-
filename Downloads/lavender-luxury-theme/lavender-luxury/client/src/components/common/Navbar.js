@@ -183,10 +183,10 @@ export default function Navbar() {
       <AnimatePresence>
         {searchOpen && (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start justify-center pt-28 px-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-start justify-center pt-24 px-3 sm:px-4"
             onClick={e => e.target === e.currentTarget && setSearchOpen(false)}>
             <motion.div initial={{ y:-20, opacity:0 }} animate={{ y:0, opacity:1 }} exit={{ y:-20, opacity:0 }}
-              className="w-full max-w-2xl bg-white rounded-2xl shadow-premium p-4">
+              className="w-full max-w-[95vw] sm:max-w-2xl bg-white rounded-2xl shadow-premium p-4">
               <form onSubmit={handleSearch} className="flex gap-3">
                 <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search sarees, kurtis, co-ord sets, bags..." className="flex-1 input-field" autoFocus />

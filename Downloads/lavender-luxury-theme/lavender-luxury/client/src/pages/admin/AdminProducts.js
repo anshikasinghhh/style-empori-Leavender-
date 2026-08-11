@@ -486,7 +486,7 @@ const deleteProduct = async (id) => {
           <span className="font-body text-sm text-gray-400 ml-auto">{filtered.length} results</span>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm font-body min-w-[700px]">
+          <table className="w-full text-sm font-body min-w-full sm:min-w-[700px]">
             <thead className="bg-gray-50/80">
               <tr>{['Product','Category','MRP' ,'Price','Stock','Coupon','Tags','Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
             </thead>
@@ -552,7 +552,7 @@ const deleteProduct = async (id) => {
                 <button onClick={() => setModal(false)} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"><X size={18}/></button>
               </div>
               <div className="p-6 space-y-4 max-h-[65vh] overflow-y-auto">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="col-span-2"><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Name *</label><input value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} className="input-field text-sm" placeholder="e.g. Royal Kanjivaram Silk Saree"/></div>
                   <div><label className="font-body text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 block">Product Code *</label><input value={form.productCode} onChange={e => setForm(f=>({...f,productCode:e.target.value}))} className="input-field text-sm" placeholder="e.g. KS-001"/></div>
                   <div>
