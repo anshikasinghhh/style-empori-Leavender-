@@ -31,10 +31,10 @@ const fetchProducts = async () => {
 };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 mt-20 lg:mt-24 mb-8 h-[340px] sm:h-[420px] md:h-[560px] lg:h-[600px] shadow-premium">
+    <div className="relative overflow-hidden rounded-3xl mx-3 sm:mx-6 mt-20 lg:mt-24 mb-8 w-full max-w-full h-[340px] sm:h-[420px] md:h-[560px] lg:h-[600px] shadow-premium">
       <AnimatePresence mode="wait">
         <motion.div key={b.id} initial={{ opacity:0, scale:1.04 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0 }} transition={{ duration:0.75 }} className="absolute inset-0">
-          <img src={b.image} alt={b.title} className="w-full h-full object-cover object-top"/>
+          <img src={b.image} alt={b.title} className="absolute inset-0 w-full h-full min-w-full min-h-full object-cover object-center"/>
           <div className={`absolute inset-0 bg-gradient-to-r ${b.gradient}`}/>
           <div className="absolute inset-0 flex items-center px-4 sm:px-8 md:px-16 lg:px-24">
             <motion.div initial={{ x:-40, opacity:0 }} animate={{ x:0, opacity:1 }} transition={{ delay:0.25, duration:0.6 }} className="max-w-xl">
