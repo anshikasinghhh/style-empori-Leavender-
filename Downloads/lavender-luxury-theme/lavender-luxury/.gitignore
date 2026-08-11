@@ -7,3 +7,7 @@ server/.env
 .env.example
 .DS_Store
 *.log
+
+# Environment files
+client/.env
+server/.env
