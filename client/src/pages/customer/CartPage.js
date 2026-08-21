@@ -1,0 +1,448 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Sparkles, Star, AlertTriangle, Flame, Clock } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { updateCartItem, removeFromCart, addToCart } from '../../slices/cartSlice';
+import { EmptyState } from '../../components/common/LoadingSpinner';
+import { formatPrice, getDiscount } from '../../utils/data';
+import toast from 'react-hot-toast';
+import api from '../../utils/api';
+
+// Stock urgency helper - checks variant stock if size/color are present
+const getStockUrgency = (item) => {
+  const product = item.product;
+  const size = item.size;
+  const color = item.color;
+  
+  let stock = product?.stock ?? 999;
+  let variantInfo = '';
+  
+  // Check variant stock if size and variants exist
+  if (size && Array.isArray(product?.variants) && product.variants.length > 0) {
+    const variant = product.variants.find(v => 
+      v.size === size && 
+      (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+    );
+    
+    if (variant) {
+      stock = variant.stock || 0;
+      variantInfo = variant.color?.name ? `${variant.color.name} - ${variant.size}` : variant.size;
+    }
+  }
+  
+  // Ensure stock is never negative for display
+  stock = Math.max(0, stock);
+  
+  const sold = product?.sold ?? 0;
+  if (stock <= 0) return { level: 'out', label: 'Out of Stock', message: variantInfo ? `This item (${variantInfo}) is no longer available` : 'This item is no longer available', icon: AlertTriangle, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
+  if (stock <= 3) return { level: 'critical', label: `Only ${stock} left!`, message: variantInfo ? `Hurry! Only ${stock} left for ${variantInfo} — checkout now` : 'Hurry! Almost gone — checkout now before it sells out', icon: Flame, color: 'text-rose', bg: 'bg-rose-50 border-rose-200', badge: 'bg-rose text-white' };
+  if (stock <= 8) return { level: 'low', label: `Only ${stock} left`, message: variantInfo ? `Stock is running low for ${variantInfo} — this item is in high demand` : 'Stock is running low — this item is in high demand', icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200', badge: 'bg-amber-500 text-white' };
+  if (sold > 100) return { level: 'popular', label: 'Selling fast!', message: `${sold}+ people already bought this — popular pick`, icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200', badge: 'bg-orange-500 text-white' };
+  return null;
+};
+
+export default function CartPage() {
+  const { items, loading, error } = useSelector(s => s.cart);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [allProducts, setAllProducts] = useState([]);
+  const [storeSettings, setStoreSettings] = useState({ shippingCharges: 99 });
+
+  // Fetch all products from backend for recommendations
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get('/products', { params: { limit: 100 } });
+        if (res.data.success) setAllProducts(res.data.products || []);
+      } catch (err) { console.error('Failed to fetch products for recommendations', err); }
+    };
+    fetchProducts();
+  }, []);
+
+  // Fetch store settings for shipping charges
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/admin/settings');
+        if (res.data.settings) {
+          setStoreSettings(res.data.settings);
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const enriched = items.map(item => ({
+    ...item,
+    product: item.product && typeof item.product === 'object'
+      ? item.product
+      : allProducts.find(p => String(p._id) === String(item.product)) || item.product
+  }));
+
+  // Check if any items are out of stock
+  const hasOutOfStockItems = enriched.some(item => {
+    const size = item.size;
+    const color = item.color;
+    let stock = item.product?.stock ?? 999;
+    
+    // Check variant stock if size and variants exist
+    if (size && Array.isArray(item.product?.variants) && item.product.variants.length > 0) {
+      const variant = item.product.variants.find(v => 
+        v.size === size && 
+        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+      );
+      if (variant) stock = variant.stock || 0;
+    }
+    
+    // Ensure stock is never negative
+    stock = Math.max(0, stock);
+    
+    return stock <= 0;
+  });
+
+  const subtotal = enriched.reduce((s, i) => {
+    const size = i.size;
+    const color = i.color;
+    let stock = i.product?.stock ?? 999;
+    
+    // Check variant stock if size and variants exist
+    if (size && Array.isArray(i.product?.variants) && i.product.variants.length > 0) {
+      const variant = i.product.variants.find(v => 
+        v.size === size && 
+        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+      );
+      if (variant) stock = variant.stock || 0;
+    }
+    
+    // Ensure stock is never negative
+    stock = Math.max(0, stock);
+    
+    const itemPrice = stock <= 0 ? 0 : (i.product?.price || 0);
+    return s + itemPrice * i.quantity;
+  }, 0);
+  const shipping = storeSettings.shippingCharges || 99;
+  const total = subtotal + shipping;
+
+  // Find items with stock urgency
+  const urgencyItems = enriched
+    .map(item => ({ ...item, urgency: getStockUrgency(item) }))
+    .filter(item => item.urgency && item.urgency.level !== 'popular');
+  const hasUrgency = urgencyItems.length > 0;
+
+  // "You Might Also Like" — use only live backend inventory products for recommendations
+  const recommendations = useMemo(() => {
+    if (enriched.length === 0) return [];
+
+    const cartIds = new Set(enriched.map(i => String(i.product?._id)));
+
+    const productPool = allProducts.filter(p => p && p._id && p.stock > 0);
+    const enrichedPool = productPool;
+
+    // Related category groups
+    const RELATED_GROUPS = [
+      ['saree', 'shawl', 'churidar-set', 'churidar sets'],
+      ['kurti', 'churidar-set', 'churidar sets'],
+      ['bag', 'bags'],
+      ['kidswear'],
+      ['croptop', 'bodycon', 'casual', 'casuals', 'coord-set', 'coord-sets', 'pant', 'pants'],
+      ['night-gown'],
+    ];
+
+    const norm = (s) => (s || '').toLowerCase().replace(/s$/, '').replace(/\s+/g, '-').trim();
+
+    // Get cart categories, tags, occasions
+    const cartCatSlugs = enriched.map(i => {
+      const cat = i.product?.category;
+      const slug = typeof cat === 'object' ? cat.slug : cat;
+      const name = typeof cat === 'object' ? cat.name : cat;
+      return norm(slug || name);
+    }).filter(Boolean);
+
+    const cartSource = enriched.map(i => i.product).filter(Boolean);
+
+    const cartTags = cartSource.flatMap(p => (p.tags || []).map(t => t.toLowerCase()));
+    const cartOccasions = cartSource.flatMap(p => (p.occasion || []).map(o => o.toLowerCase()));
+
+    // Find related categories
+    const relatedCats = new Set(cartCatSlugs);
+    cartCatSlugs.forEach(cat => {
+      RELATED_GROUPS.forEach(group => {
+        if (group.some(g => cat === g || cat.includes(g) || g.includes(cat))) {
+          group.forEach(g => relatedCats.add(g));
+        }
+      });
+    });
+
+    const results = enrichedPool
+      .filter(p => !cartIds.has(String(p._id)))
+      .map(p => {
+        const cat = p.category;
+        const pCat = norm(typeof cat === 'object' ? cat.slug || cat.name : cat);
+        const pTags = (p.tags || []).map(t => t.toLowerCase());
+        const pOccasions = (p.occasion || []).map(o => o.toLowerCase());
+
+        let score = 0;
+        // Same category
+        if (cartCatSlugs.some(c => c === pCat || pCat.includes(c) || c.includes(pCat))) score += 5;
+        // Related category
+        else if ([...relatedCats].some(rc => pCat === rc || pCat.includes(rc) || rc.includes(pCat))) score += 2;
+        // Tag overlap
+        const tagMatches = pTags.filter(t => cartTags.includes(t)).length;
+        score += tagMatches * 2;
+        // Occasion overlap
+        const occasionMatches = pOccasions.filter(o => cartOccasions.includes(o)).length;
+        score += occasionMatches;
+
+        return { ...p, score };
+      })
+      .filter(p => p.score >= 3)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+
+    // Fallback: same category products if no scored results
+    if (results.length === 0) {
+      return enrichedPool
+        .filter(p => !cartIds.has(String(p._id)))
+        .filter(p => {
+          const cat = p.category;
+          const pCat = norm(typeof cat === 'object' ? cat.slug || cat.name : cat);
+          return cartCatSlugs.some(c => c === pCat || pCat.includes(c) || c.includes(pCat));
+        })
+        .slice(0, 8);
+    }
+
+    return results;
+  }, [enriched, allProducts]);
+
+  const handleAddToCart = (product) => {
+    const defaultSize = product.sizes?.[0]?.size || 'Free Size';
+    dispatch(addToCart({ productId: product._id, quantity: 1, size: defaultSize }))
+      .unwrap()
+      .then(() => {
+        toast.success(`${product.name} added to cart!`);
+      })
+      .catch((err) => {
+        toast.error(err || 'Failed to add to cart');
+      });
+  };
+
+  if (enriched.length === 0) return (
+    <div className="max-w-7xl mx-auto px-4 pt-28 pb-16">
+      <EmptyState icon={ShoppingBag} title="Your cart is empty"
+        description="Explore our beautiful ethnic collections and add items you love!"
+        action={<Link to="/products" className="btn-primary">Start Shopping</Link>} />
+    </div>
+  );
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900">Shopping Cart</h1>
+        <span className="badge-primary">{enriched.length} item{enriched.length !== 1 ? 's' : ''}</span>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-4">
+          <AnimatePresence>
+            {enriched.map((item) => {
+              const urgency = getStockUrgency(item.product);
+              return (
+              <motion.div key={item._id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, x:-20, height:0 }}
+                className={`bg-white rounded-2xl p-3 sm:p-4 shadow-card border flex flex-col sm:flex-row gap-3 sm:gap-4 ${urgency && (urgency.level === 'critical' || urgency.level === 'out') ? 'border-rose-200' : urgency?.level === 'low' ? 'border-amber-200' : 'border-gold-pale/60'}`}>
+                <div className="flex gap-3 sm:gap-4">
+                  <Link to={`/products/${item.product?._id}`} className="w-20 h-24 sm:w-24 sm:h-28 rounded-xl overflow-hidden bg-champagne-light shrink-0 block relative">
+                    <img src={item.product?.images?.[0]?.url || ''} alt={item.product?.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"/>
+                    {urgency && urgency.level !== 'popular' && (
+                      <span className={`absolute bottom-1.5 left-1.5 right-1.5 text-center font-body text-[9px] font-bold px-1.5 py-0.5 rounded-full ${urgency.badge}`}>
+                        {urgency.label}
+                      </span>
+                    )}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-[11px] font-bold text-primary uppercase tracking-widest mb-0.5">{item.product?.category?.name}</p>
+                    <Link to={`/products/${item.product?._id}`}><h3 className="font-display font-semibold text-gray-900 text-sm mb-1 line-clamp-2 hover:text-primary transition-colors">{item.product?.name}</h3></Link>
+                    <div className="flex items-center gap-3 mb-2">
+                      {item.size && <p className="font-body text-xs text-gray-400">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
+                      {item.color && <p className="font-body text-xs text-gray-400">Color: <span className="font-semibold text-gray-600">{item.color}</span></p>}
+                    </div>
+                    {urgency && (
+                      <div className={`flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg border ${urgency.bg}`}>
+                        <urgency.icon size={12} className={urgency.color} />
+                        <span className={`font-body text-[11px] font-semibold ${urgency.color}`}>{urgency.message}</span>
+                      </div>
+                    )}
+                    <p className="font-display font-bold text-primary mb-3">{formatPrice((item.product?.price || 0) * item.quantity)}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center border border-gray-100 rounded-xl overflow-hidden">
+                        <button onClick={() => {
+                          dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity - 1 }))
+                            .unwrap()
+                            .catch((err) => toast.error(err || 'Failed to update cart'));
+                        }}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Minus size={13}/></button>
+                        <span className="w-8 text-center font-body font-bold text-gray-900 text-sm">{item.quantity}</span>
+                        <button onClick={() => {
+                          dispatch(updateCartItem({ itemId: item._id, quantity: item.quantity + 1 }))
+                            .unwrap()
+                            .catch((err) => toast.error(err || 'Failed to update cart'));
+                        }}
+                          className="w-8 h-8 flex items-center justify-center hover:bg-champagne-light/80 text-primary transition-colors"><Plus size={13}/></button>
+                      </div>
+                      <button onClick={() => { dispatch(removeFromCart(item._id)); toast.success('Removed from cart'); }}
+                        className="w-8 h-8 rounded-lg hover:bg-rose-soft flex items-center justify-center text-gray-300 hover:text-rose transition-all"><Trash2 size={14}/></button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex sm:block items-center justify-between sm:text-right border-t sm:border-t-0 pt-3 sm:pt-0">
+                  {(() => {
+                    const size = item.size;
+                    const color = item.color;
+                    let stock = item.product?.stock ?? 999;
+                    
+                    // Check variant stock if size and variants exist
+                    if (size && Array.isArray(item.product?.variants) && item.product.variants.length > 0) {
+                      const variant = item.product.variants.find(v => 
+                        v.size === size && 
+                        (!color || !v.color?.name || v.color.name.toLowerCase() === color.toLowerCase())
+                      );
+                      if (variant) stock = variant.stock || 0;
+                    }
+                    
+                    // Ensure stock is never negative
+                    stock = Math.max(0, stock);
+                    
+                    return stock <= 0 ? formatPrice(0) : formatPrice((item.product?.price || 0) * item.quantity);
+                  })()}
+                  {urgency && urgency.level === 'popular' && (
+                    <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 text-[10px] font-bold font-body">
+                      <Flame size={10}/> {urgency.label}
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+              );
+            })}
+          </AnimatePresence>
+
+          {/* Stock Urgency Alert Banner */}
+          {hasUrgency && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0 animate-pulse">
+                  <AlertTriangle size={18} className="text-rose" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-display font-bold text-gray-900 text-sm">Your items are waiting!</p>
+                  <p className="font-body text-xs text-gray-600 mt-1">
+                    {urgencyItems.length === 1
+                      ? `"${urgencyItems[0].product?.name?.split(' ').slice(0, 4).join(' ')}" is ${urgencyItems[0].urgency.label.toLowerCase()}. Complete your order before it's gone!`
+                      : `${urgencyItems.length} items in your cart have limited stock. Checkout now to secure them!`
+                    }
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {urgencyItems.map(item => (
+                      <li key={item._id} className="flex items-center gap-2 font-body text-[11px]">
+                        <Clock size={10} className={item.urgency.color} />
+                        <span className="text-gray-700 font-semibold line-clamp-1">{item.product?.name}</span>
+                        <span className={`${item.urgency.color} font-bold`}>— {item.urgency.label}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button onClick={() => navigate('/checkout')}
+                    className="mt-3 btn-primary text-xs py-2 px-4 gap-1">
+                    <Flame size={13}/> Secure My Items <ArrowRight size={13}/>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+
+        </div>
+
+        {/* Summary */}
+        <div className="space-y-4">
+          {/* Order Summary */}
+          <div className="bg-white rounded-2xl p-5 shadow-card border border-gold-pale/60">
+            <h3 className="font-display font-bold text-gray-900 mb-4">Order Summary</h3>
+            <div className="space-y-3 text-sm font-body">
+              <div className="flex justify-between text-gray-600"><span>Subtotal ({enriched.length} items)</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold text-gray-800">{formatPrice(shipping)}</span></div>
+              <div className="flex justify-between text-gray-600 text-xs pb-3 border-b border-gray-50"><span>Taxes (incl.)</span><span>Included</span></div>
+              <div className="flex justify-between font-bold text-base pt-1">
+                <span className="font-body text-gray-900">Total</span>
+                <span className="font-body text-primary text-xl">{formatPrice(total)}</span>
+              </div>
+            </div>
+            <button 
+              onClick={() => navigate('/checkout')} 
+              disabled={hasOutOfStockItems}
+              className={`w-full btn-primary mt-5 py-4 text-base gap-2 ${hasOutOfStockItems ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {hasOutOfStockItems ? 'Remove Unavailable Items' : 'Proceed to Checkout'} <ArrowRight size={18}/>
+            </button>
+            <Link to="/products" className="block text-center font-body text-sm text-gray-400 hover:text-primary transition-colors mt-3">← Continue Shopping</Link>
+          </div>
+        </div>
+      </div>
+
+      {/* You Might Also Like */}
+      {recommendations.length > 0 && (
+        <div className="mt-16">
+          <div className="flex items-center gap-2 mb-6">
+            <Sparkles size={20} className="text-primary" />
+            <h2 className="font-display text-2xl font-bold text-gray-900">You Might Also Like</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {recommendations.map((product) => {
+              const discount = getDiscount(product.originalPrice, product.price);
+              return (
+                <motion.div key={product._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-2xl overflow-hidden shadow-card border border-gold-pale/60 group hover:shadow-lg transition-shadow">
+                  <Link to={`/products/${product._id}`} className="block relative aspect-[3/4] overflow-hidden bg-champagne-light">
+                    <img src={product.images?.[0]?.url} alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {product.badge && (
+                      <span className="absolute top-2 left-2 bg-primary text-white font-body text-[10px] font-bold px-2 py-0.5 rounded-full">{product.badge}</span>
+                    )}
+                    {discount > 0 && (
+                      <span className="absolute top-2 right-2 bg-rose text-white font-body text-[10px] font-bold px-2 py-0.5 rounded-full">-{discount}%</span>
+                    )}
+                  </Link>
+                  <div className="p-3">
+                    <p className="font-body text-[10px] font-bold text-primary uppercase tracking-widest mb-0.5">{product.category?.name}</p>
+                    <Link to={`/products/${product._id}`}>
+                      <h4 className="font-display text-xs font-semibold text-gray-900 line-clamp-2 mb-1 hover:text-primary transition-colors">{product.name}</h4>
+                    </Link>
+                    <div className="flex items-center gap-1 mb-2">
+                      <Star size={10} className="text-amber-400 fill-amber-400" />
+                      <span className="font-body text-[10px] text-gray-500">{product.ratings} ({product.numReviews})</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-display font-bold text-primary text-sm">{formatPrice(product.price)}</span>
+                        {product.originalPrice > product.price && (
+                          <span className="font-body text-[10px] text-gray-400 line-through">{formatPrice(product.originalPrice)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <button onClick={() => handleAddToCart(product)}
+                      className="w-full mt-2 py-2 rounded-xl border-2 border-primary text-primary font-body text-xs font-bold hover:bg-primary hover:text-white transition-all">
+                      Add to Cart
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
