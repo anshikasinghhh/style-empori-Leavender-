@@ -111,9 +111,9 @@ export default function Footer({ className = '' }) {
           <p className="font-body text-white/40 text-xs">© 2025 Lavender. All rights reserved.</p>
           <div className="flex items-center gap-1 font-body text-white/40 text-xs">Made with <Heart size={11} className="text-rose fill-rose mx-1"/> for ethnic fashion lovers</div>
           <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">{[
-            { label: 'Privacy Policy', to: '/press-media' },
-            { label: 'Terms of Service', to: '/press-media' },
-            { label: 'Returns Policy', to: '/products' },
+            { label: 'Privacy Policy', to: '/privacy-policy' },
+            { label: 'Terms of Service', to: '/terms-of-service' },
+            { label: 'Returns Policy', to: '/return-policy' },
           ].map(item => <Link key={item.label} to={item.to} onClick={(e) => handleFooterLinkClick(e, item.to)} className="font-body text-white/40 hover:text-white text-xs transition-colors">{item.label}</Link>)}</div>
         </div>
       </div>

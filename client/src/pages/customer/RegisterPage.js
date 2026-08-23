@@ -114,7 +114,7 @@ export default function RegisterPage() {
                   <input type={showPass?'text':'password'} placeholder="Password (min 6 characters)" value={form.password} onChange={e => setForm(f => ({...f, password:e.target.value}))} className="input-field pl-11 pr-12" required minLength={6}/>
                   <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors">{showPass ? <EyeOff size={16}/> : <Eye size={16}/>}</button>
                 </div>
-                <p className="font-body text-xs text-gray-400">By creating an account you agree to our <Link to="#" className="text-primary hover:underline">Terms</Link> & <Link to="#" className="text-primary hover:underline">Privacy Policy</Link></p>
+                <p className="font-body text-xs text-gray-400">By creating an account you agree to our <Link to="#" className="text-primary hover:underline">Terms</Link> & <Link to="/privacy-policy" className="text-primary hover:underline">Privacy Policy</Link></p>
                 <button type="submit" disabled={loading} className="w-full btn-primary py-3.5 text-base">
                   {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : 'Create Account'}
                 </button>
