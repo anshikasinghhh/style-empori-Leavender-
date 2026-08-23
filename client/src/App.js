@@ -27,6 +27,9 @@ import PressMediaPage from './pages/customer/PressMedia';
 import CareersPage from './pages/customer/CareersPage';
 import SustainabilityPage from './pages/customer/SustainabilityPage';
 import CraftsmanshipPage from './pages/customer/CraftsmanshipPage';
+import PrivacyPolicyPage from './pages/customer/PrivacyPolicyPage';
+import ReturnPolicyPage from './pages/customer/ReturnPolicyPage';
+import TermsOfServicePage from './pages/customer/TermsOfServicePage';
 
 // Admin pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -121,6 +124,9 @@ export default function App() {
         <Route path="/careers" element={<CustomerLayout><CareersPage /></CustomerLayout>} />
         <Route path="/sustainability" element={<CustomerLayout><SustainabilityPage /></CustomerLayout>} />
         <Route path="/craftsmanship" element={<CustomerLayout><CraftsmanshipPage /></CustomerLayout>} />
+        <Route path="/privacy-policy" element={<CustomerLayout><PrivacyPolicyPage /></CustomerLayout>} />
+        <Route path="/return-policy" element={<CustomerLayout><ReturnPolicyPage /></CustomerLayout>} />
+        <Route path="/terms-of-service" element={<CustomerLayout><TermsOfServicePage /></CustomerLayout>} />
         {/* Protected */}
         <Route path="/cart" element={<ProtectedRoute><CustomerLayout><CartPage /></CustomerLayout></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><CustomerLayout><WishlistPage /></CustomerLayout></ProtectedRoute>} />
