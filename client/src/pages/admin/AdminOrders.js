@@ -147,7 +147,7 @@ export default function AdminOrders({ Layout = AdminLayout, readOnly = false, ca
                             {item.image || item.product?.images?.[0]?.url ? <img src={item.image || item.product.images[0].url} alt="" className="w-8 h-10 object-cover rounded-lg shrink-0"/> : <div className="w-8 h-10 rounded-lg bg-champagne-light shrink-0"/>}
                             <div className="min-w-0">
                               <p className="text-gray-700 text-xs font-semibold">{item.name || 'N/A'}</p>
-                              <p className="text-gray-400 text-[11px] mt-0.5">Code: {item.productCode || item.product?.productCode || 'N/A'}</p>
+                              <p className="text-gray-400 text-[11px] mt-0.5">Code: {item.productCode || item.product?.productCode || item.product?.sku || 'N/A'}</p>
                               <p className="text-gray-400 text-[11px]">Size: {item.size || 'Free Size'} · Color: {item.color || 'Default'} · Qty: {item.quantity || 0}</p>
                             </div>
                           </div>

@@ -180,14 +180,14 @@ router.get('/', protect, adminOrEmployee, async (req, res) => {
     const query = status ? { orderStatus: status } : {};
     const orders = await Order.find(query)
       .populate('user', 'name email')
-      .populate('items.product', 'name productCode images')
+      .populate('items.product', 'name productCode sku images')
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
     orders.forEach(order => {
       order.items.forEach(item => {
-        if (!item.productCode && item.product?.productCode) {
-          item.productCode = item.product.productCode;
+        if (!item.productCode && item.product) {
+          item.productCode = item.product.productCode || item.product.sku;
         }
       });
     });
