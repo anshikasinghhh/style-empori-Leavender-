@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 const StoreSettings = require('../models/StoreSettings');
 const LoyaltyCouponSettings = require('../models/LoyaltyCouponSettings');
 const { createShiprocketOrder } = require('../services/shiprocketService');
-const { protect } = require('../middleware/auth');
+const { protect, adminOrEmployee } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
 const { notifyAdmins, notifyEmployees, createNotification } = require('../services/notificationService');
 // ===== ORDER ROUTES =====
@@ -171,8 +171,8 @@ router.get('/my-orders', protect, async (req, res) => {
   }
 });
 
-// @GET /api/orders - Admin: all orders
-router.get('/', protect, adminOnly, async (req, res) => {
+// @GET /api/orders - Admin or employee: all orders
+router.get('/', protect, adminOrEmployee, async (req, res) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
     const query = status ? { orderStatus: status } : {};
@@ -202,8 +202,8 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// @DELETE /api/orders/:id - Admin
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+// @DELETE /api/orders/:id - Admin or employee
+router.delete('/:id', protect, adminOrEmployee, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });

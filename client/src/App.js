@@ -52,6 +52,7 @@ import EmployeeAttendance from './pages/employee/EmployeeAttendance';
 import EmployeeInventory from './pages/employee/EmployeeInventory';
 import EmployeeInventoryStock from './pages/employee/EmployeeInventoryStock';
 import EmployeeProducts from './pages/employee/EmployeeProducts';
+import EmployeeOrders from './pages/employee/EmployeeOrders';
 import EmployeeProfile from './pages/employee/EmployeeProfile';
 import EmployeeCoupons from './pages/employee/EmployeeCoupons';
 import EmployeeFlashSales from './pages/employee/EmployeeFlashSales';
@@ -153,6 +154,7 @@ export default function App() {
         <Route path="/employee/tasks" element={<EmployeeRoute><EmployeeTasks /></EmployeeRoute>} />
         <Route path="/employee/attendance" element={<EmployeeRoute><EmployeeAttendance /></EmployeeRoute>} />
         <Route path="/employee/products" element={<EmployeeRoute><EmployeeProducts /></EmployeeRoute>} />
+        <Route path="/employee/orders" element={<EmployeeRoute><EmployeeOrders /></EmployeeRoute>} />
         <Route path="/employee/inventory" element={<EmployeeRoute><EmployeeInventoryStock /></EmployeeRoute>} />
         <Route path="/employee/stock-requests" element={<EmployeeRoute><EmployeeInventory /></EmployeeRoute>} />
         <Route path="/employee/request-history" element={<EmployeeRoute><EmployeeRequestHistory /></EmployeeRoute>} />

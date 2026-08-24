@@ -26,6 +26,7 @@ export default function EmployeeLayout({ children }) {
     { icon: ClipboardList, label: 'My Tasks', path: '/employee/tasks' },
     { icon: Calendar, label: 'Attendance', path: '/employee/attendance' },
     { icon: Package, label: 'Products', path: '/employee/products' },
+    { icon: ClipboardList, label: 'Orders', path: '/employee/orders' },
     { icon: Boxes, label: 'Inventory', path: '/employee/inventory' },
     { icon: Archive, label: 'Stock Requests', path: '/employee/stock-requests' },
     { icon: Archive, label: 'Request History', path: '/employee/request-history' },
