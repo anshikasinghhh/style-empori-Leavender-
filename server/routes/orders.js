@@ -31,6 +31,8 @@ router.post('/', protect, async (req, res) => {
       const product = await Product.findById(item.product);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found: ' + item.product });
 
+      item.productCode = product.productCode;
+
       const normSize = item.size ? String(item.size).trim() : '';
       const normColor = item.color ? String(item.color).trim().toLowerCase() : '';
 
@@ -178,6 +180,7 @@ router.get('/', protect, adminOrEmployee, async (req, res) => {
     const query = status ? { orderStatus: status } : {};
     const orders = await Order.find(query)
       .populate('user', 'name email')
+      .populate('items.product', 'name productCode images')
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));

@@ -22,6 +22,7 @@ const mapOrder = (o) => ({
   email: o.user?.email || '',
   product: o.items?.[0]?.name || 'N/A',
   image: o.items?.[0]?.image || '',
+  orderItems: o.items || [],
   amount: o.total || 0,
   status: o.orderStatus || 'placed',
   payment: o.paymentMethod || 'cod',
@@ -59,7 +60,11 @@ export default function AdminOrders({ Layout = AdminLayout, readOnly = false, ca
       o.customer.toLowerCase().includes(search.toLowerCase()) ||
       o.email.toLowerCase().includes(search.toLowerCase()) ||
       String(o.orderNumber).includes(search) ||
-      o.product.toLowerCase().includes(search.toLowerCase())
+      o.orderItems.some(item =>
+        item.name?.toLowerCase().includes(search.toLowerCase()) ||
+        item.productCode?.toLowerCase().includes(search.toLowerCase()) ||
+        item.product?.productCode?.toLowerCase().includes(search.toLowerCase())
+      )
     )
   );
 
@@ -129,16 +134,24 @@ export default function AdminOrders({ Layout = AdminLayout, readOnly = false, ca
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body min-w-[850px]">
-              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Products', 'Qty', 'Amount', 'Payment', 'Status', 'Date', ...(canDelete ? ['Actions'] : [])].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
+              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product Details', 'Products', 'Qty', 'Amount', 'Payment', 'Status', 'Date', ...(canDelete ? ['Actions'] : [])].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(order => (
                   <tr key={order.id} className="hover:bg-champagne-light/80/20 transition-colors group">
                     <td className="px-4 py-3 font-bold text-primary text-xs">#{order.orderNumber}</td>
                     <td className="px-4 py-3"><p className="font-semibold text-gray-900 text-sm">{order.customer}</p><p className="text-xs text-gray-400">{order.email}</p></td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {order.image ? <img src={order.image} alt="" className="w-8 h-10 object-cover rounded-lg shrink-0"/> : <div className="w-8 h-10 rounded-lg bg-champagne-light shrink-0"/>}
-                        <span className="text-gray-600 text-xs line-clamp-2 max-w-[120px]">{order.product}{order.items > 1 ? ` +${order.items - 1} more` : ''}</span>
+                    <td className="px-4 py-3 min-w-[300px]">
+                      <div className="space-y-3">
+                        {order.orderItems.map((item, index) => (
+                          <div key={`${item.product?._id || item.product || item.name}-${index}`} className="flex items-start gap-2">
+                            {item.image || item.product?.images?.[0]?.url ? <img src={item.image || item.product.images[0].url} alt="" className="w-8 h-10 object-cover rounded-lg shrink-0"/> : <div className="w-8 h-10 rounded-lg bg-champagne-light shrink-0"/>}
+                            <div className="min-w-0">
+                              <p className="text-gray-700 text-xs font-semibold">{item.name || 'N/A'}</p>
+                              <p className="text-gray-400 text-[11px] mt-0.5">Code: {item.productCode || item.product?.productCode || 'N/A'}</p>
+                              <p className="text-gray-400 text-[11px]">Size: {item.size || 'Free Size'} · Color: {item.color || 'Default'} · Qty: {item.quantity || 0}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </td>
                     <td className="px-4 py-3 font-bold text-gray-900 text-center">{order.productCount}</td>
