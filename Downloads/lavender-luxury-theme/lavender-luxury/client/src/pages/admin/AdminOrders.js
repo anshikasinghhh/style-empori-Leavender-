@@ -31,7 +31,7 @@ const mapOrder = (o) => ({
   totalQuantity: o.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
 });
 
-export default function AdminOrders() {
+export default function AdminOrders({ Layout = AdminLayout, readOnly = false, canDelete = !readOnly }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -95,7 +95,7 @@ export default function AdminOrders() {
     <AdminLayout>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-gray-900">Orders</h1>
-        <p className="font-body text-gray-500 text-sm mt-0.5">Manage and track all customer orders</p>
+        <p className="font-body text-gray-500 text-sm mt-0.5">{readOnly ? 'View recently placed and all customer orders' : 'Manage and track all customer orders'}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -129,7 +129,7 @@ export default function AdminOrders() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm font-body min-w-[850px]">
-              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Products', 'Qty', 'Amount', 'Payment', 'Status', 'Date', 'Actions'].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
+              <thead className="bg-gray-50/80"><tr>{['Order', 'Customer', 'Product', 'Products', 'Qty', 'Amount', 'Payment', 'Status', ...(canDelete ? ['Actions'] : [])].map(h => <th key={h} className="text-left px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
               <tbody className="divide-y divide-gray-50">
                 {filtered.map(order => (
                   <tr key={order.id} className="hover:bg-champagne-light/80/20 transition-colors group">
@@ -146,17 +146,17 @@ export default function AdminOrders() {
                     <td className="px-4 py-3 font-bold text-gray-900">₹{order.amount.toLocaleString('en-IN')}</td>
                     <td className="px-4 py-3"><span className="badge bg-gray-100 text-gray-600 text-[10px] capitalize">{order.payment}</span></td>
                     <td className="px-4 py-3">
-                      <select value={order.status} onChange={e => updateStatus(order.id, e.target.value)}
+                      {readOnly ? <span className={`text-[11px] font-bold px-2.5 py-1.5 rounded-full capitalize ${STATUS_STYLES[order.status]}`}>{order.status.replace('_', ' ')}</span> : <select value={order.status} onChange={e => updateStatus(order.id, e.target.value)}
                         className={`text-[11px] font-bold px-2.5 py-1.5 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 ${STATUS_STYLES[order.status]}`}>
                         {ALL_STATUSES.map(s => <option key={s} value={s} className="text-gray-900 bg-white">{s.replace('_', ' ')}</option>)}
-                      </select>
+                      </select>}
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{new Date(order.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
-                    <td className="px-4 py-3">
+                    {canDelete && <td className="px-4 py-3">
                       <button onClick={() => deleteOrder(order.id)} className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose/90 text-rose transition-colors flex items-center justify-center" title="Delete order">
                         <Trash2 size={16} />
                       </button>
-                    </td>
+                    </td>}
                   </tr>
                 ))}
               </tbody>
