@@ -172,6 +172,7 @@ export default function CheckoutPage() {
       const orderItems = enriched.map(i => ({
         product: i.product._id,
         name: i.product.name,
+        productCode: i.product.productCode,
         image: i.product.images?.[0]?.url,
         price: i.product.price,
         quantity: i.quantity,

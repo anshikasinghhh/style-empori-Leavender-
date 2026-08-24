@@ -184,6 +184,13 @@ router.get('/', protect, adminOrEmployee, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
+    orders.forEach(order => {
+      order.items.forEach(item => {
+        if (!item.productCode && item.product?.productCode) {
+          item.productCode = item.product.productCode;
+        }
+      });
+    });
     const total = await Order.countDocuments(query);
     res.json({ success: true, orders, total });
   } catch (err) {
