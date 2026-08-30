@@ -120,26 +120,29 @@ const normalizeFormState = (data = {}) => {
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
-  const loadProducts = async () => {
-  try {
-    const res = await api.get('/products');
+  const [showAllProducts, setShowAllProducts] = useState(true);
+  const loadProducts = async (includeInactive = showAllProducts) => {
+    try {
+      const res = await api.get('/products', {
+        params: {
+          limit: includeInactive ? 'all' : 12,
+          includeInactive
+        }
+      });
 
-    console.log("SUCCESS RESPONSE:", res.data);
+      console.log('SUCCESS RESPONSE:', res.data);
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error('ERROR OBJECT:', err);
 
-    setProducts(res.data.products || []);
+      if (err.response) {
+        console.error('STATUS:', err.response.status);
+        console.error('DATA:', err.response.data);
+      }
 
-  } catch (err) {
-
-    console.error("ERROR OBJECT:", err);
-
-    if (err.response) {
-      console.error("STATUS:", err.response.status);
-      console.error("DATA:", err.response.data);
+      toast.error('Failed to load products');
     }
-
-    toast.error('Failed to load products');
-  }
-};
+  };
 
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(false);
@@ -309,9 +312,9 @@ console.log("Filtered:", filtered);
     setModal(true);
   };
 useEffect(() => {
-    loadProducts();
+    loadProducts(showAllProducts);
     loadAvailableCoupons();
-  }, []);
+  }, [showAllProducts]);
 
   const totalStock = getCalculatedStock(form);
 
@@ -470,8 +473,17 @@ const deleteProduct = async (id) => {
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
-        <div><h1 className="font-display text-2xl font-bold text-gray-900">Products</h1><p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p></div>
-        <div className="flex gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-gray-900">Products</h1>
+          <p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setShowAllProducts(prev => !prev)}
+            className="btn-outline text-sm gap-2 py-2.5"
+          >
+            {showAllProducts ? 'Showing all products' : 'Show all products'}
+          </button>
           <button onClick={recalculateAllStock} className="btn-outline text-sm gap-2 py-2.5"><RefreshCw size={16}/> Recalculate Stock</button>
           <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
         </div>

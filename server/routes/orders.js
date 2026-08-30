@@ -8,6 +8,7 @@ const { createShiprocketOrder } = require('../services/shiprocketService');
 const { protect, adminOrEmployee } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
 const { notifyAdmins, notifyEmployees, createNotification } = require('../services/notificationService');
+const FREE_SHIPPING_THRESHOLD = 1000;
 // ===== ORDER ROUTES =====
 // @POST /api/orders
 router.post('/', protect, async (req, res) => {
@@ -17,7 +18,7 @@ router.post('/', protect, async (req, res) => {
     console.log('Order creation - couponCode received:', couponCode);
     
     let subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingCost = subtotal > 999 ? 0 : 99;
+    const shippingCost = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 99;
     const settings = await StoreSettings.findOne({ key: 'global' });
     const handlingCharge = Number(settings?.handlingCharge || 0);
     const tax = Math.round(subtotal * 0.05);
