@@ -125,7 +125,7 @@ export default function AdminProducts({ Layout = AdminLayout }) {
     try {
       const res = await api.get('/products', {
         params: {
-          limit: includeInactive ? 'all' : 12,
+          limit: 'all',
           includeInactive
         }
       });
