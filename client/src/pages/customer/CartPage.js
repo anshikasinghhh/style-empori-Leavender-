@@ -9,6 +9,8 @@ import { formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
 import api from '../../utils/api';
 
+const FREE_SHIPPING_THRESHOLD = 1000;
+
 // Stock urgency helper - checks variant stock if size/color are present
 const getStockUrgency = (item) => {
   const product = item.product;
@@ -123,7 +125,7 @@ export default function CartPage() {
     const itemPrice = stock <= 0 ? 0 : (i.product?.price || 0);
     return s + itemPrice * i.quantity;
   }, 0);
-  const shipping = storeSettings.shippingCharges || 99;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (storeSettings.shippingCharges || 99);
   const total = subtotal + shipping;
 
   // Find items with stock urgency
@@ -373,7 +375,7 @@ export default function CartPage() {
             <h3 className="font-display font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 text-sm font-body">
               <div className="flex justify-between text-gray-600"><span>Subtotal ({enriched.length} items)</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
-              <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-semibold text-gray-800">{formatPrice(shipping)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={`font-semibold ${shipping === 0 ? 'text-emerald-600' : 'text-gray-800'}`}>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
               <div className="flex justify-between text-gray-600 text-xs pb-3 border-b border-gray-50"><span>Taxes (incl.)</span><span>Included</span></div>
               <div className="flex justify-between font-bold text-base pt-1">
                 <span className="font-body text-gray-900">Total</span>

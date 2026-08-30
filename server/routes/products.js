@@ -32,13 +32,15 @@ const buildCategoryQuery = (category) => {
 router.get('/', async (req, res) => {
   try {
     const { category, subcategory, minPrice, maxPrice, sort, search, isFeatured,
-      isNewArrival, isBestSeller, isFlashSale, isFestival, page = 1, limit = 12 } = req.query;
+      isNewArrival, isBestSeller, isFlashSale, isFestival, page = 1, limit = 12, includeInactive = 'false' } = req.query;
 
     // Validate and sanitize pagination parameters
     let pageNum = Math.max(1, parseInt(page) || 1);
-    let limitNum = Math.min(Math.max(1, parseInt(limit) || 12), 100); // Cap limit at 100
-    
-    const query = { isActive: true };
+    const requestedLimit = limit === 'all' ? 1000 : parseInt(limit) || 12;
+    let limitNum = Math.min(Math.max(1, requestedLimit), 1000);
+    const shouldIncludeInactive = includeInactive === 'true' || includeInactive === true;
+
+    const query = shouldIncludeInactive ? {} : { isActive: true };
     if (category) {
       query.category = buildCategoryQuery(category);
     }

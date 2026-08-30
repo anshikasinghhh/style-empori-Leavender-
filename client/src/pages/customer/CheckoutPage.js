@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 const STEPS = ['Address', 'Payment', 'Confirm'];
 const GIFT_WRAP_COST = 50;
 const DONATION_PRESETS = [3, 5, 10];
+const FREE_SHIPPING_THRESHOLD = 1000;
 
 export default function CheckoutPage() {
   const [step, setStep] = useState(0);
@@ -55,7 +56,7 @@ export default function CheckoutPage() {
   }));
 
   const subtotal = enriched.reduce((s, i) => s + (i.product?.price || 0) * i.quantity, 0);
-  const shipping = storeSettings.shippingCharges || 99;
+  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : (storeSettings.shippingCharges || 99);
   const tax = Math.round(subtotal * 0.05);
   const giftWrapCost = giftWrap ? GIFT_WRAP_COST : 0;
   const donationAmount =
@@ -461,7 +462,7 @@ export default function CheckoutPage() {
           </div>
           <div className="border-t border-gray-50 pt-3 space-y-2 text-sm font-body">
             <div className="flex justify-between text-gray-600"><span>Subtotal</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(subtotal)}</span></div>
-            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(shipping)}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={`font-body font-medium text-sm ${shipping === 0 ? 'text-emerald-600' : 'text-gray-700'}`}>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
             {handlingCharge > 0 && (
               <div className="flex justify-between text-gray-600"><span>Handling Charge</span><span className="font-body font-medium text-sm text-gray-700">{formatPrice(handlingCharge)}</span></div>
             )}
