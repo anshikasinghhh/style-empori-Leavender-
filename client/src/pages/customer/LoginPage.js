@@ -78,7 +78,7 @@ export default function LoginPage() {
                 <img
                   src={logoImage}
                   className="h-24 w-24 rounded-full"
-                  alt="Vastra Elegance Logo"
+                  alt="Lavender-Luxury Logo"
                 />
               </div>
             </div>

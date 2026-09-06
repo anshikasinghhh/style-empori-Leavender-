@@ -125,7 +125,7 @@ async function createShiprocketOrder(orderId) {
       order_id: order.orderNumber,
       order_date: formatShiprocketDate(order.createdAt || new Date()),
       pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || "Primary",
-      comment: order.notes || "Auto-synced from Vastra Elegance",
+      comment: order.notes || "Auto-synced from Lavender-Luxury",
       billing_customer_name: firstName,
       billing_last_name: lastName,
       billing_address: order.shippingAddress.street || "Not Provided",

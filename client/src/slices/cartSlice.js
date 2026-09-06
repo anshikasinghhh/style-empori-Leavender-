@@ -14,6 +14,15 @@ export const updateCartItem = createAsyncThunk('cart/update', async ({ itemId, q
   try { const { data } = await api.put(`/cart/update/${itemId}`, { quantity }); return data.cart; }
   catch (err) { return rejectWithValue(err.response?.data?.message || 'Failed to update cart'); }
 });
+export const updateCartItemOptions = createAsyncThunk('cart/updateOptions', async ({ itemId, quantity, size, color }, { rejectWithValue }) => {
+  try {
+    const payload = { quantity, size, color };
+    const { data } = await api.put(`/cart/update/${itemId}`, payload);
+    return data.cart;
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Failed to update cart item');
+  }
+});
 export const removeFromCart = createAsyncThunk('cart/remove', async (itemId, { rejectWithValue }) => {
   try { const { data } = await api.delete(`/cart/remove/${itemId}`); return data.cart; }
   catch (err) { return rejectWithValue(err.response?.data?.message); }
@@ -32,6 +41,7 @@ const cartSlice = createSlice({
       .addCase(fetchCart.fulfilled, setCart)
       .addCase(addToCart.fulfilled, setCart)
       .addCase(updateCartItem.fulfilled, setCart)
+      .addCase(updateCartItemOptions.fulfilled, setCart)
       .addCase(removeFromCart.fulfilled, setCart);
   }
 });

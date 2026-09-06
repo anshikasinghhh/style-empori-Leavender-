@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, Truck, Sparkles, Star, AlertTriangle, Flame, Clock } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateCartItem, removeFromCart, addToCart } from '../../slices/cartSlice';
+import { updateCartItem, updateCartItemOptions, removeFromCart, addToCart } from '../../slices/cartSlice';
 import { EmptyState } from '../../components/common/LoadingSpinner';
 import { formatPrice, getDiscount } from '../../utils/data';
 import toast from 'react-hot-toast';
@@ -81,11 +81,13 @@ export default function CartPage() {
     ...item,
     product: item.product && typeof item.product === 'object'
       ? item.product
-      : allProducts.find(p => String(p._id) === String(item.product)) || item.product
+      : allProducts.find(p => String(p._id) === String(item.product)) || null
   }));
+  const activeEnriched = enriched.filter(item => item.product);
+  const unavailableItems = enriched.filter(item => !item.product);
 
   // Check if any items are out of stock
-  const hasOutOfStockItems = enriched.some(item => {
+  const hasOutOfStockItems = activeEnriched.some(item => {
     const size = item.size;
     const color = item.color;
     let stock = item.product?.stock ?? 999;
@@ -105,7 +107,7 @@ export default function CartPage() {
     return stock <= 0;
   });
 
-  const subtotal = enriched.reduce((s, i) => {
+  const subtotal = activeEnriched.reduce((s, i) => {
     const size = i.size;
     const color = i.color;
     let stock = i.product?.stock ?? 999;
@@ -129,16 +131,16 @@ export default function CartPage() {
   const total = subtotal + shipping;
 
   // Find items with stock urgency
-  const urgencyItems = enriched
+  const urgencyItems = activeEnriched
     .map(item => ({ ...item, urgency: getStockUrgency(item) }))
     .filter(item => item.urgency && item.urgency.level !== 'popular');
   const hasUrgency = urgencyItems.length > 0;
 
   // "You Might Also Like" — use only live backend inventory products for recommendations
   const recommendations = useMemo(() => {
-    if (enriched.length === 0) return [];
+    if (activeEnriched.length === 0) return [];
 
-    const cartIds = new Set(enriched.map(i => String(i.product?._id)));
+    const cartIds = new Set(activeEnriched.map(i => String(i.product?._id)));
 
     const productPool = allProducts.filter(p => p && p._id && p.stock > 0);
     const enrichedPool = productPool;
@@ -156,14 +158,14 @@ export default function CartPage() {
     const norm = (s) => (s || '').toLowerCase().replace(/s$/, '').replace(/\s+/g, '-').trim();
 
     // Get cart categories, tags, occasions
-    const cartCatSlugs = enriched.map(i => {
+    const cartCatSlugs = activeEnriched.map(i => {
       const cat = i.product?.category;
       const slug = typeof cat === 'object' ? cat.slug : cat;
       const name = typeof cat === 'object' ? cat.name : cat;
       return norm(slug || name);
     }).filter(Boolean);
 
-    const cartSource = enriched.map(i => i.product).filter(Boolean);
+    const cartSource = activeEnriched.map(i => i.product).filter(Boolean);
 
     const cartTags = cartSource.flatMap(p => (p.tags || []).map(t => t.toLowerCase()));
     const cartOccasions = cartSource.flatMap(p => (p.occasion || []).map(o => o.toLowerCase()));
@@ -217,9 +219,22 @@ export default function CartPage() {
     }
 
     return results;
-  }, [enriched, allProducts]);
+  }, [activeEnriched, allProducts]);
 
   const handleAddToCart = (product) => {
+    const requiresSelection = (Array.isArray(product.sizes) && product.sizes.length > 0)
+      || (Array.isArray(product.colors) && product.colors.length > 0)
+      || (Array.isArray(product.variants) && product.variants.length > 0);
+
+    if (requiresSelection) {
+      navigate(`/products/${product._id}`);
+      toast('Please select size and/or color on the product page before adding to cart', {
+        icon: '📏',
+        duration: 2500
+      });
+      return;
+    }
+
     const defaultSize = product.sizes?.[0]?.size || 'Free Size';
     dispatch(addToCart({ productId: product._id, quantity: 1, size: defaultSize }))
       .unwrap()
@@ -231,7 +246,69 @@ export default function CartPage() {
       });
   };
 
-  if (enriched.length === 0) return (
+  const getCartItemSizeOptions = (product) => {
+    if (!product) return [{ size: 'Free Size', stock: 999 }];
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      const uniqueSizes = new Map();
+      product.variants.forEach((variant) => {
+        const sizeName = String(variant.size || 'Free Size').trim() || 'Free Size';
+        const current = uniqueSizes.get(sizeName) || { size: sizeName, stock: 0 };
+        current.stock = Math.max(current.stock, Number(variant.stock) || 0);
+        uniqueSizes.set(sizeName, current);
+      });
+      return Array.from(uniqueSizes.values()).sort((a, b) => String(a.size).localeCompare(String(b.size), undefined, { numeric: true }));
+    }
+    if (Array.isArray(product.sizes) && product.sizes.length > 0) {
+      return product.sizes.map((sizeData) => ({
+        size: String(sizeData.size || 'Free Size').trim() || 'Free Size',
+        stock: Number(sizeData.stock) || 0
+      }));
+    }
+    return [{ size: 'Free Size', stock: Number(product.stock) || 999 }];
+  };
+
+  const getCartItemColorOptions = (product, selectedSize) => {
+    if (!product) return [];
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      const filtered = selectedSize
+        ? product.variants.filter((variant) => String(variant.size).trim() === String(selectedSize).trim())
+        : product.variants;
+
+      const uniqueColors = [];
+      filtered.forEach((variant) => {
+        const name = variant.color?.name;
+        if (name && !uniqueColors.some((color) => color.name === name)) {
+          uniqueColors.push({ name, hex: variant.color?.hex || '#ddd' });
+        }
+      });
+      return uniqueColors;
+    }
+    if (Array.isArray(product.colors) && product.colors.length > 0) {
+      return product.colors;
+    }
+    return [];
+  };
+
+  const handleUpdateCartItemOptions = (item, nextSize, nextColor) => {
+    const sizeValue = nextSize || item.size || 'Free Size';
+    const colorValue = nextColor || item.color || undefined;
+
+    dispatch(updateCartItemOptions({
+      itemId: item._id,
+      quantity: item.quantity,
+      size: sizeValue,
+      color: colorValue
+    }))
+      .unwrap()
+      .then(() => {
+        toast.success('Cart item updated');
+      })
+      .catch((err) => {
+        toast.error(err || 'Failed to update cart item');
+      });
+  };
+
+  if (activeEnriched.length === 0 && unavailableItems.length === 0) return (
     <div className="max-w-7xl mx-auto px-4 pt-28 pb-16">
       <EmptyState icon={ShoppingBag} title="Your cart is empty"
         description="Explore our beautiful ethnic collections and add items you love!"
@@ -243,7 +320,7 @@ export default function CartPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-16">
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-gray-900">Shopping Cart</h1>
-        <span className="badge-primary">{enriched.length} item{enriched.length !== 1 ? 's' : ''}</span>
+        <span className="badge-primary">{activeEnriched.length} item{activeEnriched.length !== 1 ? 's' : ''}</span>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -251,6 +328,31 @@ export default function CartPage() {
         <div className="lg:col-span-2 space-y-4">
           <AnimatePresence>
             {enriched.map((item) => {
+              if (!item.product) {
+                const productName = item.name || item.productName || 'This product';
+                return (
+                  <motion.div key={item._id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, x:-20, height:0 }}
+                    className="bg-white rounded-2xl p-4 shadow-card border border-rose-200">
+                    <div className="flex items-start gap-4">
+                      <div className="w-20 h-24 rounded-xl bg-rose-50 flex items-center justify-center text-rose shrink-0">
+                        <AlertTriangle size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-body text-[11px] font-bold uppercase tracking-widest text-rose">Unavailable item</p>
+                        <h3 className="font-display text-base font-semibold text-gray-900 mt-1">{productName}</h3>
+                        <p className="font-body text-sm text-gray-500 mt-1">This product is no longer available and was removed by the admin or staff member.</p>
+                        <button
+                          onClick={() => { dispatch(removeFromCart(item._id)); toast.success('Unavailable item removed from cart'); }}
+                          className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-soft px-3 py-1.5 font-body text-xs font-semibold text-rose"
+                        >
+                          <Trash2 size={12}/> Remove from cart
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              }
+
               const urgency = getStockUrgency(item.product);
               return (
               <motion.div key={item._id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, x:-20, height:0 }}
@@ -272,6 +374,60 @@ export default function CartPage() {
                       {item.size && <p className="font-body text-xs text-gray-400">Size: <span className="font-semibold text-gray-600">{item.size}</span></p>}
                       {item.color && <p className="font-body text-xs text-gray-400">Color: <span className="font-semibold text-gray-600">{item.color}</span></p>}
                     </div>
+                    {(() => {
+                      const sizeOptions = getCartItemSizeOptions(item.product);
+                      const colorOptions = getCartItemColorOptions(item.product, item.size);
+                      const showEdit = sizeOptions.length > 1 || colorOptions.length > 1;
+
+                      if (!showEdit) return null;
+
+                      return (
+                        <div className="mt-3 sm:max-w-sm">
+                          <details className="group rounded-2xl border border-gray-200 bg-gray-50/80 p-2">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-2 py-1 font-body text-[10px] font-bold uppercase tracking-[0.18em] text-gray-600">
+                              Edit options
+                              <span className="rounded-full bg-white px-2 py-1 text-[9px] text-primary shadow-sm group-open:bg-primary group-open:text-white transition-colors">
+                                {item.size || 'Free Size'}
+                              </span>
+                            </summary>
+
+                            <div className="mt-3 space-y-3 border-t border-gray-200 pt-3">
+                              {sizeOptions.length > 1 && (
+                                <label className="block">
+                                  <span className="mb-1.5 block font-body text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Size</span>
+                                  <select
+                                    value={item.size || 'Free Size'}
+                                    onChange={(e) => handleUpdateCartItemOptions(item, e.target.value, item.color)}
+                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-body text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                  >
+                                    {sizeOptions.map((option) => (
+                                      <option key={option.size} value={option.size}>
+                                        {option.size} {option.stock >= 0 ? `(${option.stock} left)` : ''}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              )}
+
+                              {colorOptions.length > 1 && (
+                                <label className="block">
+                                  <span className="mb-1.5 block font-body text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">Color</span>
+                                  <select
+                                    value={item.color || colorOptions[0]?.name || ''}
+                                    onChange={(e) => handleUpdateCartItemOptions(item, item.size, e.target.value)}
+                                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-body text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
+                                  >
+                                    {colorOptions.map((option) => (
+                                      <option key={option.name} value={option.name}>{option.name}</option>
+                                    ))}
+                                  </select>
+                                </label>
+                              )}
+                            </div>
+                          </details>
+                        </div>
+                      );
+                    })()}
                     {urgency && (
                       <div className={`flex items-center gap-1.5 mb-2 px-2 py-1 rounded-lg border ${urgency.bg}`}>
                         <urgency.icon size={12} className={urgency.color} />
@@ -374,7 +530,7 @@ export default function CartPage() {
           <div className="bg-white rounded-2xl p-5 shadow-card border border-gold-pale/60">
             <h3 className="font-display font-bold text-gray-900 mb-4">Order Summary</h3>
             <div className="space-y-3 text-sm font-body">
-              <div className="flex justify-between text-gray-600"><span>Subtotal ({enriched.length} items)</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
+              <div className="flex justify-between text-gray-600"><span>Subtotal ({activeEnriched.length} items)</span><span className="font-semibold text-gray-800">{formatPrice(subtotal)}</span></div>
               <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={`font-semibold ${shipping === 0 ? 'text-emerald-600' : 'text-gray-800'}`}>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
               <div className="flex justify-between text-gray-600 text-xs pb-3 border-b border-gray-50"><span>Taxes (incl.)</span><span>Included</span></div>
               <div className="flex justify-between font-bold text-base pt-1">
@@ -384,10 +540,10 @@ export default function CartPage() {
             </div>
             <button 
               onClick={() => navigate('/checkout')} 
-              disabled={hasOutOfStockItems}
-              className={`w-full btn-primary mt-5 py-4 text-base gap-2 ${hasOutOfStockItems ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={hasOutOfStockItems || activeEnriched.length === 0}
+              className={`w-full btn-primary mt-5 py-4 text-base gap-2 ${(hasOutOfStockItems || activeEnriched.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {hasOutOfStockItems ? 'Remove Unavailable Items' : 'Proceed to Checkout'} <ArrowRight size={18}/>
+              {hasOutOfStockItems ? 'Remove Unavailable Items' : activeEnriched.length === 0 ? 'No Active Items' : 'Proceed to Checkout'} <ArrowRight size={18}/>
             </button>
             <Link to="/products" className="block text-center font-body text-sm text-gray-400 hover:text-primary transition-colors mt-3">← Continue Shopping</Link>
           </div>

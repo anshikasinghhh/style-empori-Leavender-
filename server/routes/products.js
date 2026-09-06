@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { Cart } = require('../models/index');
 const { protect } = require('../middleware/auth');
 const { adminOnly } = require('../middleware/admin');
 const { staffOnly } = require('../middleware/staff');
@@ -172,8 +173,14 @@ router.put('/:id/restock', protect, staffOnly, async (req, res) => {
 // @DELETE /api/products/:id - Admin & employee
 router.delete('/:id', protect, staffOnly, async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false });
+    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    await Cart.updateMany(
+      {},
+      { $pull: { items: { product: req.params.id } } }
+    );
+
     res.json({ success: true, message: 'Product deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

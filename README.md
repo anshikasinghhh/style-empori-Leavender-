@@ -1,4 +1,4 @@
-# 🪷 Vastra Elegance — Premium Ethnic Fashion E-Commerce
+# 🪷 Lavender-Luxury — Premium Ethnic Fashion E-Commerce
 
 A full-stack production-ready e-commerce platform for Indian ethnic fashion.
 
@@ -40,7 +40,7 @@ npm run dev
 
 ## 📁 Project Structure
 ```
-vastra-elegance/
+lavender-luxury/
 ├── client/                        # React frontend
 │   ├── src/
 │   │   ├── components/

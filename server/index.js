@@ -109,7 +109,7 @@ app.use('/api/flash-sales', require('./routes/flashSales'));
 app.use('/api/uploads', require('./routes/uploads'));
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Vastra Elegance API is running' });
+  res.json({ status: 'OK', message: 'Lavender-Luxury API is running' });
 });
 
 // Error handling middleware

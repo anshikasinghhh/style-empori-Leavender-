@@ -7,6 +7,7 @@ import { fetchWishlist } from './slices/wishlistSlice';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
+import toast from 'react-hot-toast';
 
 //import chatbot
 import ChatBot from "./components/common/Chatbot";
@@ -99,7 +100,14 @@ export default function App() {
   useEffect(() => {
     if (token) {
       dispatch(fetchMe());
-      dispatch(fetchCart());
+      dispatch(fetchCart())
+        .unwrap()
+        .then((cart) => {
+          if (cart?.removedItemCount > 0) {
+            toast.success(`${cart.removedItemCount} unavailable item${cart.removedItemCount === 1 ? '' : 's'} removed from your cart`);
+          }
+        })
+        .catch(() => {});
       dispatch(fetchWishlist());
     }
   }, [token, dispatch]);

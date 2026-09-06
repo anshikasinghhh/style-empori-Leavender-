@@ -7,17 +7,35 @@ const { protect } = require('../middleware/auth');
 const getPopulatedCart = async (userId) => {
   const cart = await Cart.findOne({ user: userId });
   if (!cart) return { items: [] };
-  
-  const rawProductIds = cart.items.map(item => item.product);
+
+  const originalItemCount = cart.items.length;
+  const rawProductIds = cart.items.map(item => item.product).filter(Boolean);
+  if (rawProductIds.length > 0) {
+    const validProductIds = new Set(
+      (await Product.find({ _id: { $in: rawProductIds } }).select('_id')).map(product => String(product._id))
+    );
+
+    const cleanedItems = cart.items.filter((item) => {
+      if (!item.product) return false;
+      return validProductIds.has(String(item.product));
+    });
+
+    if (cleanedItems.length !== cart.items.length) {
+      cart.items = cleanedItems;
+      await cart.save();
+    }
+  }
+
   const populated = await cart.populate('items.product');
   const cartObj = populated.toObject();
-  
+
   cartObj.items.forEach((item, idx) => {
     if (!item.product && rawProductIds[idx]) {
       item.product = rawProductIds[idx].toString();
     }
   });
-  
+
+  cartObj.removedItemCount = originalItemCount - cartObj.items.length;
   return cartObj;
 };
 
@@ -136,55 +154,80 @@ router.post('/add', protect, async (req, res) => {
 
 router.put('/update/:itemId', protect, async (req, res) => {
   try {
-    const { quantity } = req.body;
+    const { quantity, size, color } = req.body;
     const cart = await Cart.findOne({ user: req.user._id });
     if (!cart) return res.status(404).json({ success: false, message: 'Cart not found' });
     const item = cart.items.id(req.params.itemId);
     if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
-    
-    // Check product stock based on variant
+
+    const normalizedSize = size !== undefined ? String(size).trim() : item.size || '';
+    const normalizedColor = color !== undefined ? String(color).trim() : item.color || '';
+    const newQuantity = quantity !== undefined ? Number(quantity) : item.quantity;
+
     const product = await Product.findById(item.product);
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+      cart.items.pull(req.params.itemId);
+      await cart.save();
+      return res.status(410).json({
+        success: false,
+        message: 'This product is no longer available and has been removed from your cart.'
+      });
     }
-    
-    // Determine available stock based on variant or total product stock
+
+    const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+    const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+    const hasColors = Array.isArray(product.colors) && product.colors.length > 0;
+
+    if (hasVariants && !normalizedSize) {
+      return res.status(400).json({ success: false, message: 'Please select a valid size for this product' });
+    }
+
+    if (normalizedSize && hasSizes && !product.sizes.some(s => String(s.size).trim() === normalizedSize) && !hasVariants) {
+      return res.status(400).json({ success: false, message: 'Selected size is not available for this product' });
+    }
+
+    if (normalizedColor && hasColors && !product.colors.some(c => String(c.name).trim().toLowerCase() === normalizedColor.toLowerCase())) {
+      return res.status(400).json({ success: false, message: 'Selected color is not available for this product' });
+    }
+
     let availableStock = product.stock || 0;
     let variantInfo = '';
-    
-    if (item.size && Array.isArray(product.variants) && product.variants.length > 0) {
-      // Find matching variant by size and color
-      const variant = product.variants.find(v => 
-        v.size === item.size && 
-        (!item.color || !v.color?.name || v.color.name.toLowerCase() === item.color.toLowerCase())
+
+    if (normalizedSize && Array.isArray(product.variants) && product.variants.length > 0) {
+      const variant = product.variants.find(v =>
+        String(v.size).trim() === normalizedSize &&
+        (!normalizedColor || !v.color?.name || String(v.color.name).trim().toLowerCase() === normalizedColor.toLowerCase())
       );
-      
+
       if (variant) {
         availableStock = variant.stock || 0;
         variantInfo = variant.color?.name ? `${variant.color.name} - ${variant.size}` : variant.size;
       }
     }
-    
-    // Ensure stock is never negative
+
     availableStock = Math.max(0, availableStock);
-    
-    if (quantity > availableStock) {
-      return res.status(400).json({ 
-        success: false, 
-        message: variantInfo 
-          ? `Only ${availableStock} item(s) available for ${variantInfo}` 
+
+    if (newQuantity > availableStock) {
+      return res.status(400).json({
+        success: false,
+        message: variantInfo
+          ? `Only ${availableStock} item(s) available for ${variantInfo}`
           : `Only ${availableStock} item(s) available in stock`,
         availableStock
       });
     }
-    
-    if (quantity <= 0) {
+
+    item.size = normalizedSize || undefined;
+    item.color = normalizedColor || undefined;
+
+    if (newQuantity <= 0) {
       cart.items.pull(req.params.itemId);
     } else {
-      item.quantity = quantity;
+      item.quantity = newQuantity;
     }
+
     await cart.save();
-    
+
     const populated = await getPopulatedCart(req.user._id);
     res.json({ success: true, cart: populated });
   } catch (err) {
