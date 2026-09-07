@@ -178,6 +178,7 @@ router.get('/', protect, adminOrEmployee, async (req, res) => {
     const query = status ? { orderStatus: status } : {};
     const orders = await Order.find(query)
       .populate('user', 'name email')
+      .populate('items.product')
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));

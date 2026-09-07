@@ -199,7 +199,7 @@ export default function OrderDetailPage() {
             <img src={item.image || item.product?.images?.[0]?.url} alt={item.name} className="w-20 h-24 object-cover rounded-xl shadow-sm"/>
             <div className="flex-1">
               <p className="font-body font-bold text-gray-900 text-sm">{item.name}</p>
-              <p className="font-body text-xs text-gray-500 mt-0.5">Size: {item.size || 'Free Size'} · Qty: {item.quantity}</p>
+              <p className="font-body text-xs text-gray-500 mt-0.5">Code: {item.product?.productCode || 'N/A'}·Size:{item.size || 'Free Size'}·Qty:{item.quantity}</p>
               <p className="font-display font-bold text-primary mt-2">{formatPrice(item.price * item.quantity)}</p>
             </div>
             {item.product?._id && (

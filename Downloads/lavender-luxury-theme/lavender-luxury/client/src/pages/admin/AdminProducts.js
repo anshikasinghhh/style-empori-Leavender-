@@ -120,29 +120,33 @@ const normalizeFormState = (data = {}) => {
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
-  const loadProducts = async () => {
-  try {
-    const res = await api.get('/products');
+  const [showAllProducts, setShowAllProducts] = useState(false);
+  const loadProducts = async (includeInactive = showAllProducts) => {
+    try {
+      const res = await api.get('/products', {
+        params: {
+          limit: 'all',
+          includeInactive
+        }
+      });
 
-    console.log("SUCCESS RESPONSE:", res.data);
+      console.log('SUCCESS RESPONSE:', res.data);
+      setProducts(res.data.products || []);
+    } catch (err) {
+      console.error('ERROR OBJECT:', err);
 
-    setProducts(res.data.products || []);
+      if (err.response) {
+        console.error('STATUS:', err.response.status);
+        console.error('DATA:', err.response.data);
+      }
 
-  } catch (err) {
-
-    console.error("ERROR OBJECT:", err);
-
-    if (err.response) {
-      console.error("STATUS:", err.response.status);
-      console.error("DATA:", err.response.data);
+      toast.error('Failed to load products');
     }
-
-    toast.error('Failed to load products');
-  }
-};
+  };
 
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, name: '' });
   const [editId, setEditId] = useState(null);
   const [form, setForm] = useState(createEmptyForm());
   const [variantCustomSize, setVariantCustomSize] = useState("");
@@ -309,9 +313,9 @@ console.log("Filtered:", filtered);
     setModal(true);
   };
 useEffect(() => {
-    loadProducts();
+    loadProducts(showAllProducts);
     loadAvailableCoupons();
-  }, []);
+  }, [showAllProducts]);
 
   const totalStock = getCalculatedStock(form);
 
@@ -434,28 +438,27 @@ useEffect(() => {
 
   // const deleteProduct = (id) => { setProducts(ps => ps.filter(p => p._id !== id)); toast.success('Product removed'); };
 const deleteProduct = async (id) => {
+  const product = products.find(p => p._id === id);
+  const productName = product?.name || 'Product';
 
   try {
-
-    await api.delete(
-      `/products/${id}`
-    );
-
-    toast.success(
-      "Product Deleted"
-    );
-
-    loadProducts();
-
+    await api.delete(`/products/${id}`);
+    setShowAllProducts(false);
+    setDeleteConfirm({ open: false, id: null, name: '' });
+    toast.success(`${productName} deleted successfully`);
+    loadProducts(false);
   } catch (err) {
-
-    toast.error(
-      "Delete Failed"
-    );
-
+    toast.error('Delete Failed');
   }
-
 };
+
+  const openDeleteConfirm = (product) => {
+    setDeleteConfirm({
+      open: true,
+      id: product._id,
+      name: product.name || 'this product'
+    });
+  };
 
   const recalculateAllStock = async () => {
     try {
@@ -470,8 +473,17 @@ const deleteProduct = async (id) => {
   return (
     <Layout>
       <div className="flex items-center justify-between mb-6">
-        <div><h1 className="font-display text-2xl font-bold text-gray-900">Products</h1><p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p></div>
-        <div className="flex gap-2">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-gray-900">Products</h1>
+          <p className="font-body text-gray-500 text-sm mt-0.5">{products.length} products in store</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setShowAllProducts(prev => !prev)}
+            className="btn-outline text-sm gap-2 py-2.5"
+          >
+            {showAllProducts ? 'Showing all products' : 'Show all products'}
+          </button>
           <button onClick={recalculateAllStock} className="btn-outline text-sm gap-2 py-2.5"><RefreshCw size={16}/> Recalculate Stock</button>
           <button onClick={openAdd} className="btn-primary text-sm gap-2 py-2.5"><Plus size={16}/> Add Product</button>
         </div>
@@ -532,7 +544,7 @@ const deleteProduct = async (id) => {
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(p)} className="w-8 h-8 rounded-lg bg-champagne-light/80 hover:bg-primary text-primary hover:text-white flex items-center justify-center transition-all"><Edit2 size={13}/></button>
-                      <button onClick={() => deleteProduct(p._id)} className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose text-rose hover:text-white flex items-center justify-center transition-all"><Trash2 size={13}/></button>
+                      <button onClick={() => openDeleteConfirm(p)} className="w-8 h-8 rounded-lg bg-rose-soft hover:bg-rose text-rose hover:text-white flex items-center justify-center transition-all"><Trash2 size={13}/></button>
                     </div>
                   </td>
                 </tr>
@@ -541,6 +553,28 @@ const deleteProduct = async (id) => {
           </table>
         </div>
       </div>
+
+      <AnimatePresence>
+        {deleteConfirm.open && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.96, opacity: 0, y: 10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.96, opacity: 0, y: 10 }} className="w-full max-w-md overflow-hidden rounded-[28px] border border-rose-100 bg-gradient-to-br from-white via-rose-50/40 to-champagne-light/50 shadow-[0_30px_80px_rgba(73,38,32,0.18)]">
+              <div className="px-6 pt-6 pb-4">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-rose-200 shadow-inner">
+                  <Trash2 size={26} className="text-rose" />
+                </div>
+                <h3 className="text-center font-display text-2xl font-bold text-gray-900">Delete product?</h3>
+                <p className="mt-3 text-center font-body text-sm leading-relaxed text-gray-600">
+                  Are you sure you want to delete <span className="font-semibold text-gray-900">{deleteConfirm.name}</span>? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3 border-t border-gray-100 bg-white/70 p-6">
+                <button onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })} className="flex-1 rounded-full border border-gray-200 bg-white px-4 py-3 font-body text-sm font-semibold text-gray-700 transition hover:border-gray-300 hover:bg-gray-50">Cancel</button>
+                <button onClick={() => deleteProduct(deleteConfirm.id)} className="flex-1 rounded-full bg-gradient-to-r from-rose to-rose-600 px-4 py-3 font-body text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:brightness-105">Delete Product</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Modal */}
       <AnimatePresence>

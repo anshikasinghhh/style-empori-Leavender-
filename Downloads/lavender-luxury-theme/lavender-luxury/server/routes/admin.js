@@ -70,6 +70,7 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
     // Recent orders
     const recentOrders = await Order.find({})
       .populate('user', 'name email')
+      .populate('items.product')
       .sort({ createdAt: -1 })
       .limit(10);
 
