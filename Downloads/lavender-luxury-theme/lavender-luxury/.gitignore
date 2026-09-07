@@ -11,3 +11,6 @@ server/.env
 # Environment files
 client/.env
 server/.env
+
+# VPS environment files and backups
+server/.env*
