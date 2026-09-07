@@ -120,7 +120,7 @@ const normalizeFormState = (data = {}) => {
 
 export default function AdminProducts({ Layout = AdminLayout }) {
   const [products, setProducts] = useState([]);
-  const [showAllProducts, setShowAllProducts] = useState(false);
+  const [showAllProducts, setShowAllProducts] = useState(true);
   const loadProducts = async (includeInactive = showAllProducts) => {
     try {
       const res = await api.get('/products', {
